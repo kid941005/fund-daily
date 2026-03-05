@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # CLI 版本
+  fund-daily:
+    build: .
+    image: fund-daily:latest
+    container_name: fund-daily
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+    environment:
+      - TZ=Asia/Shanghai
+    command: share 000001,110022
+
+  # Web UI 版本
+  fund-daily-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    image: fund-daily-web:latest
+    container_name: fund-daily-web
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./web:/app/web
+    environment:
+      - TZ=Asia/Shanghai
+      - FLASK_ENV=production
+    restart: unless-stopped
+
+  # 定时任务
+  fund-daily-cron:
+    build: .
+    image: fund-daily:latest
+    container_name: fund-daily-cron
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./cron.sh:/app/cron.sh
+    environment:
+      - TZ=Asia/Shanghai
+      - FUND_CODES=000001,110022,161725
+    command: /app/cron.sh
+    restart: unless-stopped
