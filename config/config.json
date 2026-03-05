@@ -1,5 +1,10 @@
 {
-  "default_funds": ["000001", "110022", "161725"],
+  "default_funds": [
+    "000001",
+    "110022",
+    "161725",
+    "017193"
+  ],
   "report_time": "15:00",
   "telegram": {
     "enabled": false,

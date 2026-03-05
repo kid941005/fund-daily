@@ -20,7 +20,10 @@ app = Flask(__name__)
 CORS(app)
 
 # Import fund functions
-from scripts.fund_daily import fetch_fund_data_eastmoney, analyze_fund, generate_daily_report, format_report_for_share
+try:
+    from scripts.fund_daily import fetch_fund_data_eastmoney, analyze_fund
+except ImportError:
+    from fund_daily.main import fetch_fund_data_eastmoney, analyze_fund
 
 # Config
 DATA_DIR = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/data")
