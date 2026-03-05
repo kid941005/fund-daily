@@ -1,0 +1,12 @@
+# Fund Daily Requirements
+
+# Web Framework
+flask==3.0.0
+flask-cors==4.0.0
+
+# HTTP Requests
+requests==2.31.0
+
+# Optional: For advanced data processing
+# pandas==2.0.0
+# numpy==1.24.0
