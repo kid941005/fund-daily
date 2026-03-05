@@ -1,0 +1,13 @@
+{
+  "holdings": [
+    {
+      "fund_code": "000001",
+      "fund_name": "华夏成长混合",
+      "shares": 1000.0,
+      "cost_price": 1.05,
+      "buy_date": "2026-03-05",
+      "added_date": "2026-03-05"
+    }
+  ],
+  "last_updated": "2026-03-05T18:51:32.251049"
+}
