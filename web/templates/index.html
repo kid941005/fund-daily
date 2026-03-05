@@ -109,6 +109,90 @@
             align-items: center;
         }
         
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .nav-tab {
+            flex: 1;
+            padding: 12px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .nav-tab.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .advisor-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .advisor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .advisor-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .advisor-badge.buy { background: #e8f5e9; color: #2e7d32; }
+        .advisor-badge.hold { background: #fff3e0; color: #ef6c00; }
+        .advisor-badge.sell { background: #ffebee; color: #c62828; }
+        .advisor-badge.observe { background: #f5f5f5; color: #666; }
+        
+        .advisor-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        
+        .advisor-stats div {
+            text-align: center;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .advisor-reasons {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+        }
+        
+        .advisor-reasons div {
+            margin: 3px 0;
+        }
+        
         .add-btn {
             background: #667eea;
             color: white;
@@ -256,6 +340,16 @@
     </div>
     
     <div class="container">
+        <!-- 导航标签 -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('funds')">基金</button>
+            <button class="nav-tab" onclick="switchTab('advisor')">建议</button>
+            <button class="nav-tab" onclick="switchTab('sectors')">板块</button>
+        </div>
+        
+        <!-- 基金列表页面 -->
+        <div id="tab-funds" class="tab-content active">
+        
         <div class="summary-card">
             <div class="summary-title">市场概览</div>
             <div class="summary-stats" id="summaryStats">
@@ -270,6 +364,22 @@
                 <button class="add-btn" onclick="showAddModal()">+ 添加基金</button>
             </div>
             <div id="fundList">
+                <div class="loading">加载中...</div>
+            </div>
+        </div>
+        </div>
+        
+        <!-- 操作建议页面 -->
+        <div id="tab-advisor" class="tab-content">
+            <div id="advisorList">
+                <div class="loading">加载中...</div>
+            </div>
+        </div>
+        
+        <!-- 热门板块页面 -->
+        <div id="tab-sectors" class="tab-content">
+            <div id="sectorsSummary" class="summary-card"></div>
+            <div id="sectorsList">
                 <div class="loading">加载中...</div>
             </div>
         </div>
@@ -362,6 +472,147 @@
             `).join('');
             
             document.getElementById('fundList').innerHTML = html;
+        }
+        
+        // Tab switching
+        function switchTab(tabName) {
+            // Update tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById('tab-' + tabName).classList.add('active');
+            
+            // Load data if needed
+            if (tabName === 'advisor') {
+                loadAdvisor();
+            } else if (tabName === 'sectors') {
+                loadSectors();
+            }
+        }
+        
+        // Load advisor data
+        async function loadAdvisor() {
+            try {
+                const response = await fetch('/api/advisor');
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderAdvisorList(data.advisors);
+                }
+            } catch (error) {
+                document.getElementById('advisorList').innerHTML = 
+                    '<div class="error">加载失败，请刷新重试</div>';
+            }
+        }
+        
+        function renderAdvisorList(advisors) {
+            if (!advisors || advisors.length === 0) {
+                document.getElementById('advisorList').innerHTML = 
+                    '<div style="text-align:center;padding:40px;color:#999">暂无基金，请先添加基金</div>';
+                return;
+            }
+            
+            const html = advisors.map(advisor => {
+                // Badge class
+                let badgeClass = 'observe';
+                let badgeText = '观望';
+                if (advisor.recommendation && advisor.recommendation.includes('买入')) {
+                    badgeClass = 'buy';
+                    badgeText = '买入';
+                } else if (advisor.recommendation && advisor.recommendation.includes('卖出')) {
+                    badgeClass = 'sell';
+                    badgeText = '卖出';
+                } else if (advisor.recommendation && advisor.recommendation.includes('持有')) {
+                    badgeClass = 'hold';
+                    badgeText = '持有';
+                }
+                
+                // Reasons
+                const reasonsHtml = advisor.reason ? advisor.reason.map(r => 
+                    '<div>' + r + '</div>'
+                ).join('') : '';
+                
+                return '<div class="advisor-card">' +
+                    '<div class="advisor-header">' +
+                    '<div><strong>' + (advisor.fund_name || '') + '</strong>' +
+                    '<span style="color:#999;font-size:12px;margin-left:8px">' + (advisor.fund_code || '') + '</span></div>' +
+                    '<span class="advisor-badge ' + badgeClass + '">' + badgeText + '</span></div>' +
+                    '<div class="advisor-stats">' +
+                    '<div><div style="color:#666">现价</div><div style="font-weight:bold">' + (advisor.current_price || '-') + '</div></div>' +
+                    '<div><div style="color:#666">日涨跌</div><div style="font-weight:bold;color:' + ((advisor.daily_change || 0) >= 0 ? '#e74c3c' : '#27ae60') + '">' + ((advisor.daily_change || 0)).toFixed(2) + '%</div></div>' +
+                    '<div><div style="color:#666">置信度</div><div style="font-weight:bold">' + (advisor.confidence || 0) + '%</div></div>' +
+                    '</div>' +
+                    '<div style="font-size:12px;color:#666">风险: ' + (advisor.risk_level || '-') + ' | 趋势: ' + (advisor.trend || '-') + ' | 波动: ' + (advisor.volatility || '-') + '%</div>' +
+                    (advisor.target_price ? '<div style="font-size:12px;margin-top:5px">目标价: ' + advisor.target_price + ' | 止损: ' + advisor.stop_loss + '</div>' : '') +
+                    '<div class="advisor-reasons">' + reasonsHtml + '</div>' +
+                    '</div>';
+            }).join('');
+            
+            document.getElementById('advisorList').innerHTML = html;
+        }
+        
+        // Load sectors data
+        async function loadSectors() {
+            try {
+                const response = await fetch('/api/sectors');
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderSectors(data.data);
+                }
+            } catch (error) {
+                document.getElementById('sectorsList').innerHTML = 
+                    '<div class="error">加载失败，请刷新重试</div>';
+            }
+        }
+        
+        function renderSectors(data) {
+            if (!data) return;
+            
+            const summary = data.summary || {};
+            
+            // Summary card
+            const summaryHtml = '<div class="summary-title">市场概览</div>' +
+                '<div class="summary-stats">' +
+                '<div class="stat-item"><div class="stat-value">' + (summary.total_sectors || 0) + '</div><div class="stat-label">板块数</div></div>' +
+                '<div class="stat-item"><div class="stat-value up">' + (summary.up_count || 0) + '</div><div class="stat-label">上涨</div></div>' +
+                '<div class="stat-item"><div class="stat-value down">' + (summary.down_count || 0) + '</div><div class="stat-label">下跌</div></div>' +
+                '<div class="stat-item"><div class="stat-value ' + ((summary.avg_change || 0) >= 0 ? 'up' : 'down') + '">' + ((summary.avg_change || 0) >= 0 ? '+' : '') + (summary.avg_change || 0) + '%</div><div class="stat-label">平均涨跌</div></div>' +
+                '</div>' +
+                '<div class="sentiment ' + (summary.market_sentiment === '偏多' ? 'bullish' : summary.market_sentiment === '偏空' ? 'bearish' : 'neutral') + '">' +
+                '市场情绪: ' + (summary.market_sentiment || '震荡') + '</div>';
+            
+            document.getElementById('sectorsSummary').innerHTML = summaryHtml;
+            
+            // Industry sectors
+            let html = '<div class="fund-list"><div class="section-title"><span>🔥 行业板块涨幅前5</span></div>';
+            
+            const industryHot = data.industry && data.industry.hot ? data.industry.hot : [];
+            for (let i = 0; i < Math.min(5, industryHot.length); i++) {
+                const s = industryHot[i];
+                html += '<div class="fund-item"><div class="fund-info"><div class="fund-name">' + s.name + '</div></div>' +
+                    '<div class="fund-nav"><div class="nav-value" style="color:#e74c3c">' + (s.change >= 0 ? '+' : '') + s.change.toFixed(2) + '%</div></div></div>';
+            }
+            html += '</div>';
+            
+            // Concept sectors
+            html += '<div class="fund-list" style="margin-top:15px"><div class="section-title"><span>🔥 概念板块涨幅前5</span></div>';
+            
+            const conceptHot = data.concept && data.concept.hot ? data.concept.hot : [];
+            for (let i = 0; i < Math.min(5, conceptHot.length); i++) {
+                const s = conceptHot[i];
+                html += '<div class="fund-item"><div class="fund-info"><div class="fund-name">' + s.name + '</div></div>' +
+                    '<div class="fund-nav"><div class="nav-value" style="color:#e74c3c">' + (s.change >= 0 ? '+' : '') + s.change.toFixed(2) + '%</div></div></div>';
+            }
+            html += '</div>';
+            
+            document.getElementById('sectorsList').innerHTML = html;
         }
         
         // Modal functions

@@ -25,6 +25,26 @@ try:
 except ImportError:
     from fund_daily.main import fetch_fund_data_eastmoney, analyze_fund
 
+# Import advisor
+try:
+    from fund_daily.advisor import generate_advisor
+except ImportError:
+    import sys
+    import os
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from fund_daily.advisor import generate_advisor
+
+# Import sectors
+try:
+    from fund_daily.sectors import analyze_sectors, get_sector_recommendation
+except ImportError:
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from fund_daily.sectors import analyze_sectors, get_sector_recommendation
+    except:
+        analyze_sectors = None
+        get_sector_recommendation = None
+
 # Config
 DATA_DIR = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/data")
 CONFIG_FILE = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/config/config.json")
@@ -84,6 +104,49 @@ def get_report():
     codes = config.get('default_funds', [])
     report = generate_daily_report(codes)
     return jsonify(report)
+
+@app.route('/api/advisor')
+def get_advisor():
+    """Generate investment advisor"""
+    config = load_config()
+    codes = config.get('default_funds', [])
+    results = []
+    for code in codes:
+        result = generate_advisor(code)
+        results.append(result)
+    return jsonify({
+        "success": True,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "advisors": results
+    })
+
+@app.route('/api/sectors')
+def get_sectors():
+    """Get hot sector analysis"""
+    if analyze_sectors is None:
+        return jsonify({"success": False, "error": "Sectors module not available"})
+    result = analyze_sectors()
+    return jsonify({
+        "success": True,
+        "data": result
+    })
+
+@app.route('/api/sectors/recommend')
+def get_sector_recommend():
+    """Get sector investment recommendation"""
+    if get_sector_recommendation is None:
+        return jsonify({"success": False, "error": "Sectors module not available"})
+    result = get_sector_recommendation()
+    return jsonify({
+        "success": True,
+        "data": result
+    })
+
+@app.route('/api/advisor/<code>')
+def get_advisor_single(code):
+    """Get advisor for single fund"""
+    result = generate_advisor(code)
+    return jsonify(result)
 
 @app.route('/api/history')
 def get_history():
