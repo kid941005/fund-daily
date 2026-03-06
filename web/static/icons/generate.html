@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head><title>Generate Icons</title></head>
+<body>
+<canvas id="c" width="512" height="512"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+// Background
+const grad = ctx.createLinearGradient(0, 0, 512, 512);
+grad.addColorStop(0, '#667eea');
+grad.addColorStop(1, '#764ba2');
+ctx.fillStyle = grad;
+ctx.roundRect(0, 0, 512, 512, 80);
+ctx.fill();
+
+// Text
+ctx.fillStyle = 'white';
+ctx.font = 'bold 180px sans-serif';
+ctx.textAlign = 'center';
+ctx.fillText('📊', 256, 260);
+
+ctx.font = 'bold 60px sans-serif';
+ctx.fillText('Fund Daily', 256, 400);
+
+const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+sizes.forEach(s => {
+  console.log(`<img src="${canvas.toDataURL()}" width="${s}" height="${s}">`);
+});
+</script>
+</body>
+</html>

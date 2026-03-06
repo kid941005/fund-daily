@@ -3,6 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="基金每日分析工具 - 持仓管理、风险分析，操作建议">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Fund Daily">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
     <title>Fund Daily - 每日基金</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1462,6 +1469,13 @@
                 loadSectors();
             }
         }, 60000);
+        
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed:', err));
+        }
     </script>
 </body>
 </html>
