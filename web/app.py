@@ -19,8 +19,25 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-# Import fund functions
-from scripts.fund_daily import fetch_fund_data_eastmoney, analyze_fund, generate_daily_report, format_report_for_share
+# Import fund functions - dynamic import to handle hyphenated filename
+import importlib.util
+import sys
+
+def import_fund_module():
+    script_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scripts', 'fund-daily.py')
+    spec = importlib.util.spec_from_file_location("fund_daily", script_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+fund_module = import_fund_module()
+fetch_fund_data_eastmoney = fund_module.fetch_fund_data_eastmoney
+analyze_fund = fund_module.analyze_fund
+generate_daily_report = fund_module.generate_daily_report
+format_report_for_share = fund_module.format_report_for_share
+fetch_market_hot_news = fund_module.fetch_market_hot_news
+fetch_hot_sectors = fund_module.fetch_hot_sectors
+generate_advice = fund_module.generate_advice
 
 # Config
 DATA_DIR = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/data")
@@ -137,6 +154,38 @@ def remove_fund():
         config['default_funds'].remove(code)
         save_config(config)
     return jsonify({"success": True})
+
+@app.route('/api/news')
+def get_news():
+    """Get market hot news"""
+    limit = request.args.get('limit', 8, type=int)
+    news = fetch_market_hot_news(limit)
+    return jsonify({
+        "success": True,
+        "news": news
+    })
+
+@app.route('/api/sectors')
+def get_sectors():
+    """Get hot sectors"""
+    limit = request.args.get('limit', 10, type=int)
+    sectors = fetch_hot_sectors(limit)
+    return jsonify({
+        "success": True,
+        "sectors": sectors
+    })
+
+@app.route('/api/advice')
+def get_advice():
+    """Get investment advice"""
+    config = load_config()
+    codes = config.get('default_funds', ['000001', '110022', '161725'])
+    report = generate_daily_report(codes)
+    advice = generate_advice(report.get('funds', []))
+    return jsonify({
+        "success": True,
+        "advice": advice
+    })
 
 def calculate_summary(funds):
     """Calculate market summary"""

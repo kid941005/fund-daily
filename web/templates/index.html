@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fund Daily - 每日基金</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -20,94 +16,89 @@
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-        
-        .header .date {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .summary-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .summary-title {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 15px;
-        }
-        
-        .summary-stats {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            text-align: center;
-        }
-        
-        .stat-item {
             padding: 15px;
-            border-radius: 8px;
-            background: #f8f9fa;
-        }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .stat-value.up { color: #e74c3c; }
-        .stat-value.down { color: #27ae60; }
-        .stat-value.flat { color: #95a5a6; }
-        
-        .stat-label {
-            font-size: 12px;
-            color: #666;
-        }
-        
-        .sentiment {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 8px;
             text-align: center;
+        }
+        
+        .header h1 { font-size: 20px; margin-bottom: 5px; }
+        .header .date { opacity: 0.9; font-size: 12px; }
+        
+        @media (min-width: 768px) {
+            .header { padding: 20px; }
+            .header h1 { font-size: 24px; }
+            .header .date { font-size: 14px; }
+        }
+        
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 13px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            min-width: 0;
+        }
+        
+        @media (min-width: 768px) {
+            .tab { padding: 15px 10px; font-size: 14px; }
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
             font-weight: bold;
         }
         
-        .sentiment.bullish { background: #ffeaea; color: #c0392b; }
-        .sentiment.bearish { background: #eaffea; color: #27ae60; }
-        .sentiment.neutral { background: #f0f0f0; color: #7f8c8d; }
+        .container { 
+            max-width: 100%; 
+            margin: 0 auto; 
+            padding: 15px; 
+        }
         
-        .fund-list {
+        @media (min-width: 768px) {
+            .container {
+                max-width: 90%;
+                padding: 20px;
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .container {
+                max-width: 1100px;
+            }
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .card {
             background: white;
             border-radius: 12px;
-            padding: 20px;
+            padding: 15px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
         }
         
-        .section-title {
-            font-size: 18px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        @media (min-width: 768px) {
+            .card {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
         }
+        
+        .section-title { font-size: 16px; color: #666; margin-bottom: 15px; }
+        .section-title-main { font-size: 18px; font-weight: bold; margin-bottom: 15px; }
         
         .add-btn {
             background: #667eea;
@@ -119,10 +110,6 @@
             font-size: 14px;
         }
         
-        .add-btn:hover {
-            background: #5a6fd6;
-        }
-        
         .fund-item {
             display: flex;
             justify-content: space-between;
@@ -131,54 +118,95 @@
             border-bottom: 1px solid #eee;
         }
         
-        .fund-item:last-child {
-            border-bottom: none;
-        }
-        
-        .fund-info {
-            flex: 1;
-        }
-        
-        .fund-name {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .fund-code {
-            font-size: 12px;
-            color: #999;
-        }
-        
-        .fund-nav {
-            text-align: right;
-        }
-        
-        .nav-value {
-            font-size: 18px;
-            font-weight: bold;
-        }
-        
-        .change-value {
-            font-size: 14px;
-            margin-top: 5px;
-        }
-        
+        .fund-item:last-child { border-bottom: none; }
+        .fund-info { flex: 1; }
+        .fund-name { font-weight: bold; margin-bottom: 5px; }
+        .fund-code { font-size: 12px; color: #999; }
+        .fund-nav { text-align: right; }
+        .nav-value { font-size: 18px; font-weight: bold; }
+        .change-value { font-size: 14px; margin-top: 5px; }
         .change-value.up { color: #e74c3c; }
         .change-value.down { color: #27ae60; }
         
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #999;
+        .loading { text-align: center; padding: 40px; color: #999; }
+        .error { background: #ffeaea; color: #c0392b; padding: 15px; border-radius: 8px; }
+        
+        .holding-item { padding: 15px; border-bottom: 1px solid #eee; }
+        
+        .holding-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
         }
         
-        .error {
-            background: #ffeaea;
-            color: #c0392b;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
+        .holding-info { flex: 1; }
+        .holding-name { font-weight: bold; font-size: 15px; }
+        .holding-code { font-size: 12px; color: #999; }
+        
+        .holding-amount-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
         }
+        
+        .holding-amount-row label { font-size: 14px; color: #666; }
+        
+        .holding-amount-row input {
+            width: 120px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .holding-change { font-size: 14px; padding: 4px 10px; border-radius: 4px; margin-top: 8px; display: inline-block; }
+        .holding-change.up { background: #ffebee; color: #c62828; }
+        .holding-change.down { background: #e8f5e9; color: #2e7d32; }
+        .holding-change.flat { background: #f5f5f5; color: #666; }
+        
+        .delete-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .advice-card { text-align: center; padding: 30px 20px; }
+        .advice-emoji { font-size: 64px; margin-bottom: 20px; }
+        .advice-title { font-size: 24px; font-weight: bold; margin-bottom: 15px; }
+        .advice-desc { font-size: 16px; color: #666; line-height: 1.6; margin-bottom: 20px; }
+        
+        .advice-funds { text-align: left; margin-top: 20px; }
+        
+        .advice-fund-item { padding: 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px; }
+        
+        .advice-fund-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .advice-fund-name { font-weight: bold; }
+        
+        .advice-tag {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        
+        .advice-tag.buy { background: #e8f5e9; color: #2e7d32; }
+        .advice-tag.sell { background: #ffebee; color: #c62828; }
+        .advice-tag.hold { background: #e3f2fd; color: #1565c0; }
+        .advice-tag.watch { background: #fff3e0; color: #ef6c00; }
+        
+        .advice-fund-change { font-size: 13px; color: #666; }
+        
+        .news-item { padding: 15px 0; border-bottom: 1px solid #eee; cursor: pointer; }
+        .news-item:hover { background: #f8f9fa; }
+        .news-item:last-child { border-bottom: none; }
+        .news-title { font-size: 15px; font-weight: bold; margin-bottom: 8px; line-height: 1.4; }
+        .news-meta { font-size: 12px; color: #999; }
         
         .modal {
             display: none;
@@ -195,58 +223,43 @@
         
         .modal-content {
             background: white;
-            padding: 20px;
+            padding: 25px;
             border-radius: 12px;
             width: 90%;
-            max-width: 400px;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         
-        .modal-title {
-            font-size: 18px;
-            margin-bottom: 15px;
+        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; }
+        .modal-close { float: right; cursor: pointer; font-size: 24px; color: #999; }
+        .modal-body { font-size: 15px; line-height: 1.6; color: #333; }
+        
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 8px; font-size: 14px; color: #666; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        
+        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-secondary { background: #f0f0f0; color: #666; }
+        .btn-success { background: #27ae60; color: white; }
+        
+        .summary-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
+        .stat-box { text-align: center; padding: 12px 8px; background: #f8f9fa; border-radius: 8px; }
+        .stat-num { font-size: 18px; font-weight: bold; }
+        .stat-num.up { color: #e74c3c; }
+        .stat-num.down { color: #27ae60; }
+        .stat-label { font-size: 11px; color: #666; margin-top: 5px; }
+        
+        @media (min-width: 768px) {
+            .summary-stats { gap: 10px; margin-bottom: 15px; }
+            .stat-box { padding: 15px; }
+            .stat-num { font-size: 24px; }
+            .stat-label { font-size: 12px; }
         }
         
-        .input-group {
-            margin-bottom: 15px;
-        }
-        
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-        
-        .input-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-        
-        .btn-secondary {
-            background: #f0f0f0;
-            color: #666;
-        }
+        .empty-hint { text-align: center; padding: 40px; color: #999; }
     </style>
 </head>
 <body>
@@ -255,161 +268,477 @@
         <div class="date" id="currentDate">加载中...</div>
     </div>
     
+    <div class="tabs">
+        <div class="tab active" data-tab="hot" onclick="switchTab('hot')">🔥 热门板块</div>
+        <div class="tab" data-tab="holdings" onclick="switchTab('holdings')">💼 持仓</div>
+        <div class="tab" data-tab="advice" onclick="switchTab('advice')">💡 建议</div>
+    </div>
+    
     <div class="container">
-        <div class="summary-card">
-            <div class="summary-title">市场概览</div>
-            <div class="summary-stats" id="summaryStats">
-                <div class="loading">加载中...</div>
+        <!-- Tab 1: 热门板块 -->
+        <div class="tab-content active" id="tab-hot">
+            <div class="card">
+                <div class="section-title-main">市场热点资讯</div>
+                <div id="hotNewsList"><div class="loading">加载中...</div></div>
             </div>
-            <div class="sentiment" id="marketSentiment">-</div>
+            
+            <div class="card">
+                <div class="section-title-main">板块涨跌排行</div>
+                <div id="sectorList"><div class="loading">加载中...</div></div>
+            </div>
         </div>
         
-        <div class="fund-list">
-            <div class="section-title">
-                <span>我的基金</span>
-                <button class="add-btn" onclick="showAddModal()">+ 添加基金</button>
+        <!-- Tab 2: 持仓 -->
+        <div class="tab-content" id="tab-holdings">
+            <div class="card">
+                <div class="section-title-main">
+                    <span>我的持仓</span>
+                    <button class="add-btn" onclick="showAddModal()">+ 添加持仓</button>
+                </div>
+                <div class="summary-stats" id="holdingsSummary">
+                    <div class="stat-box">
+                        <div class="stat-num" id="totalFunds">0</div>
+                        <div class="stat-label">基金数量</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num" id="totalAmount">0</div>
+                        <div class="stat-label">持仓金额(元)</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num" id="totalChange">0%</div>
+                        <div class="stat-label">平均涨跌</div>
+                    </div>
+                </div>
+                <div id="holdingsList"><div class="loading">加载中...</div></div>
             </div>
-            <div id="fundList">
-                <div class="loading">加载中...</div>
+        </div>
+        
+        <!-- Tab 3: 建议 -->
+        <div class="tab-content" id="tab-advice">
+            <div class="card">
+                <div class="section-title-main">今日操作建议</div>
+                <div id="adviceContent"><div class="loading">加载中...</div></div>
             </div>
         </div>
     </div>
     
-    <!-- Add Fund Modal -->
+    <!-- Add Holdings Modal -->
     <div class="modal" id="addModal">
         <div class="modal-content">
-            <div class="modal-title">添加基金</div>
+            <div class="modal-title">添加持仓</div>
             <div class="input-group">
                 <label>基金代码</label>
-                <input type="text" id="fundCode" placeholder="例如: 000001" maxlength="6">
+                <input type="text" id="holdingsCode" placeholder="例如: 000001" maxlength="6">
+            </div>
+            <div class="input-group">
+                <label>持仓金额（元）</label>
+                <input type="number" id="holdingsAmount" placeholder="例如: 10000" min="0">
             </div>
             <div class="modal-buttons">
                 <button class="btn btn-secondary" onclick="hideAddModal()">取消</button>
-                <button class="btn btn-primary" onclick="addFund()">添加</button>
+                <button class="btn btn-success" onclick="saveHoldings()">保存</button>
             </div>
+        </div>
+    </div>
+    
+    <!-- News Detail Modal -->
+    <div class="modal" id="newsModal">
+        <div class="modal-content">
+            <div class="modal-title">
+                <span>资讯详情</span>
+                <span class="modal-close" onclick="closeNewsModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="newsModalBody"></div>
         </div>
     </div>
 
     <script>
-        // Update date
-        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('zh-CN');
+        let holdingsData = JSON.parse(localStorage.getItem('fundHoldings') || '[]');
+        let fundsCache = [];
+        let newsData = [];
         
-        // Load data
-        async function loadData() {
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('zh-CN', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.tab === tabName) tab.classList.add('active');
+            });
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById('tab-' + tabName).classList.add('active');
+            
+            if (tabName === 'hot') {
+                loadHotNews();
+                loadSectors();
+            } else if (tabName === 'holdings') {
+                loadFundsAndHoldings();
+            } else if (tabName === 'advice') {
+                loadAdviceData();
+            }
+        }
+        
+        // 加载热门资讯
+        async function loadHotNews() {
+            console.log('Loading hot news...');
+            try {
+                const response = await fetch('/api/news?limit=8');
+                console.log('News response:', response.status);
+                const data = await response.json();
+                console.log('News data:', data);
+                if (data.success) {
+                    newsData = data.news;
+                    renderHotNews(data.news);
+                }
+            } catch (e) {
+                console.error('News load error:', e);
+                document.getElementById('hotNewsList').innerHTML = '<div class="error">加载失败: ' + e.message + '</div>';
+            }
+        }
+        
+        function renderHotNews(news) {
+            if (!news || news.length === 0) {
+                document.getElementById('hotNewsList').innerHTML = '<div class="empty-hint">暂无资讯</div>';
+                return;
+            }
+            const html = news.map((item, index) => `
+                <div class="news-item" onclick="showNewsDetail(${index})">
+                    <div class="news-title">${item.title}</div>
+                    <div class="news-meta">${item.time} · ${item.source}</div>
+                </div>
+            `).join('');
+            document.getElementById('hotNewsList').innerHTML = html;
+        }
+        
+        // 显示资讯详情 - 点击后跳转到文章链接
+        function showNewsDetail(index) {
+            const item = newsData[index];
+            if (!item) return;
+            
+            // 如果有真实链接则跳转，否则搜索
+            if (item.url) {
+                window.open(item.url, '_blank');
+            } else {
+                // 跳转到百度搜索
+                const searchUrl = 'https://www.baidu.com/s?wd=' + encodeURIComponent(item.title);
+                window.open(searchUrl, '_blank');
+            }
+        }
+        
+        function closeNewsModal() {
+            document.getElementById('newsModal').style.display = 'none';
+        }
+        
+        // 加载板块数据
+        async function loadSectors() {
+            console.log('Loading sectors...');
+            try {
+                const response = await fetch('/api/sectors?limit=10');
+                console.log('Sectors response:', response.status);
+                const data = await response.json();
+                console.log('Sectors data:', data);
+                if (data.success) renderSectors(data.sectors);
+            } catch (e) {
+                console.error('Sectors load error:', e);
+                document.getElementById('sectorList').innerHTML = '<div class="error">加载失败: ' + e.message + '</div>';
+            }
+        }
+        
+        function renderSectors(sectors) {
+            if (!sectors || sectors.length === 0) {
+                document.getElementById('sectorList').innerHTML = '<div class="empty-hint">暂无数据</div>';
+                return;
+            }
+            const html = sectors.map(sector => {
+                const change = parseFloat(sector.change);
+                const trend = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
+                const arrow = change > 0 ? '↑' : change < 0 ? '↓' : '-';
+                return `
+                    <div class="fund-item">
+                        <div class="fund-info"><div class="fund-name">${sector.name}</div></div>
+                        <div class="fund-nav"><div class="change-value ${trend}">${arrow} ${change.toFixed(2)}%</div></div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('sectorList').innerHTML = html;
+        }
+        
+        // 加载基金数据并显示持仓
+        async function loadFundsAndHoldings() {
             try {
                 const response = await fetch('/api/funds');
                 const data = await response.json();
                 
                 if (data.success) {
-                    renderSummary(data.summary);
-                    renderFundList(data.funds);
+                    fundsCache = data.funds;
+                    renderHoldings(data.funds);
                 }
-            } catch (error) {
-                document.getElementById('fundList').innerHTML = 
-                    '<div class="error">加载失败，请刷新重试</div>';
+            } catch (e) {
+                document.getElementById('holdingsList').innerHTML = '<div class="error">加载失败</div>';
             }
         }
         
-        function renderSummary(summary) {
-            const statsHtml = `
-                <div class="stat-item">
-                    <div class="stat-value">${summary.total}</div>
-                    <div class="stat-label">总数</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value up">${summary.up}</div>
-                    <div class="stat-label">上涨</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value down">${summary.down}</div>
-                    <div class="stat-label">下跌</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value flat">${summary.flat}</div>
-                    <div class="stat-label">平盘</div>
-                </div>
-            `;
-            document.getElementById('summaryStats').innerHTML = statsHtml;
-            
-            const sentimentEl = document.getElementById('marketSentiment');
-            sentimentEl.textContent = `市场情绪: ${summary.sentiment}`;
-            sentimentEl.className = 'sentiment ' + 
-                (summary.sentiment === '乐观' ? 'bullish' : 
-                 summary.sentiment === '谨慎' ? 'bearish' : 'neutral');
-        }
-        
-        function renderFundList(funds) {
-            if (funds.length === 0) {
-                document.getElementById('fundList').innerHTML = 
-                    '<div style="text-align:center;padding:40px;color:#999">暂无基金，点击添加</div>';
-                return;
+        function renderHoldings(funds) {
+            // 如果没有持仓数据，默认使用全部基金，金额为0
+            if (holdingsData.length === 0) {
+                holdingsData = funds.map(f => ({
+                    code: f.fund_code,
+                    name: f.fund_name,
+                    amount: 0
+                }));
+                localStorage.setItem('fundHoldings', JSON.stringify(holdingsData));
             }
             
-            const html = funds.map(fund => `
-                <div class="fund-item">
-                    <div class="fund-info">
-                        <div class="fund-name">${fund.fund_name}</div>
-                        <div class="fund-code">${fund.fund_code}</div>
-                    </div>
-                    <div class="fund-nav">
-                        <div class="nav-value">${fund.nav}</div>
-                        <div class="change-value ${fund.trend}">
-                            ${fund.trend === 'up' ? '📈' : fund.trend === 'down' ? '📉' : '➖'} 
-                            ${fund.change_percent}
+            let totalAmount = 0;
+            let totalChangeSum = 0;
+            let validCount = 0;
+            
+            const html = holdingsData.map((h, index) => {
+                const fund = funds.find(f => f.fund_code === h.code) || {};
+                const change = parseFloat(fund.daily_change) || 0;
+                const changeStr = (change > 0 ? '+' : '') + change.toFixed(2) + '%';
+                const trend = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
+                
+                // 如果基金存在，显示基金名称；不存在则显示代码
+                const displayName = fund.fund_name || h.name || h.code;
+                
+                if (h.amount > 0) {
+                    totalAmount += h.amount;
+                    totalChangeSum += change;
+                    validCount++;
+                }
+                
+                return `
+                    <div class="holding-item">
+                        <div class="holding-header">
+                            <div class="holding-info">
+                                <div class="holding-name">${displayName}</div>
+                                <div class="holding-code">${h.code}</div>
+                            </div>
+                            <button class="delete-btn" onclick="removeHolding(${index})">删除</button>
+                        </div>
+                        <div class="holding-change ${trend}">今日涨跌: ${changeStr}</div>
+                        <div class="holding-amount-row">
+                            <label>持仓金额:</label>
+                            <input type="number" value="${h.amount}" 
+                                   onchange="updateAmount(${index}, this.value)"
+                                   placeholder="输入金额">
+                            <span>元</span>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
             
-            document.getElementById('fundList').innerHTML = html;
+            document.getElementById('holdingsList').innerHTML = html || '<div class="empty-hint">暂无持仓，点击添加</div>';
+            
+            // 更新汇总
+            const holdingsWithAmount = holdingsData.filter(h => h.amount > 0);
+            document.getElementById('totalFunds').textContent = holdingsWithAmount.length;
+            document.getElementById('totalAmount').textContent = totalAmount.toLocaleString();
+            const avgChange = validCount > 0 ? (totalChangeSum / validCount) : 0;
+            const avgChangeStr = (avgChange > 0 ? '+' : '') + avgChange.toFixed(2) + '%';
+            document.getElementById('totalChange').textContent = avgChangeStr;
+            document.getElementById('totalChange').className = 'stat-num ' + (avgChange > 0 ? 'up' : 'down');
         }
         
-        // Modal functions
+        function updateAmount(index, value) {
+            holdingsData[index].amount = parseFloat(value) || 0;
+            localStorage.setItem('fundHoldings', JSON.stringify(holdingsData));
+            loadFundsAndHoldings();
+        }
+        
+        function removeHolding(index) {
+            if (confirm('确定删除该持仓吗？')) {
+                holdingsData.splice(index, 1);
+                localStorage.setItem('fundHoldings', JSON.stringify(holdingsData));
+                loadFundsAndHoldings();
+            }
+        }
+        
         function showAddModal() {
             document.getElementById('addModal').style.display = 'flex';
         }
         
         function hideAddModal() {
             document.getElementById('addModal').style.display = 'none';
-            document.getElementById('fundCode').value = '';
+            document.getElementById('holdingsCode').value = '';
+            document.getElementById('holdingsAmount').value = '';
         }
         
-        async function addFund() {
-            const code = document.getElementById('fundCode').value.trim();
+        async function saveHoldings() {
+            const code = document.getElementById('holdingsCode').value.trim();
+            const amount = parseFloat(document.getElementById('holdingsAmount').value) || 0;
+            
             if (!code || code.length !== 6) {
                 alert('请输入6位基金代码');
                 return;
             }
             
             try {
-                const response = await fetch('/api/add-fund', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({code: code})
-                });
-                
+                const response = await fetch('/api/fund/' + code);
                 const data = await response.json();
-                if (data.success) {
-                    hideAddModal();
-                    loadData();
-                } else {
-                    alert(data.error || '添加失败');
+                
+                if (!data.fund_code) {
+                    alert('基金代码不存在');
+                    return;
                 }
-            } catch (error) {
-                alert('网络错误');
+                
+                const existing = holdingsData.findIndex(h => h.code === code);
+                if (existing >= 0) {
+                    holdingsData[existing].amount = amount;
+                    holdingsData[existing].name = data.fund_name;
+                } else {
+                    holdingsData.push({ code, name: data.fund_name, amount });
+                }
+                
+                localStorage.setItem('fundHoldings', JSON.stringify(holdingsData));
+                hideAddModal();
+                loadFundsAndHoldings();
+            } catch (e) {
+                alert('基金代码不存在');
             }
         }
         
-        // Close modal on outside click
+        // 加载建议数据
+        async function loadAdviceData() {
+            try {
+                const response = await fetch('/api/funds');
+                const data = await response.json();
+                
+                if (!data.success) {
+                    document.getElementById('adviceContent').innerHTML = '<div class="error">加载失败</div>';
+                    return;
+                }
+                
+                fundsCache = data.funds;
+                renderAdvice(data.funds);
+            } catch (e) {
+                document.getElementById('adviceContent').innerHTML = '<div class="error">加载失败</div>';
+            }
+        }
+        
+        function renderAdvice(funds) {
+            const holdingsWithAmount = holdingsData.filter(h => h.amount > 0);
+            
+            if (holdingsWithAmount.length === 0) {
+                document.getElementById('adviceContent').innerHTML = `
+                    <div class="advice-card">
+                        <div class="advice-emoji">📊</div>
+                        <div class="advice-title">暂无持仓</div>
+                        <div class="advice-desc">请先在"持仓"页面添加持仓金额，以便获取操作建议</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let upCount = 0, downCount = 0, holdCount = 0;
+            
+            const fundAdvices = holdingsWithAmount.map(h => {
+                const fund = funds.find(f => f.fund_code === h.code) || {};
+                const change = parseFloat(fund.daily_change) || 0;
+                
+                let advice, adviceClass, adviceEmoji;
+                
+                if (change > 1) {
+                    advice = '建议买入';
+                    adviceClass = 'buy';
+                    adviceEmoji = '📈';
+                    upCount++;
+                } else if (change < -1) {
+                    advice = '建议卖出';
+                    adviceClass = 'sell';
+                    adviceEmoji = '📉';
+                    downCount++;
+                } else if (change > 0) {
+                    advice = '继续持有';
+                    adviceClass = 'hold';
+                    adviceEmoji = '✅';
+                    holdCount++;
+                } else {
+                    advice = '继续观望';
+                    adviceClass = 'watch';
+                    adviceEmoji = '👀';
+                    holdCount++;
+                }
+                
+                return {
+                    name: h.name || fund.fund_name || h.code,
+                    code: h.code,
+                    change: change,
+                    advice: advice,
+                    adviceClass: adviceClass,
+                    adviceEmoji: adviceEmoji
+                };
+            });
+            
+            let overallAdvice, overallEmoji, overallDesc;
+            
+            if (upCount > downCount && upCount > holdCount) {
+                overallEmoji = '📈';
+                overallAdvice = '市场向好';
+                overallDesc = `在您持仓的${holdingsWithAmount.length}只基金中，${upCount}只上涨${downCount}只下跌，整体表现良好。`;
+            } else if (downCount > upCount && downCount > holdCount) {
+                overallEmoji = '📉';
+                overallAdvice = '注意风险';
+                overallDesc = `在您持仓的${holdingsWithAmount.length}只基金中，${downCount}只下跌${upCount}只上涨，市场波动较大。`;
+            } else if (holdCount > 0 && upCount === downCount) {
+                overallEmoji = '➖';
+                overallAdvice = '震荡整理';
+                overallDesc = '市场处于震荡调整阶段，建议保持现有持仓观望。';
+            } else {
+                overallEmoji = '✅';
+                overallAdvice = '平稳运行';
+                overallDesc = '市场整体平稳，建议继续持有现有仓位。';
+            }
+            
+            const html = `
+                <div class="advice-card">
+                    <div class="advice-emoji">${overallEmoji}</div>
+                    <div class="advice-title">${overallAdvice}</div>
+                    <div class="advice-desc">${overallDesc}</div>
+                    
+                    <div class="advice-funds">
+                        ${fundAdvices.map(f => `
+                            <div class="advice-fund-item">
+                                <div class="advice-fund-header">
+                                    <div>
+                                        <div class="advice-fund-name">${f.name}</div>
+                                        <div class="advice-fund-change">${f.change > 0 ? '+' : ''}${f.change.toFixed(2)}%</div>
+                                    </div>
+                                    <div class="advice-tag ${f.adviceClass}">${f.adviceEmoji} ${f.advice}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('adviceContent').innerHTML = html;
+        }
+        
         document.getElementById('addModal').addEventListener('click', function(e) {
             if (e.target === this) hideAddModal();
         });
         
-        // Load data on page load
-        loadData();
+        document.getElementById('newsModal').addEventListener('click', function(e) {
+            if (e.target === this) closeNewsModal();
+        });
         
-        // Refresh every 60 seconds
-        setInterval(loadData, 60000);
+        // 初始加载
+        loadHotNews();
+        loadSectors();
+        
+        setInterval(() => {
+            const activeTab = document.querySelector('.tab.active').dataset.tab;
+            if (activeTab === 'hot') {
+                loadHotNews();
+                loadSectors();
+            }
+        }, 60000);
     </script>
 </body>
 </html>

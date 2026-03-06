@@ -157,6 +157,147 @@ def format_report_for_share(report):
     
     return "\n".join(lines)
 
+def fetch_market_hot_news(limit=8):
+    """Fetch market hot news from East Money with real links"""
+    try:
+        # East Money 7x24快讯 API
+        url = "https://newsapi.eastmoney.com/kuaixun/v1/getlist_102_ajaxResult_50_1_.html"
+        req = urllib.request.Request(
+            url,
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Referer': 'https://stock.eastmoney.com/'
+            }
+        )
+        
+        with urllib.request.urlopen(req, context=ctx, timeout=10) as response:
+            content = response.read().decode('utf-8')
+            # Parse JSONP: var ajaxResult={...}
+            if 'var ajaxResult=' in content:
+                json_str = content.split('var ajaxResult=')[1].rstrip(';')
+                data = json.loads(json_str)
+                
+                news_list = []
+                for item in data.get('LivesList', [])[:limit]:
+                    # Use the real URL from the API
+                    url = item.get('url_w', '') or item.get('url_m', '') or item.get('url_unique', '')
+                    news_list.append({
+                        "title": item.get('title', ''),
+                        "time": item.get('showtime', ''),
+                        "source": item.get('source', '东方财富'),
+                        "summary": item.get('digest', '')[:100] if item.get('digest') else '',
+                        "url": url
+                    })
+                return news_list
+    except Exception as e:
+        print(f"News fetch error: {e}", file=sys.stderr)
+    
+    # Fallback - return empty instead of demo data
+    return []
+
+def fetch_hot_sectors(limit=10):
+    """Fetch hot sectors from East Money"""
+    try:
+        url = "https://data.eastmoney.com/bkzj/hy.html"
+        req = urllib.request.Request(
+            url,
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Referer': 'https://data.eastmoney.com/'
+            }
+        )
+        
+        with urllib.request.urlopen(req, context=ctx, timeout=10) as response:
+            html = response.read().decode('utf-8')
+            
+            # Extract sector data from HTML
+            import re
+            sectors = []
+            
+            # Try to find sector data in script tags
+            pattern = r'var[^=]*=\{?"[^"]*":\s*\[(.*?)\]\}'
+            matches = re.findall(pattern, html, re.DOTALL)
+            
+            # Fallback: use a simpler approach with common sector data
+            # Since the page structure is complex, return mock data for demo
+            # In production, you'd parse the actual API response
+            url2 = "https://push2.eastmoney.com/api/qt/clist/get"
+            params = {
+                "pn": 1,
+                "pz": limit,
+                "po": 1,
+                "np": 1,
+                "ut": "bd1d9ddb04089700cf9c27f6f7426281",
+                "fltt": 2,
+                "invt": 2,
+                "fid": "f3",
+                "fs": "m:90+t:2",
+                "fields": "f1,f2,f3,f4,f12,f13,f14"
+            }
+            query_string = urllib.parse.urlencode(params)
+            url2 = f"{url2}?{query_string}"
+            
+            req2 = urllib.request.Request(url2, headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            })
+            
+            with urllib.request.urlopen(req2, context=ctx, timeout=10) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                diff = data.get('data', {}).get('diff', [])
+                
+                for item in diff:
+                    sectors.append({
+                        "name": item.get('f14', ''),
+                        "change": item.get('f3', 0),
+                        "code": item.get('f12', '')
+                    })
+                return sectors[:limit]
+    except Exception as e:
+        print(f"Error fetching sectors: {e}", file=sys.stderr)
+        return []
+
+def generate_advice(funds):
+    """Generate investment advice based on fund performance"""
+    if not funds:
+        return {"advice": "暂无基金数据", "risk_level": "未知"}
+    
+    up_count = sum(1 for f in funds if f.get('trend') == 'up')
+    down_count = sum(1 for f in funds if f.get('trend') == 'down')
+    total = len(funds)
+    
+    avg_change = sum(f.get('daily_change', 0) for f in funds) / total if total > 0 else 0
+    
+    # Determine advice
+    if up_count > down_count and avg_change > 1:
+        advice = "市场表现良好，持有基金多数上涨，建议继续持有"
+        risk_level = "稳健"
+        action = "持有"
+    elif down_count > up_count and avg_change < -1:
+        advice = "市场波动较大，部分基金下跌明显，建议关注风险"
+        risk_level = "谨慎"
+        action = "观望"
+    elif avg_change > 0.5:
+        advice = "市场温和上涨，可适当关注但避免追高"
+        risk_level = "适中"
+        action = "持有"
+    elif avg_change < -0.5:
+        advice = "市场有所回调，可能是低吸机会"
+        risk_level = "适中"
+        action = "关注"
+    else:
+        advice = "市场整体平稳，建议保持现有配置"
+        risk_level = "稳健"
+        action = "持有"
+    
+    return {
+        "advice": advice,
+        "risk_level": risk_level,
+        "action": action,
+        "up_count": up_count,
+        "down_count": down_count,
+        "avg_change": round(avg_change, 2)
+    }
+
 def main():
     if len(sys.argv) < 2:
         print("""Usage: fund-daily <command> [options]
@@ -196,6 +337,30 @@ Examples:
         report = generate_daily_report(codes)
         result = format_report_for_share(report)
         print(result)
+        
+    elif command == "news" and len(sys.argv) > 2:
+        limit = int(sys.argv[2])
+        news = fetch_market_hot_news(limit)
+        print(json.dumps(news, ensure_ascii=False, indent=2))
+        
+    elif command == "news":
+        news = fetch_market_hot_news(8)
+        print(json.dumps(news, ensure_ascii=False, indent=2))
+        
+    elif command == "sectors" and len(sys.argv) > 2:
+        limit = int(sys.argv[2])
+        sectors = fetch_hot_sectors(limit)
+        print(json.dumps(sectors, ensure_ascii=False, indent=2))
+        
+    elif command == "sectors":
+        sectors = fetch_hot_sectors(10)
+        print(json.dumps(sectors, ensure_ascii=False, indent=2))
+        
+    elif command == "advice":
+        # For CLI, use default funds
+        funds_data = generate_daily_report(['000001', '110022', '161725'])
+        advice = generate_advice(funds_data.get('funds', []))
+        print(json.dumps(advice, ensure_ascii=False, indent=2))
         
     else:
         print("Error: Invalid command or missing arguments", file=sys.stderr)
