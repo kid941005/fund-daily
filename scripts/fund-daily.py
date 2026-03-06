@@ -298,6 +298,125 @@ def generate_advice(funds):
         "avg_change": round(avg_change, 2)
     }
 
+def get_fund_detail_info(code):
+    """Get detailed fund information including history and risk metrics"""
+    try:
+        # Fetch basic data
+        fund_data = fetch_fund_data_eastmoney(code)
+        
+        # Fetch detailed data from East Money
+        url = f"https://fund.eastmoney.com/pingzhongdata/{code}.js"
+        req = urllib.request.Request(
+            url,
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        )
+        
+        with urllib.request.urlopen(req, context=ctx, timeout=10) as response:
+            content = response.read().decode('utf-8')
+            
+            # Extract metrics
+            import re
+            
+            #收益率
+            syl_1n = re.search(r'syl_1n="([^"]+)"', content)
+            syl_6y = re.search(r'syl_6y="([^"]+)"', content)
+            syl_3y = re.search(r'syl_3y="([^"]+)"', content)
+            syl_1y = re.search(r'syl_1y="([^"]+)"', content)
+            syl_1z = re.search(r'syl_1z="([^"]+)"', content)  # 近1周
+            syl_2z = re.search(r'syl_2z="([^"]+)"', content)  # 近2周
+            syl_5z = re.search(r'syl_5z="([^"]+)"', content)  # 近5周
+            syl_10z = re.search(r'syl_10z="([^"]+)"', content)  # 近10周
+            
+            # 净值数据
+            dwjz = re.search(r'dwjz="([^"]+)"', content)  # 单位净值
+            ljjz = re.search(r'ljjz="([^"]+)"', content)  # 累计净值
+            fund_sourceRate = re.search(r'fund_sourceRate="([^"]+)"', content)  # 原费率
+            fund_Rate = re.search(r'fund_Rate="([^"]+)"', content)  # 现费率
+            
+        # 构建返回数据
+        result = {
+            "fund_code": code,
+            "fund_name": fund_data.get("name", ""),
+            "nav": fund_data.get("dwjz"),  # 单位净值
+            "acc_nav": ljjz.group(1) if ljjz else None,  # 累计净值
+            "estimate_nav": fund_data.get("gsz"),  # 估算净值
+            "daily_change": fund_data.get("gszzl"),  # 今日涨跌
+            "date": fund_data.get("jzrq"),  # 净值日期
+            
+            # 收益率
+            "return_1w": syl_1z.group(1) if syl_1z else None,  # 近1周
+            "return_2w": syl_2z.group(1) if syl_2z else None,  # 近2周
+            "return_1m": syl_1y.group(1) if syl_1y else None,  # 近1月
+            "return_3m": syl_3y.group(1) if syl_3y else None,  # 近3月
+            "return_6m": syl_6y.group(1) if syl_6y else None,  # 近6月
+            "return_1y": syl_1n.group(1) if syl_1n else None,  # 近1年
+            "return_10z": syl_10z.group(1) if syl_10z else None,  # 近10周
+            
+            # 费率
+            "fee_rate": fund_Rate.group(1) if fund_Rate else None,
+            "source_rate": fund_sourceRate.group(1) if fund_sourceRate else None,
+            
+            # 计算风险指标
+            "risk_metrics": calculate_risk_metrics(
+                float(syl_1y.group(1)) if syl_1y and syl_1y.group(1) else 0,
+                float(syl_3y.group(1)) if syl_3y and syl_3y.group(1) else 0,
+                float(syl_1n.group(1)) if syl_1n and syl_1n.group(1) else 0
+            )
+        }
+        
+        return result
+        
+    except Exception as e:
+        return {"error": str(e), "fund_code": code}
+
+def calculate_risk_metrics(month_1, month_3, year_1):
+    """Calculate risk metrics based on returns"""
+    # 简化的风险指标计算
+    # 实际应该基于历史净值数据计算标准差和最大回撤
+    
+    # 风险等级评估
+    if year_1 > 30:
+        risk_level = "高风险"
+        risk_score = 8
+    elif year_1 > 15:
+        risk_level = "中高风险"
+        risk_score = 6
+    elif year_1 > 5:
+        risk_level = "中等风险"
+        risk_score = 4
+    else:
+        risk_level = "中低风险"
+        risk_score = 2
+    
+    # 波动性评估（基于不同周期的收益率差异）
+    volatility = abs(month_3 - month_1) / 3 if month_1 else 0
+    
+    # 收益风险比（简化版）
+    if volatility > 0:
+        return_ratio = year_1 / volatility if volatility > 0 else 0
+    else:
+        return_ratio = 0
+    
+    return {
+        "risk_level": risk_level,
+        "risk_score": risk_score,
+        "volatility": round(volatility, 2),
+        "return_ratio": round(return_ratio, 2),
+        "suggestion": get_risk_suggestion(risk_level, year_1)
+    }
+
+def get_risk_suggestion(risk_level, year_return):
+    """Get investment suggestion based on risk level"""
+    suggestions = {
+        "高风险": "适合风险承受能力强的投资者，建议占比不超过30%",
+        "中高风险": "适合追求高收益的投资者，建议占比不超过50%",
+        "中等风险": "适合稳健型投资者，建议占比不超过70%",
+        "中低风险": "适合保守型投资者，可作为主力持仓"
+    }
+    return suggestions.get(risk_level, "请根据自身风险承受能力配置")
+
 def main():
     if len(sys.argv) < 2:
         print("""Usage: fund-daily <command> [options]
@@ -361,6 +480,11 @@ Examples:
         funds_data = generate_daily_report(['000001', '110022', '161725'])
         advice = generate_advice(funds_data.get('funds', []))
         print(json.dumps(advice, ensure_ascii=False, indent=2))
+        
+    elif command == "detail" and len(sys.argv) > 2:
+        code = sys.argv[2]
+        detail = get_fund_detail_info(code)
+        print(json.dumps(detail, ensure_ascii=False, indent=2))
         
     else:
         print("Error: Invalid command or missing arguments", file=sys.stderr)

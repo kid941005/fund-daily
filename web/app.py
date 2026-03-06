@@ -24,7 +24,11 @@ app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
 # Secret key for sessions
-app.secret_key = secrets.token_hex(32)
+app.secret_key = "fund-daily-secret-key-2026"
+
+# Configure session
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Import fund functions - dynamic import to handle hyphenated filename
 import importlib.util
@@ -45,6 +49,7 @@ format_report_for_share = fund_module.format_report_for_share
 fetch_market_hot_news = fund_module.fetch_market_hot_news
 fetch_hot_sectors = fund_module.fetch_hot_sectors
 generate_advice = fund_module.generate_advice
+get_fund_detail_info = fund_module.get_fund_detail_info
 
 # Config
 DATA_DIR = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/data")
@@ -409,6 +414,164 @@ def get_advice():
         "success": True,
         "advice": advice
     })
+
+@app.route('/api/fund-detail/<code>')
+def get_fund_detail_full(code):
+    """Get detailed fund information including risk metrics"""
+    detail = get_fund_detail_info(code)
+    return jsonify({
+        "success": True,
+        "detail": detail
+    })
+
+@app.route('/api/portfolio-analysis')
+def get_portfolio_analysis():
+    """Get portfolio analysis including backtest and risk metrics"""
+    user_id = session.get('user_id')
+    
+    if user_id:
+        holdings = get_user_holdings(user_id)
+        holdings_dict = {h['code']: h for h in holdings}
+        codes = [h['code'] for h in holdings if h.get('amount', 0) > 0]
+        if not codes:
+            return jsonify({
+                "success": True,
+                "analysis": {
+                    "message": "暂无持仓，无法分析"
+                }
+            })
+    else:
+        holdings_dict = {}
+        codes = ["000001", "110022", "161725"]
+    
+    # 获取每只基金的详细信息
+    funds_detail = []
+    total_amount = 0
+    
+    for code in codes:
+        detail = get_fund_detail_info(code)
+        h = holdings_dict.get(code, {})
+        amount = h.get('amount', 0)
+        
+        if detail.get('fund_code'):
+            detail['amount'] = amount
+            detail['buy_nav'] = h.get('buyNav')
+            detail['buy_date'] = h.get('buyDate')
+            
+            # 计算持有收益
+            if amount > 0 and h.get('buyNav') and detail.get('nav'):
+                try:
+                    current_nav = float(detail['nav'])
+                    buy_nav = float(h['buyNav'])
+                    profit_pct = (current_nav - buy_nav) / buy_nav * 100
+                    detail['holding_profit'] = round(profit_pct, 2)
+                    detail['holding_profit_amount'] = round(amount * profit_pct / 100, 2)
+                except:
+                    pass
+            
+            funds_detail.append(detail)
+            total_amount += amount
+    
+    # 计算组合风险指标
+    portfolio_analysis = analyze_portfolio_risk(funds_detail, total_amount)
+    
+    # 资产配置建议
+    allocation = suggest_allocation(funds_detail)
+    
+    return jsonify({
+        "success": True,
+        "analysis": {
+            "funds": funds_detail,
+            "total_amount": total_amount,
+            "risk_metrics": portfolio_analysis,
+            "allocation": allocation
+        }
+    })
+
+def analyze_portfolio_risk(funds, total_amount):
+    """Analyze portfolio risk metrics"""
+    if not funds or total_amount == 0:
+        return {"message": "暂无持仓数据"}
+    
+    # 计算持仓权重
+    for fund in funds:
+        fund['weight'] = round(fund['amount'] / total_amount * 100, 2) if fund.get('amount') else 0
+    
+    # 计算组合加权风险
+    # 计算组合加权风险
+    total_risk_score = sum(f.get('risk_metrics', {}).get('risk_score', 4) * f.get('weight', 0) for f in funds) / 100
+    
+    # 风险等级
+    if total_risk_score > 6:
+        risk_level = "高风险"
+    elif total_risk_score > 4:
+        risk_level = "中高风险"
+    elif total_risk_score > 2:
+        risk_level = "中等风险"
+    else:
+        risk_level = "中低风险"
+    
+    # 收益分析
+    try:
+        avg_return_1y = sum(float(f.get('return_1y', 0) or 0) * f.get('weight', 0) for f in funds) / 100
+    except:
+        avg_return_1y = 0
+    
+    return {
+        "risk_level": risk_level,
+        "risk_score": round(total_risk_score, 1),
+        "avg_return_1y": round(avg_return_1y, 2),
+        "fund_count": len(funds),
+        "diversification": "良好" if len(funds) >= 5 else "一般" if len(funds) >= 3 else "需分散"
+    }
+
+def suggest_allocation(funds):
+    """Suggest asset allocation based on risk profile"""
+    if not funds:
+        return {"message": "暂无持仓数据"}
+    
+    # 按风险等级分类
+    high_risk = []
+    medium_risk = []
+    low_risk = []
+    
+    for fund in funds:
+        risk = fund.get('risk_metrics', {}).get('risk_level', '中等风险')
+        if '高' in risk:
+            high_risk.append(fund)
+        elif '低' in risk:
+            low_risk.append(fund)
+        else:
+            medium_risk.append(fund)
+    
+    # 建议配置
+    high_pct = len(high_risk) / len(funds) * 100 if funds else 0
+    medium_pct = len(medium_risk) / len(funds) * 100 if funds else 0
+    low_pct = len(low_risk) / len(funds) * 100 if funds else 0
+    
+    # 建议
+    suggestions = []
+    if high_pct > 50:
+        suggestions.append("⚠️ 高风险基金占比过高，建议降低至30%以下")
+    if low_pct < 20:
+        suggestions.append("💡 建议增加低风险基金配置，提高组合稳定性")
+    if len(funds) < 3:
+        suggestions.append("📊 建议持有3-5只基金分散风险")
+    
+    if not suggestions:
+        suggestions.append("✅ 当前配置较为合理")
+    
+    return {
+        "high_risk_pct": round(high_pct, 1),
+        "medium_risk_pct": round(medium_pct, 1),
+        "low_risk_pct": round(low_pct, 1),
+        "suggestions": suggestions,
+        "ideal_allocation": {
+            "high_risk": "20-30%",
+            "medium_risk": "40-50%",
+            "low_risk": "30-40%"
+        }
+    }
 
 def calculate_summary(funds):
     """Calculate market summary"""

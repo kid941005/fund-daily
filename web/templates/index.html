@@ -303,6 +303,148 @@
             line-height: 1.5;
         }
         
+        /* Analysis Page Styles */
+        .analysis-section {
+            margin-bottom: 20px;
+        }
+        
+        .analysis-section h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .risk-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .risk-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .risk-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .risk-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .allocation-bars {
+            margin-bottom: 15px;
+        }
+        
+        .allocation-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .bar-label {
+            width: 70px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .bar-track {
+            flex: 1;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        
+        .bar-fill.high { background: #ff6b6b; }
+        .bar-fill.medium { background: #ffd43b; }
+        .bar-fill.low { background: #51cf66; }
+        
+        .bar-value {
+            width: 40px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .suggestions {
+            margin-top: 15px;
+        }
+        
+        .suggestion-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .fund-detail-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .fund-detail-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .fund-detail-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .fund-detail-header .fund-name {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .fund-detail-header .fund-weight {
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .fund-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        
+        .fund-metrics .metric {
+            text-align: center;
+        }
+        
+        .fund-metrics .metric-label {
+            font-size: 11px;
+            color: #999;
+            display: block;
+        }
+        
+        .fund-metrics .metric-value {
+            font-size: 13px;
+            font-weight: bold;
+        }
+        
+        .fund-metrics .metric-value.up { color: #e74c3c; }
+        .fund-metrics .metric-value.down { color: #27ae60; }
+        
         .news-item { padding: 15px 0; border-bottom: 1px solid #eee; cursor: pointer; }
         .news-item:hover { background: #f8f9fa; }
         .news-item:last-child { border-bottom: none; }
@@ -376,6 +518,7 @@
         <div class="tab active" data-tab="hot" onclick="switchTab('hot')">🔥 热门板块</div>
         <div class="tab" data-tab="holdings" onclick="switchTab('holdings')">💼 持仓</div>
         <div class="tab" data-tab="advice" onclick="switchTab('advice')">💡 建议</div>
+        <div class="tab" data-tab="analysis" onclick="switchTab('analysis')">📊 分析</div>
     </div>
     
     <div class="container">
@@ -422,6 +565,14 @@
             <div class="card">
                 <div class="section-title-main">今日操作建议</div>
                 <div id="adviceContent"><div class="loading">加载中...</div></div>
+            </div>
+        </div>
+        
+        <!-- Tab 4: 分析 -->
+        <div class="tab-content" id="tab-analysis">
+            <div class="card">
+                <div class="section-title-main">📈 组合分析</div>
+                <div id="analysisContent"><div class="loading">加载中...</div></div>
             </div>
         </div>
     </div>
@@ -682,6 +833,8 @@
                 loadFundsAndHoldings();
             } else if (tabName === 'advice') {
                 loadAdviceData();
+            } else if (tabName === 'analysis') {
+                loadAnalysisData();
             }
         }
         
@@ -983,6 +1136,128 @@
             } catch (e) {
                 document.getElementById('adviceContent').innerHTML = '<div class="error">加载失败</div>';
             }
+        }
+        
+        // 加载组合分析数据
+        async function loadAnalysisData() {
+            try {
+                const response = await fetch('/api/portfolio-analysis');
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderAnalysis(data.analysis);
+                } else {
+                    document.getElementById('analysisContent').innerHTML = '<div class="error">加载失败</div>';
+                }
+            } catch (e) {
+                console.error('Analysis load error:', e);
+                document.getElementById('analysisContent').innerHTML = '<div class="error">加载失败</div>';
+            }
+        }
+        
+        // 渲染分析内容
+        function renderAnalysis(analysis) {
+            if (!analysis || !analysis.funds || analysis.funds.length === 0) {
+                document.getElementById('analysisContent').innerHTML = `
+                    <div class="advice-card">
+                        <div class="advice-emoji">📊</div>
+                        <div class="advice-title">暂无持仓分析</div>
+                        <div class="advice-desc">请先在"持仓"页面添加持仓金额，以便获取组合分析</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const { funds, total_amount, risk_metrics, allocation } = analysis;
+            
+            // 风险指标卡片
+            const riskHtml = `
+                <div class="analysis-section">
+                    <h3>🎯 组合风险指标</h3>
+                    <div class="risk-cards">
+                        <div class="risk-card">
+                            <div class="risk-label">风险等级</div>
+                            <div class="risk-value">${risk_metrics.risk_level}</div>
+                        </div>
+                        <div class="risk-card">
+                            <div class="risk-label">风险评分</div>
+                            <div class="risk-value">${risk_metrics.risk_score}/10</div>
+                        </div>
+                        <div class="risk-card">
+                            <div class="risk-label">平均年化收益</div>
+                            <div class="risk-value">${risk_metrics.avg_return_1y || 0}%</div>
+                        </div>
+                        <div class="risk-card">
+                            <div class="risk-label">分散度</div>
+                            <div class="risk-value">${risk_metrics.diversification}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 资产配置建议
+            const allocationHtml = `
+                <div class="analysis-section">
+                    <h3>💰 资产配置建议</h3>
+                    <div class="allocation-bars">
+                        <div class="allocation-bar">
+                            <span class="bar-label">高风险</span>
+                            <div class="bar-track"><div class="bar-fill high" style="width:${allocation.high_risk_pct}%"></div></div>
+                            <span class="bar-value">${allocation.high_risk_pct}%</span>
+                        </div>
+                        <div class="allocation-bar">
+                            <span class="bar-label">中等风险</span>
+                            <div class="bar-track"><div class="bar-fill medium" style="width:${allocation.medium_risk_pct}%"></div></div>
+                            <span class="bar-value">${allocation.medium_risk_pct}%</span>
+                        </div>
+                        <div class="allocation-bar">
+                            <span class="bar-label">低风险</span>
+                            <div class="bar-track"><div class="bar-fill low" style="width:${allocation.low_risk_pct}%"></div></div>
+                            <span class="bar-value">${allocation.low_risk_pct}%</span>
+                        </div>
+                    </div>
+                    <div class="suggestions">
+                        ${allocation.suggestions.map(s => `<div class="suggestion-item">${s}</div>`).join('')}
+                    </div>
+                </div>
+            `;
+            
+            // 基金详情列表
+            const fundsHtml = `
+                <div class="analysis-section">
+                    <h3>📋 基金详情</h3>
+                    <div class="fund-detail-list">
+                        ${funds.map(f => `
+                            <div class="fund-detail-item">
+                                <div class="fund-detail-header">
+                                    <div class="fund-name">${f.fund_name}</div>
+                                    <div class="fund-weight">占比: ${f.weight}%</div>
+                                </div>
+                                <div class="fund-metrics">
+                                    <div class="metric">
+                                        <span class="metric-label">风险等级</span>
+                                        <span class="metric-value">${f.risk_metrics?.risk_level || '-'}</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">近1月</span>
+                                        <span class="metric-value ${parseFloat(f.return_1m) > 0 ? 'up' : 'down'}">${f.return_1m || '-'}%</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">近3月</span>
+                                        <span class="metric-value ${parseFloat(f.return_3m) > 0 ? 'up' : 'down'}">${f.return_3m || '-'}%</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">近1年</span>
+                                        <span class="metric-value ${parseFloat(f.return_1y) > 0 ? 'up' : 'down'}">${f.return_1y || '-'}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('analysisContent').innerHTML = riskHtml + allocationHtml + fundsHtml;
         }
         
         function renderAdvice(funds) {
