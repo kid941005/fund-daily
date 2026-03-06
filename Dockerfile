@@ -2,26 +2,20 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    curl ca-certificates && rm -rf /var/lib/apt/lists/*
 
-# Copy skill files
-COPY scripts/fund-daily.py /app/fund-daily.py
-COPY config/ /app/config/
+COPY web/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Make executable
-RUN chmod +x /app/fund-daily.py
+COPY web/ ./web/
+COPY scripts/fund-daily.py ./scripts/
 
-# Create data directory
 RUN mkdir -p /app/data
 
-# Set environment
 ENV PYTHONUNBUFFERED=1
-ENV FUND_DATA_PATH=/app/data
+ENV FLASK_APP=web/app.py
 
-# Default command
-ENTRYPOINT ["python3", "/app/fund-daily.py"]
-CMD ["--help"]
+EXPOSE 5000
+
+CMD ["python3", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
