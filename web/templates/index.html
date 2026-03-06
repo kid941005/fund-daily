@@ -18,10 +18,36 @@
             color: white;
             padding: 15px;
             text-align: center;
+            position: relative;
         }
         
         .header h1 { font-size: 20px; margin-bottom: 5px; }
         .header .date { opacity: 0.9; font-size: 12px; }
+        
+        .user-bar {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 12px;
+        }
+        
+        .user-bar .username {
+            margin-right: 10px;
+        }
+        
+        .user-bar button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor:-size: 12 pointer;
+            fontpx;
+        }
+        
+        .user-bar button:hover {
+            background: rgba(255,255,255,0.3);
+        }
         
         @media (min-width: 768px) {
             .header { padding: 20px; }
@@ -266,6 +292,9 @@
     <div class="header">
         <h1>📊 Fund Daily</h1>
         <div class="date" id="currentDate">加载中...</div>
+        <div class="user-bar" id="userBar">
+            <button onclick="showLoginModal()">登录/注册</button>
+        </div>
     </div>
     
     <div class="tabs">
@@ -341,6 +370,29 @@
         </div>
     </div>
     
+    <!-- Login/Register Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-title" id="loginModalTitle">登录</div>
+            <div class="input-group">
+                <label>用户名</label>
+                <input type="text" id="loginUsername" placeholder="输入用户名" maxlength="20">
+            </div>
+            <div class="input-group">
+                <label>密码</label>
+                <input type="password" id="loginPassword" placeholder="输入密码" minlength="6">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="hideLoginModal()">取消</button>
+                <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">登录</button>
+                <button class="btn btn-success" id="registerBtn" onclick="doRegister()">注册</button>
+            </div>
+            <div style="text-align:center;margin-top:15px;">
+                <a href="#" onclick="toggleLoginMode()" id="toggleLoginMode" style="color:#667eea;font-size:14px">没有账号？点击注册</a>
+            </div>
+        </div>
+    </div>
+    
     <!-- News Detail Modal -->
     <div class="modal" id="newsModal">
         <div class="modal-content">
@@ -353,9 +405,185 @@
     </div>
 
     <script>
-        let holdingsData = JSON.parse(localStorage.getItem('fundHoldings') || '[]');
+        let holdingsData = [];
         let fundsCache = [];
         let newsData = [];
+        let currentUser = null;
+        let isLoginMode = true;
+        
+        // Check login status on load
+        checkLoginStatus();
+        
+        async function checkLoginStatus() {
+            try {
+                const response = await fetch('/api/check-login');
+                const data = await response.json();
+                if (data.logged_in) {
+                    currentUser = data.username;
+                    updateUserBar(data.username);
+                    loadUserHoldings();
+                } else {
+                    // Use localStorage for non-logged in users
+                    holdingsData = JSON.parse(localStorage.getItem('fundHoldings') || '[]');
+                }
+            } catch (e) {
+                holdingsData = JSON.parse(localStorage.getItem('fundHoldings') || '[]');
+            }
+        }
+        
+        function updateUserBar(username) {
+            document.getElementById('userBar').innerHTML = `
+                <span class="username">${username}</span>
+                <button onclick="doLogout()">退出</button>
+            `;
+        }
+        
+        function showLoginModal() {
+            isLoginMode = true;
+            updateLoginModal();
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+        
+        function hideLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+        
+        function toggleLoginMode() {
+            isLoginMode = !isLoginMode;
+            updateLoginModal();
+        }
+        
+        function updateLoginModal() {
+            document.getElementById('loginModalTitle').textContent = isLoginMode ? '登录' : '注册';
+            document.getElementById('loginBtn').style.display = isLoginMode ? 'inline-block' : 'none';
+            document.getElementById('registerBtn').style.display = isLoginMode ? 'none' : 'inline-block';
+            document.getElementById('toggleLoginMode').textContent = isLoginMode ? '没有账号？点击注册' : '已有账号？点击登录';
+        }
+        
+        async function doLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                alert('请输入用户名和密码');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.username;
+                    updateUserBar(data.username);
+                    hideLoginModal();
+                    loadUserHoldings();
+                    switchTab('holdings');
+                } else {
+                    alert(data.error);
+                }
+            } catch (e) {
+                alert('登录失败');
+            }
+        }
+        
+        async function doRegister() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                alert('请输入用户名和密码');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.username;
+                    updateUserBar(data.username);
+                    holdingsData = [];
+                    hideLoginModal();
+                    switchTab('holdings');
+                    alert('注册成功！请添加您的持仓');
+                } else {
+                    alert(data.error);
+                }
+            } catch (e) {
+                alert('注册失败');
+            }
+        }
+        
+        async function doLogout() {
+            try {
+                await fetch('/api/logout', {method: 'POST'});
+                currentUser = null;
+                holdingsData = JSON.parse(localStorage.getItem('fundHoldings') || '[]');
+                document.getElementById('userBar').innerHTML = '<button onclick="showLoginModal()">登录/注册</button>';
+                loadFunds();
+                switchTab('hot');
+            } catch (e) {
+                alert('退出失败');
+            }
+        }
+        
+        async function loadUserHoldings() {
+            try {
+                const response = await fetch('/api/holdings');
+                const data = await response.json();
+                if (data.success) {
+                    holdingsData = data.holdings || [];
+                }
+            } catch (e) {
+                console.error('Failed to load holdings:', e);
+            }
+        }
+        
+        async function saveHoldingsToServer(code, amount) {
+            if (!currentUser) {
+                // Save to localStorage for non-logged in users
+                localStorage.setItem('fundHoldings', JSON.stringify(holdingsData));
+                return;
+            }
+            
+            try {
+                await fetch('/api/holdings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({code, amount})
+                });
+            } catch (e) {
+                console.error('Failed to save to server:', e);
+            }
+        }
+        
+        async function removeHoldingsFromServer(code) {
+            if (!currentUser) {
+                localStorage.setItem('fundHoldings', JSON.stringify(holdingsData));
+                return;
+            }
+            
+            try {
+                await fetch('/api/holdings', {
+                    method: 'DELETE',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({code})
+                });
+            } catch (e) {
+                console.error('Failed to remove from server:', e);
+            }
+        }
         
         document.getElementById('currentDate').textContent = new Date().toLocaleDateString('zh-CN', {
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -546,15 +774,17 @@
         }
         
         function updateAmount(index, value) {
+            const code = holdingsData[index].code;
             holdingsData[index].amount = parseFloat(value) || 0;
-            localStorage.setItem('fundHoldings', JSON.stringify(holdingsData));
+            saveHoldingsToServer(code, holdingsData[index].amount);
             loadFundsAndHoldings();
         }
         
         function removeHolding(index) {
             if (confirm('确定删除该持仓吗？')) {
+                const code = holdingsData[index].code;
                 holdingsData.splice(index, 1);
-                localStorage.setItem('fundHoldings', JSON.stringify(holdingsData));
+                removeHoldingsFromServer(code);
                 loadFundsAndHoldings();
             }
         }
@@ -595,7 +825,7 @@
                     holdingsData.push({ code, name: data.fund_name, amount });
                 }
                 
-                localStorage.setItem('fundHoldings', JSON.stringify(holdingsData));
+                saveHoldingsToServer(code, amount);
                 hideAddModal();
                 loadFundsAndHoldings();
             } catch (e) {
