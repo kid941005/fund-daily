@@ -192,6 +192,47 @@
         .holding-change.down { background: #e8f5e9; color: #2e7d32; }
         .holding-change.flat { background: #f5f5f5; color: #666; }
         
+        .holding-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .holding-stats .stat-item {
+            text-align: center;
+        }
+        
+        .holding-stats .stat-label {
+            font-size: 11px;
+            color: #999;
+            display: block;
+        }
+        
+        .holding-stats .stat-value {
+            font-size: 14px;
+            font-weight: bold;
+            display: block;
+            margin-top: 3px;
+        }
+        
+        .holding-stats .stat-value.up { color: #e74c3c; }
+        .holding-stats .stat-value.down { color: #27ae60; }
+        
+        .holding-nav-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #999;
+            margin: 8px 0;
+            padding: 8px;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+        
         .delete-btn {
             background: #ff6b6b;
             color: white;
@@ -211,6 +252,27 @@
         
         .advice-fund-item { padding: 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px; }
         
+        .sector-group { margin-bottom: 20px; }
+        .sector-group:last-child { margin-bottom: 0; }
+        
+        .sector-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .sector-name { font-weight: bold; font-size: 15px; }
+        
+        .sector-change { font-size: 14px; font-weight: bold; }
+        .sector-change.up { color: #ff6b6b; }
+        .sector-change.down { color: #51cf66; }
+        
+        .sector-funds { background: #f8f9fa; border-radius: 0 0 8px 8px; padding: 5px; }
+        
         .advice-fund-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .advice-fund-name { font-weight: bold; }
         
@@ -227,6 +289,19 @@
         .advice-tag.watch { background: #fff3e0; color: #ef6c00; }
         
         .advice-fund-change { font-size: 13px; color: #666; }
+        
+        .advice-fund-desc { font-size: 12px; color: #888; margin-top: 5px; font-style: italic; }
+        
+        .risk-warning {
+            margin-top: 15px;
+            padding: 12px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #856404;
+            line-height: 1.5;
+        }
         
         .news-item { padding: 15px 0; border-bottom: 1px solid #eee; cursor: pointer; }
         .news-item:hover { background: #f8f9fa; }
@@ -716,7 +791,9 @@
                 holdingsData = funds.map(f => ({
                     code: f.fund_code,
                     name: f.fund_name,
-                    amount: 0
+                    amount: 0,
+                    buyDate: null,
+                    buyNav: null
                 }));
                 localStorage.setItem('fundHoldings', JSON.stringify(holdingsData));
             }
@@ -730,6 +807,27 @@
                 const change = parseFloat(fund.daily_change) || 0;
                 const changeStr = (change > 0 ? '+' : '') + change.toFixed(2) + '%';
                 const trend = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
+                const nav = fund.nav || '-';
+                const estimateNav = fund.estimate_nav || '-';
+                const navDate = fund.date || '-';
+                
+                // 计算持有收益（如果有买入净值）
+                let holdingProfit = '-';
+                let holdingProfitClass = '';
+                if (h.buyNav && h.buyNav > 0 && nav && nav !== '-') {
+                    const profit = ((parseFloat(nav) - h.buyNav) / h.buyNav * 100);
+                    holdingProfit = (profit > 0 ? '+' : '') + profit.toFixed(2) + '%';
+                    holdingProfitClass = profit >= 0 ? 'up' : 'down';
+                }
+                
+                // 计算持有天数
+                let holdingDays = '-';
+                if (h.buyDate) {
+                    const buyTime = new Date(h.buyDate);
+                    const now = new Date();
+                    const days = Math.floor((now - buyTime) / (1000 * 60 * 60 * 24));
+                    holdingDays = days + '天';
+                }
                 
                 // 如果基金存在，显示基金名称；不存在则显示代码
                 const displayName = fund.fund_name || h.name || h.code;
@@ -749,12 +847,34 @@
                             </div>
                             <button class="delete-btn" onclick="removeHolding(${index})">删除</button>
                         </div>
-                        <div class="holding-change ${trend}">今日涨跌: ${changeStr}</div>
+                        <div class="holding-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">持仓金额</span>
+                                <span class="stat-value">${h.amount > 0 ? h.amount.toLocaleString() : '0'}元</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">持仓收益</span>
+                                <span class="stat-value ${holdingProfitClass}">${holdingProfit}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">今日涨跌</span>
+                                <span class="stat-value ${trend}">${changeStr}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">持有天数</span>
+                                <span class="stat-value">${holdingDays}</span>
+                            </div>
+                        </div>
+                        <div class="holding-nav-info">
+                            <span>净值: ${nav}</span>
+                            <span>估算: ${estimateNav}</span>
+                            <span>日期: ${navDate}</span>
+                        </div>
                         <div class="holding-amount-row">
-                            <label>持仓金额:</label>
+                            <label>修改持仓:</label>
                             <input type="number" value="${h.amount}" 
                                    onchange="updateAmount(${index}, this.value)"
-                                   placeholder="输入金额">
+                                   placeholder="金额">
                             <span>元</span>
                         </div>
                     </div>
@@ -817,12 +937,26 @@
                     return;
                 }
                 
+                const today = new Date().toISOString().split('T')[0];
                 const existing = holdingsData.findIndex(h => h.code === code);
+                
                 if (existing >= 0) {
+                    // 如果之前金额为0，现在有金额，记录买入日期和净值
+                    if (holdingsData[existing].amount === 0 && amount > 0) {
+                        holdingsData[existing].buyDate = today;
+                        holdingsData[existing].buyNav = data.nav;
+                    }
                     holdingsData[existing].amount = amount;
                     holdingsData[existing].name = data.fund_name;
                 } else {
-                    holdingsData.push({ code, name: data.fund_name, amount });
+                    // 新增持仓
+                    holdingsData.push({ 
+                        code, 
+                        name: data.fund_name, 
+                        amount,
+                        buyDate: amount > 0 ? today : null,
+                        buyNav: amount > 0 ? data.nav : null
+                    });
                 }
                 
                 saveHoldingsToServer(code, amount);
@@ -865,65 +999,149 @@
                 return;
             }
             
-            let upCount = 0, downCount = 0, holdCount = 0;
+            // 板块分类函数
+            function getSector(name) {
+                name = name || '';
+                if (name.includes('消费') || name.includes('食品') || name.includes('白酒') || name.includes('家电') || name.includes('纺织')) return '消费';
+                if (name.includes('医药') || name.includes('医疗') || name.includes('中药') || name.includes('生物')) return '医药';
+                if (name.includes('科技') || name.includes('半导体') || name.includes('芯片') || name.includes('电子') || name.includes('计算机') || name.includes('软件')) return '科技';
+                if (name.includes('新能源') || name.includes('光伏') || name.includes('锂电') || name.includes('电力') || name.includes('电池')) return '新能源';
+                if (name.includes('金融') || name.includes('银行') || name.includes('证券') || name.includes('保险')) return '金融';
+                if (name.includes('地产') || name.includes('房地产') || name.includes('建筑') || name.includes('建材')) return '地产';
+                if (name.includes('军工') || name.includes('国防') || name.includes('航天') || name.includes('航空')) return '军工';
+                if (name.includes('传媒') || name.includes('游戏') || name.includes('影视') || name.includes('互联网')) return '传媒';
+                if (name.includes('环保') || name.includes('碳中和')) return '环保';
+                if (name.includes('工业') || name.includes('制造') || name.includes('机械') || name.includes('汽车')) return '制造';
+                if (name.includes('能源') || name.includes('煤炭') || name.includes('石油') || name.includes('化工')) return '能源';
+                if (name.includes('农业') || name.includes('畜牧') || name.includes('养殖') || name.includes('牧原')) return '农业';
+                if (name.includes('创业板') || name.includes('科创') || name.includes('人工智能')) return '科技';
+                if (name.includes('碳中和') || name.includes('资源')) return '新能源';
+                return '其他';
+            }
             
             const fundAdvices = holdingsWithAmount.map(h => {
                 const fund = funds.find(f => f.fund_code === h.code) || {};
                 const change = parseFloat(fund.daily_change) || 0;
+                const name = h.name || fund.fund_name || h.code;
+                const sector = getSector(name);
+                const amount = h.amount || 0;
                 
-                let advice, adviceClass, adviceEmoji;
+                // 基金建议：越跌越买，越涨越卖（反向操作）
+                // 结合板块趋势和历史波动，给出更稳健的建议
+                let advice, adviceClass, adviceEmoji, advicePercent, adviceDesc;
                 
-                if (change > 1) {
-                    advice = '建议买入';
-                    adviceClass = 'buy';
+                if (change > 3) {
+                    advice = '建议止盈';
+                    advicePercent = 30;
+                    adviceClass = 'sell';
                     adviceEmoji = '📈';
-                    upCount++;
-                } else if (change < -1) {
-                    advice = '建议卖出';
+                    adviceDesc = '当日大涨30%，可考虑分批止盈，落袋为安。';
+                } else if (change > 1.5) {
+                    advice = '可止盈10%';
+                    advicePercent = 10;
                     adviceClass = 'sell';
                     adviceEmoji = '📉';
-                    downCount++;
-                } else if (change > 0) {
+                    adviceDesc = '当日涨幅不错，若盈利可考虑部分止盈。';
+                } else if (change < -3) {
+                    advice = '建议加仓';
+                    advicePercent = 20;
+                    adviceClass = 'buy';
+                    adviceEmoji = '💰';
+                    adviceDesc = '当日大跌，此时加仓可降低持仓成本。';
+                } else if (change < -1.5) {
+                    advice = '可加仓10%';
+                    advicePercent = 10;
+                    adviceClass = 'buy';
+                    adviceEmoji = '💪';
+                    adviceDesc = '当日小幅下跌，是低吸的机会。';
+                } else {
                     advice = '继续持有';
+                    advicePercent = 0;
                     adviceClass = 'hold';
                     adviceEmoji = '✅';
-                    holdCount++;
-                } else {
-                    advice = '继续观望';
-                    adviceClass = 'watch';
-                    adviceEmoji = '👀';
-                    holdCount++;
+                    adviceDesc = '当日波动不大，继续持有待涨。';
                 }
                 
                 return {
-                    name: h.name || fund.fund_name || h.code,
+                    name: name,
                     code: h.code,
+                    amount: amount,
+                    sector: sector,
                     change: change,
                     advice: advice,
+                    advicePercent: advicePercent,
                     adviceClass: adviceClass,
                     adviceEmoji: adviceEmoji
                 };
             });
             
+            // 按持仓金额加权计算总涨跌
+            const totalAmount = fundAdvices.reduce((sum, f) => sum + f.amount, 0);
+            const weightedChange = fundAdvices.reduce((sum, f) => sum + (f.change * f.amount / totalAmount), 0);
+            
+            // 按板块分组
+            const sectorGroups = {};
+            fundAdvices.forEach(f => {
+                if (!sectorGroups[f.sector]) sectorGroups[f.sector] = [];
+                sectorGroups[f.sector].push(f);
+            });
+            
+            // 计算板块涨跌
+            const sectorSummary = Object.entries(sectorGroups).map(([sector, list]) => {
+                const sectorAmount = list.reduce((sum, f) => sum + f.amount, 0);
+                const avgChange = list.reduce((sum, f) => sum + f.change, 0) / list.length;
+                const weightedChange = list.reduce((sum, f) => sum + (f.change * f.amount / sectorAmount), 0);
+                return { sector, list, avgChange: weightedChange, amount: sectorAmount };
+            });
+            
+            // 总体建议
             let overallAdvice, overallEmoji, overallDesc;
             
-            if (upCount > downCount && upCount > holdCount) {
+            if (weightedChange > 3) {
                 overallEmoji = '📈';
-                overallAdvice = '市场向好';
-                overallDesc = `在您持仓的${holdingsWithAmount.length}只基金中，${upCount}只上涨${downCount}只下跌，整体表现良好。`;
-            } else if (downCount > upCount && downCount > holdCount) {
+                overallAdvice = '整体大涨';
+                overallDesc = `按持仓金额加权计算，当前整体涨幅${weightedChange.toFixed(2)}%。建议：对涨幅较大的基金可考虑分批止盈，落袋为安。`;
+            } else if (weightedChange > 1.5) {
+                overallEmoji = '😊';
+                overallAdvice = '小幅上涨';
+                overallDesc = `按持仓金额加权计算，当前整体涨幅${weightedChange.toFixed(2)}%。建议：继续持有，享受基金成长收益。`;
+            } else if (weightedChange < -3) {
+                overallEmoji = '💰';
+                overallAdvice = '大幅回调';
+                overallDesc = `按持仓金额加权计算，当前整体跌幅${Math.abs(weightedChange).toFixed(2)}%。建议：对于优质基金，此时是加仓好机会，可考虑逢低布局。`;
+            } else if (weightedChange < -1.5) {
                 overallEmoji = '📉';
-                overallAdvice = '注意风险';
-                overallDesc = `在您持仓的${holdingsWithAmount.length}只基金中，${downCount}只下跌${upCount}只上涨，市场波动较大。`;
-            } else if (holdCount > 0 && upCount === downCount) {
-                overallEmoji = '➖';
-                overallAdvice = '震荡整理';
-                overallDesc = '市场处于震荡调整阶段，建议保持现有持仓观望。';
+                overallAdvice = '小幅回调';
+                overallDesc = `按持仓金额加权计算，当前整体跌幅${Math.abs(weightedChange).toFixed(2)}%。建议：属于正常波动，基金适合长期持有。`;
             } else {
-                overallEmoji = '✅';
-                overallAdvice = '平稳运行';
-                overallDesc = '市场整体平稳，建议继续持有现有仓位。';
+                overallEmoji = '➡️';
+                overallAdvice = '横盘整理';
+                overallDesc = `按持仓金额加权计算，当前整体波动${weightedChange.toFixed(2)}%。建议：市场平稳，建议定投持有。`;
             }
+            
+            // 按板块生成HTML
+            const sectorHtml = sectorSummary.sort((a, b) => b.avgChange - a.avgChange).map(s => `
+                <div class="sector-group">
+                    <div class="sector-header">
+                        <span class="sector-name">${s.sector}</span>
+                        <span class="sector-change ${s.avgChange > 0 ? 'up' : 'down'}">${s.avgChange > 0 ? '↑' : '↓'} ${Math.abs(s.avgChange).toFixed(2)}%</span>
+                    </div>
+                    <div class="sector-funds">
+                        ${s.list.sort((a, b) => b.change - a.change).map(f => `
+                            <div class="advice-fund-item">
+                                <div class="advice-fund-header">
+                                    <div>
+                                        <div class="advice-fund-name">${f.name}</div>
+                                        <div class="advice-fund-change">${f.change > 0 ? '+' : ''}${f.change.toFixed(2)}% · ${f.amount.toLocaleString()}元</div>
+                                        <div class="advice-fund-desc">${f.adviceDesc || ''}</div>
+                                    </div>
+                                    <div class="advice-tag ${f.adviceClass}">${f.adviceEmoji} ${f.advice}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
             
             const html = `
                 <div class="advice-card">
@@ -931,18 +1149,18 @@
                     <div class="advice-title">${overallAdvice}</div>
                     <div class="advice-desc">${overallDesc}</div>
                     
+                    <div class="risk-warning">
+                        <strong>⚠️ 风险提示：</strong>
+                        本建议仅供参考，不构成投资建议。基金投资需长期持有，建议分散投资，控制仓位。市场有风险，投资需谨慎。
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span>持仓总额：<strong>${totalAmount.toLocaleString()}元</strong></span>
+                        <span>加权涨跌：<strong class="${weightedChange > 0 ? 'up' : 'down'}">${weightedChange > 0 ? '+' : ''}${weightedChange.toFixed(2)}%</strong></span>
+                    </div>
+                    
                     <div class="advice-funds">
-                        ${fundAdvices.map(f => `
-                            <div class="advice-fund-item">
-                                <div class="advice-fund-header">
-                                    <div>
-                                        <div class="advice-fund-name">${f.name}</div>
-                                        <div class="advice-fund-change">${f.change > 0 ? '+' : ''}${f.change.toFixed(2)}%</div>
-                                    </div>
-                                    <div class="advice-tag ${f.adviceClass}">${f.adviceEmoji} ${f.advice}</div>
-                                </div>
-                            </div>
-                        `).join('')}
+                        ${sectorHtml}
                     </div>
                 </div>
             `;

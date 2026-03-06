@@ -1,4 +1,4 @@
-FROM registry.cn-hangzhou.aliyuncs.com/library/python:3.11-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -15,7 +15,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY web/ /app/web/
 COPY scripts/fund-daily.py /app/scripts/fund-daily.py
-COPY config/ /app/config/
 
 # Create data directory
 RUN mkdir -p /app/data
