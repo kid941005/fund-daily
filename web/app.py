@@ -48,6 +48,7 @@ format_report_for_share = fund_module.format_report_for_share
 fetch_market_hot_news = fund_module.fetch_market_hot_news
 fetch_hot_sectors = fund_module.fetch_hot_sectors
 generate_advice = fund_module.generate_advice
+calculate_expected_return = fund_module.calculate_expected_return
 get_fund_detail_info = fund_module.get_fund_detail_info
 
 # Config
@@ -548,6 +549,42 @@ def get_fund_detail_full(code):
     return jsonify({
         "success": True,
         "detail": detail
+    })
+
+@app.route('/api/expected-return')
+def get_expected_return():
+    """Calculate expected return based on holdings and sector performance"""
+    user_id = session.get('user_id')
+    
+    # Get holdings
+    if user_id:
+        holdings = get_user_holdings(user_id)
+        holdings = [h for h in holdings if h.get('amount', 0) > 0]
+    else:
+        # Use default funds for non-logged in users
+        holdings = []
+    
+    if not holdings:
+        return jsonify({
+            "success": False,
+            "error": "暂无持仓，请先添加持仓",
+            "expected_return": 0
+        })
+    
+    # Get fund data for change info
+    codes = [h.get('code') for h in holdings]
+    funds_data = []
+    for code in codes:
+        data = fetch_fund_data_eastmoney(code)
+        if not data.get('error'):
+            funds_data.append(data)
+    
+    # Calculate expected return
+    result = calculate_expected_return(holdings, funds_data)
+    
+    return jsonify({
+        "success": True,
+        "result": result
     })
 
 @app.route('/api/portfolio-analysis')

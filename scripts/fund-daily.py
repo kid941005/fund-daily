@@ -403,6 +403,109 @@ def get_market_sentiment():
         logger.error(f"Error getting market sentiment: {str(e)}")
         return {'sentiment': '平稳', 'score': 0, 'error': str(e)}
 
+def calculate_expected_return(holdings, funds_data):
+    """Calculate expected return based on holdings and sector performance
+    
+    Args:
+        holdings: List of holdings with code, amount, name
+        funds_data: List of fund data with code, daily_change
+    
+    Returns:
+        dict: Expected return analysis
+    """
+    if not holdings or not funds_data:
+        return {"error": "暂无持仓数据", "expected_return": 0}
+    
+    # Get sector data
+    sectors = fetch_hot_sectors(10)
+    
+    # Sector keywords mapping to fund types
+    sector_keywords = {
+        '新能源': ['新能源', '光伏', '锂电', '电池', '电力', '储能', '氢能'],
+        '消费': ['消费', '食品', '饮料', '白酒', '家电', '纺织', '零售'],
+        '医药': ['医药', '医疗', '生物', '中药', '疫苗', '医疗器械'],
+        '科技': ['科技', '半导体', '芯片', '电子', '计算机', '软件', '互联网'],
+        '金融': ['金融', '银行', '保险', '证券', '地产'],
+        '军工': ['军工', '航天', '航空', '国防'],
+        '材料': ['材料', '化工', '钢铁', '有色', '建材'],
+        '基建': ['基建', '工程', '建筑', '工程机械'],
+    }
+    
+    # Calculate expected return
+    total_investment = 0
+    expected_return = 0
+    holdings_analysis = []
+    
+    for h in holdings:
+        code = h.get('code')
+        amount = h.get('amount', 0)
+        name = h.get('name', '')
+        
+        if amount <= 0:
+            continue
+        
+        total_investment += amount
+        
+        # Find fund's daily change
+        fund_change = 0
+        for f in funds_data:
+            if f.get('fund_code') == code:
+                fund_change = f.get('daily_change', 0)
+                break
+        
+        # Map fund to related sectors based on name
+        related_sectors = []
+        fund_sector_change = 0
+        
+        for sector_name, keywords in sector_keywords.items():
+            for keyword in keywords:
+                if keyword in name:
+                    related_sectors.append(sector_name)
+                    # Find sector change
+                    for s in sectors:
+                        if sector_name in s.get('name', ''):
+                            fund_sector_change = s.get('change', 0)
+                            break
+                    break
+        
+        # If no sector match found, use fund's own change
+        if not related_sectors:
+            related_sectors = ['综合']
+            fund_sector_change = fund_change
+        
+        # Calculate expected return for this holding
+        # Weight: 70% fund's own change + 30% related sector change
+        expected = amount * (fund_change * 0.7 + fund_sector_change * 0.3) / 100
+        expected_return += expected
+        
+        holdings_analysis.append({
+            'code': code,
+            'name': name,
+            'amount': amount,
+            'fund_change': fund_change,
+            'related_sectors': related_sectors,
+            'sector_change': fund_sector_change,
+            'expected_return': round(expected, 2)
+        })
+    
+    # Calculate return percentage
+    return_pct = (expected_return / total_investment * 100) if total_investment > 0 else 0
+    
+    # Get top performing sectors
+    top_sectors = sorted(sectors, key=lambda x: x.get('change', 0), reverse=True)[:3]
+    
+    return {
+        'total_investment': round(total_investment, 2),
+        'expected_return': round(expected_return, 2),
+        'return_percentage': round(return_pct, 2),
+        'holdings_analysis': holdings_analysis,
+        'top_sectors': [
+            {'name': s.get('name', ''), 'change': s.get('change', 0)} 
+            for s in top_sectors
+        ],
+        'market_sentiment': get_market_sentiment().get('sentiment', '平稳')
+    }
+
 def generate_advice(funds):
     """Generate investment advice based on fund performance and market indicators"""
     if not funds:
