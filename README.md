@@ -1,15 +1,28 @@
 # Fund Daily - 每日基金分析工具
 
-🚀 自动获取基金数据，分析趋势，生成每日报告
+🚀 自动获取基金数据，分析趋势，生成每日报告，支持持仓管理和风险分析
+
+[English](README_EN.md) | 中文
 
 ## ✨ 功能特点
 
-- 📊 **实时数据** - 获取基金净值、涨跌幅
-- 📈 **趋势分析** - 自动判断涨跌趋势
-- 📋 **每日报告** - 生成多基金对比报告
-- 💬 **分享格式** - 一键生成适合分享的文字
-- 🌐 **Web UI** - 可视化界面查看基金数据
-- 🐳 **Docker 支持** - 一键部署
+| 功能 | 说明 |
+|------|------|
+| 📊 实时数据 | 获取基金净值、估算涨跌幅 |
+| 📈 趋势分析 | 自动判断涨跌趋势 |
+| 🧠 市场情绪 | 综合板块+新闻计算市场情绪得分 |
+| 📉 风险分析 | 夏普比率、最大回撤、风险评分 |
+| 💰 持仓管理 | 用户账号系统，添加/修改持仓 |
+| 📥 数据导出 | CSV/JSON格式导出持仓数据 |
+| 📋 每日报告 | 生成多基金对比报告 |
+| 💬 分享格式 | 一键生成适合分享的文字 |
+| 🌐 Web UI | 可视化界面，操作建议 |
+| 📱 PWA支持 | 可添加到手机桌面 |
+| 🐳 Docker | 一键部署 |
+
+## 🖼️ 界面预览
+
+![Fund Daily](https://via.placeholder.com/800x400?text=Fund+Daily+Web+UI)
 
 ## 🚀 快速开始
 
@@ -65,14 +78,33 @@ python3 scripts/fund-daily.py report 000001,000002,000003
 
 # 生成分享文本
 python3 scripts/fund-daily.py share 000001,000002,000003
+
+# 获取市场热点新闻
+python3 scripts/fund-daily.py news
+
+# 获取热门板块
+python3 scripts/fund-daily.py sectors
+
+# 获取操作建议
+python3 scripts/fund-daily.py advice
 ```
 
-### Web 界面
+### Web 界面功能
 
-启动后访问 http://localhost:5000，可以：
-- 查看实时基金数据
-- 添加/删除关注的基金
-- 查看市场概览
+访问 http://localhost:5000：
+
+| Tab | 功能 |
+|-----|------|
+| 🔥 热门板块 | 市场热点资讯、板块涨跌排行 |
+| 💼 持仓 | 添加/管理持仓，修改金额 |
+| 💡 建议 | 操作建议（买入/持有/卖出） |
+| 📊 分析 | 组合分析、风险指标、资产配置 |
+
+### 用户系统
+
+- 注册账号：点击右上角"登录/注册"
+- 添加持仓：在"持仓"页面点击"+ 添加持仓"
+- 导出数据：登录后点击右上角用户名 → "导出数据"
 
 ## 🐳 Docker Compose
 
@@ -91,11 +123,27 @@ docker-compose up -d
 |:---|:---|
 | 000001 | 华夏成长混合 |
 | 110022 | 易方达消费行业 |
-| 161725 | 招商白酒 |
-| 002190 | 农银新能源 |
-| 005911 | 广发双擎升级 |
+| 161725 | 招商中证白酒指数(LOF)A |
+| 002190 | 农银新能源主题混合 |
+| 005911 | 广发双擎升级混合 |
 
 ## 🔧 配置
+
+### 环境变量
+
+在 `.env` 文件中配置：
+
+```bash
+# 安全设置
+FUND_DAILY_SECRET_KEY=your_secret_key  # 会话密钥
+FLASK_ENV=development                   # 生产环境设为 production
+FUND_DAILY_SSL_VERIFY=1               # 0 关闭SSL验证
+
+# 缓存设置
+FUND_DAILY_CACHE_DURATION=300         # 缓存秒数，默认5分钟
+```
+
+### 配置文件
 
 编辑 `config/config.json`：
 
@@ -110,15 +158,17 @@ docker-compose up -d
 
 ```
 fund-daily/
-├── scripts/          # 核心脚本
-│   └── fund-daily.py # 主程序
-├── web/              # Web UI
-│   ├── app.py        # Flask 应用
-│   └── templates/    # HTML 模板
-├── config/           # 配置文件
-├── Dockerfile        # CLI 版本
-├── Dockerfile.web    # Web 版本
-└── docker-compose.yml
+├── scripts/              # 核心脚本
+│   └── fund-daily.py    # 主程序
+├── web/                  # Web UI
+│   ├── app.py           # Flask 应用
+│   ├── templates/        # HTML 模板
+│   └── static/          # 静态资源
+├── config/              # 配置文件
+├── SKILL.md             # OpenClaw 技能配置
+├── Dockerfile           # CLI 版本
+├── Dockerfile.web       # Web 版本
+└── docker-compose.yml   # Docker 编排
 ```
 
 ## ⚠️ 免责声明
