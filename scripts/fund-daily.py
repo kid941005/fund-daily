@@ -319,6 +319,110 @@ def fetch_hot_sectors(limit=10):
         logger.error(f"Error fetching sectors: {str(e)}")
         return []
 
+def fetch_commodity_prices():
+    """Fetch commodity prices via ETFs (gold, silver, energy, copper)
+    
+    Returns:
+        dict: Commodity price data with changes
+    """
+    cache_key = "commodity_prices"
+    cached = get_cache(cache_key)
+    if cached is not None:
+        return cached
+    
+    commodities = {}
+    
+    # 大宗商品ETF映射：代码 -> (名称, 权重)
+    commodity_etfs = {
+        'gold': ('518880', '华安黄金ETF', 0.4),      # 黄金 40%
+        'silver': ('161226', '白银基金', 0.15),      # 白银 15%
+        'energy': ('159867', '能源化工ETF', 0.25),   # 能源 25%
+        'copper': ('159997', '有色金属ETF', 0.2),   # 有色 20%
+    }
+    
+    for key, (code, name, weight) in commodity_etfs.items():
+        try:
+            url = f"https://fundgz.1234567.com.cn/js/{code}.js"
+            req = urllib.request.Request(
+                url,
+                headers={'User-Agent': 'Mozilla/5.0', 'Referer': 'https://fund.eastmoney.com/'}
+            )
+            with urllib.request.urlopen(req, context=ctx, timeout=8) as resp:
+                content = resp.read().decode('utf-8')
+                if content.startswith('jsonpgz('):
+                    data = json.loads(content[8:-2])
+                    change = float(data.get('gszzl', 0) or 0)
+                    commodities[key] = {
+                        'name': name,
+                        'code': code,
+                        'price': data.get('gsz'),
+                        'change': change,
+                        'weight': weight
+                    }
+        except Exception as e:
+            logger.debug(f"Commodity ETF {code} fetch failed: {e}")
+    
+    set_cache(cache_key, commodities)
+    return commodities
+
+
+def get_commodity_sentiment():
+    """Analyze commodity price trends
+    
+    Returns:
+        dict: {
+            'sentiment': '通胀'/'通缩'/'平稳',
+            'score': -50 to 50,
+            'details': {...}
+        }
+    """
+    commodities = fetch_commodity_prices()
+    
+    if not commodities:
+        return {'sentiment': '平稳', 'score': 0, 'details': {}}
+    
+    # 计算加权得分：大宗商品涨价→通胀预期→利空股市
+    score = 0
+    total_weight = 0
+    details = {}
+    
+    for name, data in commodities.items():
+        change = data.get('change', 0) or 0
+        weight = data.get('weight', 0.25)  # 默认权重
+        details[name] = {
+            'name': data.get('name', name),
+            'code': data.get('code'),
+            'price': data.get('price'),
+            'change': change,
+            'weight': weight
+        }
+        # 涨价为正，通胀预期增强
+        score += change * weight
+        total_weight += weight
+    
+    # 归一化
+    if total_weight > 0:
+        score = score / total_weight
+    
+    # 限制得分范围
+    score = max(-50, min(50, score))
+    
+    # 判断情绪
+    if score > 10:
+        sentiment = '通胀'  # 大宗商品普涨，通胀预期强
+    elif score < -10:
+        sentiment = '通缩'  # 大宗商品普跌，需求疲软
+    else:
+        sentiment = '平稳'
+    
+    return {
+        'sentiment': sentiment,
+        'score': round(score, 2),
+        'details': details,
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+
+
 def get_market_sentiment():
     """Get market sentiment from multiple sources
     
@@ -370,6 +474,18 @@ def get_market_sentiment():
         score += hope_count * 10
         score -= fear_count * 10
         
+        # 大宗商品因素 (通胀/通缩影响)
+        # 大宗商品涨价 → 通胀预期 → 货币政策收紧预期 → 利空股市
+        commodity = get_commodity_sentiment()
+        commodity_score = commodity.get('score', 0)
+        
+        # 大宗商品权重：根据市场波动调整
+        # 当板块波动大时，大宗商品影响力增强
+        sector_volatility = abs(avg_change) if sectors else 0
+        commodity_weight = min(0.3, 0.1 + sector_volatility * 0.02)  # 10%-30%权重
+        
+        score -= commodity_score * commodity_weight * 10  # 通胀利空股市
+        
         # 限制在 -100 到 100
         score = max(-100, min(100, score))
         
@@ -393,6 +509,9 @@ def get_market_sentiment():
             'sector_total': len(sectors),
             'news_hope': hope_count,
             'news_fear': fear_count,
+            'commodity_sentiment': commodity.get('sentiment', '平稳'),
+            'commodity_score': commodity_score,
+            'commodity_details': commodity.get('details', {}),
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
         
@@ -616,6 +735,19 @@ def generate_advice(funds):
     else:
         risk_level = "中低风险"
     
+    # 获取大宗商品信息
+    commodity = get_commodity_sentiment()
+    
+    # 构建大宗商品描述
+    commodity_info = []
+    for name, data in commodity.get('details', {}).items():
+        change = data.get('change', 0) or 0
+        price = data.get('price', 'N/A')
+        emoji = "📈" if change > 0 else "📉" if change < 0 else "➖"
+        commodity_info.append(f"{emoji}{data.get('name', name)}: {change:+.2f}%")
+    
+    commodity_desc = " | ".join(commodity_info) if commodity_info else "暂无"
+    
     return {
         "advice": advice,
         "risk_level": risk_level,
@@ -625,6 +757,10 @@ def generate_advice(funds):
         "avg_change": round(avg_change, 2),
         "market_sentiment": market_sentiment,
         "market_score": market_score,
+        "commodity_sentiment": commodity.get('sentiment', '平稳'),
+        "commodity_score": commodity.get('score', 0),
+        "commodity_details": commodity.get('details', {}),
+        "commodity_desc": commodity_desc,
         "sharpe_ratio": round(avg_sharpe, 2),
         "max_drawdown": round(avg_drawdown, 2),
         "drawdown_days": drawdown_days,
