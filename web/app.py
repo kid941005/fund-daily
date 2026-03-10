@@ -22,12 +22,17 @@ app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
 # Secret key for sessions - use environment variable with fallback
-app.secret_key = os.environ.get('FUND_DAILY_SECRET_KEY') or secrets.token_hex(32)
+secret_key = os.environ.get('FUND_DAILY_SECRET_KEY')
+if not secret_key:
+    # Use a fixed default key for development
+    secret_key = "fund-daily-dev-key-please-change-in-production"
+app.secret_key = secret_key.encode() if isinstance(secret_key, str) else secret_key
 
 # Configure session
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
+# Only set secure cookie when using HTTPS
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FUND_DAILY_SECURE_COOKIES', '').lower() == 'true'
 
 # Import fund functions - dynamic import to handle hyphenated filename
 import importlib.util
