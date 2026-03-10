@@ -10,7 +10,8 @@ import json
 from datetime import datetime
 from functools import wraps
 
-DB_PATH = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/fund-daily.db")
+# Database path - use environment variable or default to /app/data
+DB_PATH = os.environ.get('FUND_DAILY_DB_PATH', '/app/data/fund-daily.db')
 
 def get_db():
     """Get database connection"""
