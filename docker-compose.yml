@@ -14,7 +14,10 @@ services:
       - TZ=Asia/Shanghai
       - FLASK_ENV=production
       - FUND_DAILY_SECRET_KEY=${FUND_DAILY_SECRET_KEY:-}
-    restart: unless-stopped
+      - FUND_DAILY_SSL_VERIFY=1
+      - FUND_DAILY_DB_PATH=/app/data/fund-daily.db
+      - FUND_CODES=000001,110022,161725
+    restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/"]
       interval: 30s
