@@ -348,6 +348,109 @@ def manage_holdings():
         
         return jsonify({"success": True, "message": "持仓已删除"})
 
+@app.route('/api/export', methods=['GET'])
+@login_required
+def export_holdings():
+    """Export user holdings data in CSV or JSON format"""
+    import csv
+    import io
+    
+    user_id = session.get('user_id')
+    export_format = request.args.get('format', 'csv').lower()
+    
+    holdings = get_user_holdings(user_id)
+    
+    if not holdings:
+        return jsonify({"success": False, "error": "暂无持仓数据"})
+    
+    export_data = []
+    for h in holdings:
+        code = h.get('code')
+        fund_data = fetch_fund_data_eastmoney(code)
+        detail = get_fund_detail_info(code) if code else {}
+        
+        row = {
+            'code': code,
+            'name': h.get('name', fund_data.get('name', '')),
+            'amount': h.get('amount', 0),
+            'buy_nav': h.get('buyNav', ''),
+            'buy_date': h.get('buyDate', ''),
+            'current_nav': fund_data.get('dwjz', ''),
+            'estimate_nav': fund_data.get('gsz', ''),
+            'daily_change': fund_data.get('gszzl', ''),
+            'return_1m': detail.get('return_1m', ''),
+            'return_3m': detail.get('return_3m', ''),
+            'return_6m': detail.get('return_6m', ''),
+            'return_1y': detail.get('return_1y', ''),
+            'risk_level': detail.get('risk_metrics', {}).get('risk_level', ''),
+            'sharpe_ratio': detail.get('risk_metrics', {}).get('sharpe_ratio', ''),
+            'max_drawdown': detail.get('risk_metrics', {}).get('estimated_max_drawdown', ''),
+            'fee_rate': detail.get('fee_rate', ''),
+        }
+        
+        if h.get('amount', 0) > 0 and h.get('buyNav') and fund_data.get('dwjz'):
+            try:
+                current = float(fund_data.get('dwjz', 0))
+                buy = float(h.get('buyNav'))
+                if buy > 0:
+                    profit_pct = (current - buy) / buy * 100
+                    row['holding_profit_pct'] = round(profit_pct, 2)
+                    row['holding_profit_amount'] = round(h.get('amount', 0) * profit_pct / 100, 2)
+            except:
+                pass
+        
+        export_data.append(row)
+    
+    if export_format == 'json':
+        return jsonify({
+            "success": True,
+            "format": "json",
+            "data": export_data,
+            "export_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+    
+    header_map = {
+        'code': '基金代码',
+        'name': '基金名称',
+        'amount': '持仓金额(元)',
+        'buy_nav': '买入净值',
+        'buy_date': '买入日期',
+        'current_nav': '当前净值',
+        'estimate_nav': '估算净值',
+        'daily_change': '日涨跌幅(%)',
+        'return_1m': '近1月(%)',
+        'return_3m': '近3月(%)',
+        'return_6m': '近6月(%)',
+        'return_1y': '近1年(%)',
+        'risk_level': '风险等级',
+        'sharpe_ratio': '夏普比率',
+        'max_drawdown': '最大回撤(%)',
+        'fee_rate': '费率(%)',
+        'holding_profit_pct': '持有收益(%)',
+        'holding_profit_amount': '收益金额(元)'
+    }
+    
+    output = io.StringIO()
+    if export_data:
+        fieldnames = list(export_data[0].keys())
+        chinese_headers = [header_map.get(f, f) for f in fieldnames]
+        writer = csv.writer(output)
+        writer.writerow(chinese_headers)
+        for row in export_data:
+            writer.writerow([row.get(f, '') for f in fieldnames])
+    
+    from flask import Response
+    filename = f"fund_holdings_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={
+            'Content-Disposition': f'attachment; filename={filename}',
+            'Content-Type': 'text/csv; charset=utf-8-sig'
+        }
+    )
+
 @app.route('/api/add-fund', methods=['POST'])
 def add_fund():
     """Add fund to watchlist (legacy, for non-logged in users)"""
