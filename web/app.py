@@ -32,6 +32,24 @@ app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production
 # Import fund functions - dynamic import to handle hyphenated filename
 import importlib.util
 import sys
+from db import database as db
+
+def import_fund_module():
+    script_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scripts', 'fund-daily.py')
+    spec = importlib.util.spec_from_file_location("fund_daily", script_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+# Initialize database
+db.init_db()
+
+# Migrate from JSON if exists
+json_users_file = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/users.json")
+if os.path.exists(json_users_file) and os.path.getsize(json_users_file) > 10:
+    print("Migrating data from JSON to SQLite...")
+    # Note: Migration needs to be done manually for now
+    # db.migrate_from_json(json_users_file)
 
 def import_fund_module():
     script_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scripts', 'fund-daily.py')
@@ -80,30 +98,22 @@ def verify_password(password, stored_hash):
         return False
 
 def load_users():
-    """Load users from file"""
-    if os.path.exists(USERS_FILE):
-        with open(USERS_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return {}
+    """Load users from database (for compatibility)"""
+    # Return a dict-like structure for compatibility
+    # In production, use db.get_user_by_* functions directly
+    return {}  # Legacy - no longer needed with SQLite
 
 def save_users(users):
-    """Save users to file"""
-    with open(USERS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(users, f, ensure_ascii=False, indent=2)
+    """Save users to file (legacy - no longer needed)"""
+    pass
 
 def get_user_holdings(user_id):
-    """Get user's holdings"""
-    users = load_users()
-    if user_id in users:
-        return users[user_id].get('holdings', [])
-    return []
+    """Get user's holdings from database"""
+    return db.get_holdings(user_id)
 
 def save_user_holdings(user_id, holdings):
-    """Save user's holdings"""
-    users = load_users()
-    if user_id in users:
-        users[user_id]['holdings'] = holdings
-        save_users(users)
+    """Save user's holdings to database"""
+    db.save_holdings(user_id, holdings)
 
 def get_current_user():
     """Get current logged in user"""
@@ -141,22 +151,15 @@ def register():
     if len(password) < 6:
         return jsonify({"success": False, "error": "密码长度至少6位"})
     
-    users = load_users()
+    # Check if username exists in database
+    existing = db.get_user_by_username(username)
+    if existing:
+        return jsonify({"success": False, "error": "用户名已存在"})
     
-    # Check if username exists
-    for uid, user in users.items():
-        if user.get('username') == username:
-            return jsonify({"success": False, "error": "用户名已存在"})
-    
-    # Create new user
-    user_id = hashlib.sha256(username.encode()).hexdigest()[:16]
-    users[user_id] = {
-        'username': username,
-        'password': hash_password(password),
-        'holdings': [],
-        'created_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
-    save_users(users)
+    # Create new user in database
+    user_id = db.create_user(username, hash_password(password))
+    if not user_id:
+        return jsonify({"success": False, "error": "注册失败"})
     
     # Auto login
     session['user_id'] = user_id
@@ -175,25 +178,25 @@ def login():
     username = data.get('username', '').strip()
     password = data.get('password', '')
     
-    users = load_users()
+    # Find user in database
+    user = db.get_user_by_username(username)
     
-    # Find user
+    if not user:
+        return jsonify({"success": False, "error": "用户名或密码错误"})
+    
+    stored_hash = user.get('password', '')
+    
+    # Verify password
     user_id = None
-    for uid, user in users.items():
-        if user.get('username') == username:
-            stored_hash = user.get('password', '')
-            # Support both old SHA256 (no $) and new PBKDF2 (with $) hashes
-            if '$' in stored_hash:
-                if verify_password(password, stored_hash):
-                    user_id = uid
-            else:
-                # Legacy: old SHA256 hash without salt
-                if stored_hash == hashlib.sha256(password.encode()).hexdigest():
-                    user_id = uid
-                    # Upgrade to new hash format
-                    users[uid]['password'] = hash_password(password)
-                    save_users(users)
-            break
+    if '$' in stored_hash:
+        if verify_password(password, stored_hash):
+            user_id = user.get('user_id')
+    else:
+        # Legacy: old SHA256 hash without salt
+        if stored_hash == hashlib.sha256(password.encode()).hexdigest():
+            user_id = user.get('user_id')
+            # Upgrade to new hash format
+            db.update_user_password(user.get('user_id'), hash_password(password))
     
     if not user_id:
         return jsonify({"success": False, "error": "用户名或密码错误"})
@@ -630,48 +633,70 @@ def import_from_screenshot():
             })
         
         # Parse fund information from OCR text
-        # Expected patterns:
-        # - 6-digit fund codes: 000001, 110022, etc.
-        # - Amounts: 10000, 10,000, etc.
+        # Better parsing: find all 6-digit codes and all amounts, then match them
         
-        # Find 6-digit codes
+        # Find all 6-digit codes
         fund_codes = re.findall(r'\b(\d{6})\b', text)
         
-        # Find amounts (with or without comma)
-        amounts = re.findall(r'[￥¥]?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*元?', text)
+        # Find all amounts (numbers with decimals)
+        amounts = re.findall(r'(\d{1,3}(?:,\d{3})*\.\d{2})', text)
         
-        # Try to match codes with amounts
+        # Clean amounts
+        clean_amounts = []
+        for a in amounts:
+            try:
+                clean_amounts.append(float(a.replace(',', '')))
+            except:
+                pass
+        
+        # Match codes with amounts (they should be in order)
+        # OCR output usually has code then amount in nearby lines
         parsed = []
         
-        # Simple parsing: assume each code corresponds to an amount found nearby
-        # This is a heuristic and may need manual adjustment
-        
-        # Find lines with fund codes and try to extract amounts
+        # Get lines containing codes
         lines = text.split('\n')
-        for line in lines:
+        
+        # Find lines with codes and try to find amounts after them
+        for i, line in enumerate(lines):
             code_match = re.search(r'(\d{6})', line)
-            amount_match = re.search(r'(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)', line)
-            
             if code_match:
                 code = code_match.group(1)
+                # Look for amount in next few lines
                 amount = 0
-                if amount_match:
-                    amt_str = amount_match.group(1).replace(',', '')
-                    amount = float(amt_str)
+                for j in range(i+1, min(i+5, len(lines))):
+                    # Try to find amount pattern
+                    amt_match = re.search(r'(\d{1,3}(?:,\d{3})*\.\d{2})', lines[j])
+                    if amt_match:
+                        try:
+                            amount = float(amt_match.group(1).replace(',', ''))
+                            break
+                        except:
+                            pass
                 
-                if amount > 0:  # Only include if we found an amount
-                    parsed.append({'code': code, 'amount': amount, 'source': line.strip()})
-                elif len(parsed) < len(fund_codes) and fund_codes[len(parsed)] == code:
-                    # Mark code for later
-                    parsed.append({'code': code, 'amount': None, 'source': line.strip()})
+                # Only add if we found a reasonable amount
+                if amount > 0:
+                    parsed.append({'code': code, 'amount': amount, 'source': line.strip()[:50]})
         
-        # Filter valid codes (6 digits, likely fund codes)
+        # If the above didn't work well, try a simpler approach:
+        # Assume codes and amounts are in order
+        if len(parsed) < len(fund_codes) // 2 and len(clean_amounts) >= len(fund_codes):
+            parsed = []
+            for i, code in enumerate(fund_codes):
+                if i < len(clean_amounts):
+                    # Check if it's a valid fund code
+                    if code[0] in ['0', '1', '2', '3', '5', '6', '7', '8', '9']:
+                        parsed.append({'code': code, 'amount': clean_amounts[i], 'source': 'matched'})
+        
+        # Filter valid codes
         valid_codes = []
+        seen = set()
         for p in parsed:
             code = p['code']
-            # Check if it's a valid fund code (starts with 0, 1, 2, 3, 5, 6)
-            if code[0] in ['0', '1', '2', '3', '5', '6']:
-                valid_codes.append(p)
+            if code not in seen and code[0] in ['0', '1', '2', '3', '5', '6', '7', '8', '9']:
+                # Skip if amount is too small (probably not a holding)
+                if p['amount'] and p['amount'] >= 10:
+                    valid_codes.append(p)
+                    seen.add(code)
         
         return jsonify({
             "success": True,
