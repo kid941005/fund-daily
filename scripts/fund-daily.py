@@ -319,38 +319,199 @@ def fetch_hot_sectors(limit=10):
         logger.error(f"Error fetching sectors: {str(e)}")
         return []
 
-def generate_advice(funds):
-    """Generate investment advice based on fund performance"""
-    if not funds:
-        return {"advice": "暂无基金数据", "risk_level": "未知"}
+def get_market_sentiment():
+    """Get market sentiment from multiple sources
     
+    Returns:
+        dict: {
+            'sentiment': '乐观'/'谨慎'/'恐慌'/'平稳',
+            'score': -100 to 100,
+            'indicators': {...}
+        }
+    """
+    # Check cache first
+    cache_key = "market_sentiment"
+    cached = get_cache(cache_key)
+    if cached is not None:
+        return cached
+    
+    try:
+        # Get sector data
+        sectors = fetch_hot_sectors(5)
+        
+        # Get news sentiment (简单分析)
+        news = fetch_market_hot_news(5)
+        
+        # 分析涨跌幅
+        up_count = sum(1 for s in sectors if s.get('change', 0) > 0)
+        down_count = sum(1 for s in sectors if s.get('change', 0) < 0)
+        
+        # 计算市场得分
+        score = 0
+        
+        # 板块涨跌
+        if sectors:
+            avg_change = sum(s.get('change', 0) for s in sectors) / len(sectors)
+            score += avg_change * 10
+        
+        # 上涨/下跌板块比例
+        if up_count > down_count * 2:
+            score += 20
+        elif down_count > up_count * 2:
+            score -= 20
+        
+        # 关键词情绪分析
+        fear_words = ['跌', '跌停', '恐慌', '暴跌', '大跌', '跳水', '利空']
+        hope_words = ['涨', '涨停', '利好', '暴涨', '大涨', '反弹', '突破']
+        
+        fear_count = sum(1 for n in news for w in fear_words if w in n.get('title', ''))
+        hope_count = sum(1 for n in news for w in hope_words if w in n.get('title', ''))
+        
+        score += hope_count * 10
+        score -= fear_count * 10
+        
+        # 限制在 -100 到 100
+        score = max(-100, min(100, score))
+        
+        # 确定情绪
+        if score > 30:
+            sentiment = "乐观"
+        elif score > 10:
+            sentiment = "偏多"
+        elif score > -10:
+            sentiment = "平稳"
+        elif score > -30:
+            sentiment = "偏空"
+        else:
+            sentiment = "恐慌"
+        
+        result = {
+            'sentiment': sentiment,
+            'score': score,
+            'sector_up': up_count,
+            'sector_down': down_count,
+            'sector_total': len(sectors),
+            'news_hope': hope_count,
+            'news_fear': fear_count,
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        set_cache(cache_key, result)
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error getting market sentiment: {str(e)}")
+        return {'sentiment': '平稳', 'score': 0, 'error': str(e)}
+
+def generate_advice(funds):
+    """Generate investment advice based on fund performance and market indicators"""
+    if not funds:
+        return {"advice": "暂无基金数据", "risk_level": "未知", "action": "观望"}
+    
+    # 基础统计
     up_count = sum(1 for f in funds if f.get('trend') == 'up')
     down_count = sum(1 for f in funds if f.get('trend') == 'down')
     total = len(funds)
     
     avg_change = sum(f.get('daily_change', 0) for f in funds) / total if total > 0 else 0
     
-    # Determine advice
-    if up_count > down_count and avg_change > 1:
-        advice = "市场表现良好，持有基金多数上涨，建议继续持有"
-        risk_level = "稳健"
-        action = "持有"
-    elif down_count > up_count and avg_change < -1:
-        advice = "市场波动较大，部分基金下跌明显，建议关注风险"
-        risk_level = "谨慎"
-        action = "观望"
-    elif avg_change > 0.5:
-        advice = "市场温和上涨，可适当关注但避免追高"
-        risk_level = "适中"
-        action = "持有"
-    elif avg_change < -0.5:
-        advice = "市场有所回调，可能是低吸机会"
-        risk_level = "适中"
-        action = "关注"
+    # 获取市场情绪
+    market = get_market_sentiment()
+    market_sentiment = market.get('sentiment', '平稳')
+    market_score = market.get('score', 0)
+    
+    # 计算组合加权指标 - 尝试获取详细数据
+    total_sharpe = 0
+    total_drawdown = 0
+    total_risk_score = 0
+    funds_with_risk = 0
+    
+    for f in funds:
+        # 尝试从详细数据获取风险指标
+        code = f.get('fund_code')
+        if code:
+            try:
+                detail = get_fund_detail_info(code)
+                risk = detail.get('risk_metrics', {})
+                if risk:
+                    total_sharpe += risk.get('sharpe_ratio', 0)
+                    total_drawdown += risk.get('estimated_max_drawdown', 0)
+                    total_risk_score += risk.get('risk_score', 4)
+                    funds_with_risk += 1
+            except:
+                pass
+    
+    # 如果没有详细数据，使用默认值
+    if funds_with_risk > 0:
+        avg_sharpe = total_sharpe / funds_with_risk
+        avg_drawdown = total_drawdown / funds_with_risk
+        avg_risk = total_risk_score / funds_with_risk
     else:
-        advice = "市场整体平稳，建议保持现有配置"
-        risk_level = "稳健"
+        avg_sharpe = 0
+        avg_drawdown = 0
+        avg_risk = 4
+    
+    # 估算回撤天数（简化：根据近1月波动）
+    # 波动大可能回撤天数多
+    drawdown_days = int(avg_drawdown * 2) if avg_drawdown > 0 else 0
+    drawdown_days = min(drawdown_days, 30)  # 最多30天
+    
+    # 综合评分
+    score = 0
+    
+    # 市场情绪权重
+    if market_sentiment in ['乐观', '偏多']:
+        score += 30
+    elif market_sentiment == '平稳':
+        score += 10
+    elif market_sentiment in ['偏空', '恐慌']:
+        score -= 30
+    
+    # 基金当日表现
+    score += avg_change * 10
+    
+    # 夏普比率（越大越好）
+    if avg_sharpe > 1:
+        score += 20
+    elif avg_sharpe > 0.5:
+        score += 10
+    elif avg_sharpe < 0:
+        score -= 15
+    
+    # 最大回撤（越大越危险）
+    if avg_drawdown > 20:
+        score -= 20
+    elif avg_drawdown > 10:
+        score -= 10
+    elif avg_drawdown < 5:
+        score += 10
+    
+    # 确定操作建议
+    if score > 40:
+        advice = "市场情绪乐观，基金表现良好，适合适度加仓"
+        action = "买入"
+    elif score > 20:
+        advice = "市场偏多，建议继续持有，可少量加仓"
         action = "持有"
+    elif score > -10:
+        advice = "市场整体平稳，建议保持当前配置"
+        action = "持有"
+    elif score > -30:
+        advice = "市场偏谨慎，注意风险，可适当减仓"
+        action = "减仓"
+    else:
+        advice = "市场情绪偏空，建议减仓观望，等待机会"
+        action = "卖出"
+    
+    # 风险等级
+    if avg_risk >= 7:
+        risk_level = "高风险"
+    elif avg_risk >= 5:
+        risk_level = "中高风险"
+    elif avg_risk >= 3:
+        risk_level = "中等风险"
+    else:
+        risk_level = "中低风险"
     
     return {
         "advice": advice,
@@ -358,7 +519,13 @@ def generate_advice(funds):
         "action": action,
         "up_count": up_count,
         "down_count": down_count,
-        "avg_change": round(avg_change, 2)
+        "avg_change": round(avg_change, 2),
+        "market_sentiment": market_sentiment,
+        "market_score": market_score,
+        "sharpe_ratio": round(avg_sharpe, 2),
+        "max_drawdown": round(avg_drawdown, 2),
+        "drawdown_days": drawdown_days,
+        "risk_score": round(avg_risk, 1)
     }
 
 def get_fund_detail_info(code):
