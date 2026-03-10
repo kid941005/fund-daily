@@ -12,12 +12,28 @@
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
     <title>Fund Daily - 每日基金</title>
     <style>
+        :root {
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1a1a1a;
+                --card-bg: #2d2d2d;
+                --text-color: #e0e0e0;
+                --text-secondary: #aaaaaa;
+                --border-color: #444444;
+            }
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            color: #333;
+            background: var(--bg-color);
+            color: var(--text-color);
         }
         
         .header {
@@ -77,7 +93,7 @@
             position: absolute;
             right: 0;
             top: 100%;
-            background: white;
+            background: var(--card-bg);
             min-width: 150px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             border-radius: 8px;
@@ -118,7 +134,7 @@
         
         .tabs {
             display: flex;
-            background: white;
+            background: var(--card-bg);
             border-bottom: 1px solid #eee;
             position: sticky;
             top: 0;
@@ -132,7 +148,7 @@
             text-align: center;
             cursor: pointer;
             font-size: 13px;
-            color: #666;
+            color: var(--text-secondary);
             border-bottom: 3px solid transparent;
             white-space: nowrap;
             min-width: 0;
@@ -144,7 +160,7 @@
         
         .tab.active {
             color: #667eea;
-            border-bottom-color: #667eea;
+            border-bottom-color: var(--text-color);
             font-weight: bold;
         }
         
@@ -170,7 +186,7 @@
         .tab-content.active { display: block; }
         
         .card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 12px;
             padding: 15px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -184,7 +200,7 @@
             }
         }
         
-        .section-title { font-size: 16px; color: #666; margin-bottom: 15px; }
+        .section-title { font-size: 16px; color: var(--text-secondary); margin-bottom: 15px; }
         .section-title-main { font-size: 18px; font-weight: bold; margin-bottom: 15px; }
         
         .add-btn {
@@ -238,7 +254,7 @@
             margin-top: 8px;
         }
         
-        .holding-amount-row label { font-size: 14px; color: #666; }
+        .holding-amount-row label { font-size: 14px; color: var(--text-secondary); }
         
         .holding-amount-row input {
             width: 120px;
@@ -251,7 +267,7 @@
         .holding-change { font-size: 14px; padding: 4px 10px; border-radius: 4px; margin-top: 8px; display: inline-block; }
         .holding-change.up { background: #ffebee; color: #c62828; }
         .holding-change.down { background: #e8f5e9; color: #2e7d32; }
-        .holding-change.flat { background: #f5f5f5; color: #666; }
+        .holding-change.flat { background: #f5f5f5; color: var(--text-secondary); }
         
         .holding-stats {
             display: grid;
@@ -307,7 +323,7 @@
         .advice-card { text-align: center; padding: 30px 20px; }
         .advice-emoji { font-size: 64px; margin-bottom: 20px; }
         .advice-title { font-size: 24px; font-weight: bold; margin-bottom: 15px; }
-        .advice-desc { font-size: 16px; color: #666; line-height: 1.6; margin-bottom: 20px; }
+        .advice-desc { font-size: 16px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 20px; }
         
         .advice-funds { text-align: left; margin-top: 20px; }
         
@@ -349,7 +365,7 @@
         .advice-tag.hold { background: #e3f2fd; color: #1565c0; }
         .advice-tag.watch { background: #fff3e0; color: #ef6c00; }
         
-        .advice-fund-change { font-size: 13px; color: #666; }
+        .advice-fund-change { font-size: 13px; color: var(--text-secondary); }
         
         .advice-fund-desc { font-size: 12px; color: #888; margin-top: 5px; font-style: italic; }
         
@@ -390,7 +406,7 @@
         
         .risk-label {
             font-size: 12px;
-            color: #666;
+            color: var(--text-secondary);
             margin-bottom: 5px;
         }
         
@@ -413,7 +429,7 @@
         .bar-label {
             width: 70px;
             font-size: 12px;
-            color: #666;
+            color: var(--text-secondary);
         }
         
         .bar-track {
@@ -451,7 +467,7 @@
             border-radius: 6px;
             margin-bottom: 8px;
             font-size: 13px;
-            color: #666;
+            color: var(--text-secondary);
         }
         
         .fund-detail-list {
@@ -526,7 +542,7 @@
         }
         
         .modal-content {
-            background: white;
+            background: var(--card-bg);
             padding: 25px;
             border-radius: 12px;
             width: 90%;
@@ -540,13 +556,13 @@
         .modal-body { font-size: 15px; line-height: 1.6; color: #333; }
         
         .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; margin-bottom: 8px; font-size: 14px; color: #666; }
+        .input-group label { display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-secondary); }
         .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
         
         .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
         .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
         .btn-primary { background: #667eea; color: white; }
-        .btn-secondary { background: #f0f0f0; color: #666; }
+        .btn-secondary { background: #f0f0f0; color: var(--text-secondary); }
         .btn-success { background: #27ae60; color: white; }
         
         .summary-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
@@ -554,7 +570,7 @@
         .stat-num { font-size: 18px; font-weight: bold; }
         .stat-num.up { color: #e74c3c; }
         .stat-num.down { color: #27ae60; }
-        .stat-label { font-size: 11px; color: #666; margin-top: 5px; }
+        .stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 5px; }
         
         @media (min-width: 768px) {
             .summary-stats { gap: 10px; margin-bottom: 15px; }
