@@ -33,6 +33,7 @@ app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production
 import importlib.util
 import sys
 from db import database as db
+from db import dingtalk
 
 def import_fund_module():
     script_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scripts', 'fund-daily.py')
@@ -438,6 +439,99 @@ def export_holdings():
         }
     )
 
+# ========== 钉钉通知相关 ==========
+
+@app.route('/api/dingtalk/config', methods=['POST'])
+@login_required
+def dingtalk_config():
+    """配置钉钉Webhook地址"""
+    data = request.json
+    webhook = data.get('webhook', '').strip()
+    
+    if webhook and not webhook.startswith('https://'):
+        return jsonify({"success": False, "error": "Webhook地址格式错误"})
+    
+    # 保存到用户配置
+    user_id = session.get('user_id')
+    config = db.get_user_config(user_id)
+    config['dingtalk_webhook'] = webhook
+    db.save_user_config(user_id, config)
+    
+    return jsonify({"success": True, "message": "钉钉通知配置已保存"})
+
+@app.route('/api/dingtalk/config', methods=['GET'])
+@login_required
+def dingtalk_config_get():
+    """获取钉钉Webhook配置状态"""
+    user_id = session.get('user_id')
+    config = db.get_user_config(user_id)
+    webhook = config.get('dingtalk_webhook', '')
+    
+    return jsonify({
+        "success": True,
+        "configured": bool(webhook),
+        "webhook": webhook[:20] + "..." if webhook and len(webhook) > 20 else webhook
+    })
+
+@app.route('/api/dingtalk/test', methods=['POST'])
+@login_required
+def dingtalk_test():
+    """测试钉钉通知"""
+    user_id = session.get('user_id')
+    config = db.get_user_config(user_id)
+    webhook = config.get('dingtalk_webhook', '')
+    
+    if not webhook:
+        return jsonify({"success": False, "error": "请先配置钉钉Webhook地址"})
+    
+    success = dingtalk.send_dingtalk_message(
+        webhook, 
+        "✅ Fund Daily 钉钉通知测试成功！\n\n如果收到这条消息，说明配置正确。",
+        msg_type="text"
+    )
+    
+    if success:
+        return jsonify({"success": True, "message": "测试消息发送成功，请检查钉钉"})
+    else:
+        return jsonify({"success": False, "error": "发送失败，请检查Webhook地址是否正确"})
+
+@app.route('/api/dingtalk/send-report', methods=['POST'])
+@login_required
+def dingtalk_send_report():
+    """发送每日报告到钉钉"""
+    user_id = session.get('user_id')
+    config = db.get_user_config(user_id)
+    webhook = config.get('dingtalk_webhook', '')
+    
+    if not webhook:
+        return jsonify({"success": False, "error": "请先配置钉钉Webhook地址"})
+    
+    # 获取持仓
+    holdings = db.get_holdings(user_id)
+    if not holdings:
+        return jsonify({"success": False, "error": "暂无持仓数据"})
+    
+    # 获取基金数据
+    fund_codes = [h.get('code') for h in holdings]
+    funds_data = {}
+    for code in fund_codes:
+        data = fetch_fund_data_eastmoney(code)
+        if data:
+            funds_data[code] = data
+    
+    # 生成建议
+    advice = generate_advice(funds_data)
+    
+    # 发送报告
+    success = dingtalk.send_daily_report(webhook, {"advice": advice, "holdings": holdings})
+    
+    if success:
+        return jsonify({"success": True, "message": "每日报告已发送到钉钉"})
+    else:
+        return jsonify({"success": False, "error": "发送失败"})
+
+# ========== 导入相关 ==========
+
 @app.route('/api/import', methods=['POST'])
 @login_required
 def import_holdings():
@@ -616,61 +710,86 @@ def import_from_screenshot():
             })
         
         # Parse fund information from OCR text
-        # Better parsing: find all 6-digit codes and all amounts, then match them
+        # Enhanced parsing for multiple fund app formats (支付宝, 天天基金, 银行, etc.)
         
-        # Find all 6-digit codes
+        # Find all 6-digit fund codes
         fund_codes = re.findall(r'\b(\d{6})\b', text)
         
-        # Find all amounts (numbers with decimals)
-        amounts = re.findall(r'(\d{1,3}(?:,\d{3})*\.\d{2})', text)
+        # Enhanced amount patterns:
+        # - 1,234.56 (with comma)
+        # - 1234.56 (no comma)
+        # - ¥1234.56 / ￥1234.56
+        # - 1234 (integer)
+        amount_patterns = [
+            r'[\￥¥￥]?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)',  # With decimals
+            r'[\￥¥￥]?\s*(\d{1,6})(?!\d)',  # Integer amounts
+        ]
+        
+        amounts = []
+        for pattern in amount_patterns:
+            amounts.extend(re.findall(pattern, text))
         
         # Clean amounts
         clean_amounts = []
+        seen_amounts = set()
         for a in amounts:
             try:
-                clean_amounts.append(float(a.replace(',', '')))
+                val = float(a.replace(',', ''))
+                # Filter unrealistic amounts (too small or too large)
+                if 10 <= val <= 10000000 and val not in seen_amounts:
+                    clean_amounts.append(val)
+                    seen_amounts.add(val)
             except:
                 pass
         
-        # Match codes with amounts (they should be in order)
-        # OCR output usually has code then amount in nearby lines
+        # Match codes with amounts using line-by-line analysis
+        # For支付宝/天天基金: code on left, amount on right (not same line)
+        # Strategy: "持有金额" markers appear in order with amounts below them
         parsed = []
-        
-        # Get lines containing codes
         lines = text.split('\n')
         
-        # Find lines with codes and try to find amounts after them
+        # Find all fund codes in order
+        code_positions = []
         for i, line in enumerate(lines):
             code_match = re.search(r'(\d{6})', line)
             if code_match:
-                code = code_match.group(1)
-                # Look for amount in next few lines
-                amount = 0
-                for j in range(i+1, min(i+5, len(lines))):
-                    # Try to find amount pattern
-                    amt_match = re.search(r'(\d{1,3}(?:,\d{3})*\.\d{2})', lines[j])
+                code_positions.append({'line': i, 'code': code_match.group(1)})
+        
+        # Find all amount positions (look for "持有金额" then amount below)
+        amount_positions = []
+        for i, line in enumerate(lines):
+            if '持有金额' in line or '持有' in line:
+                # Look for amount in next 1-2 lines
+                for j in range(i+1, min(i+3, len(lines))):
+                    amt_match = re.search(r'(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)', lines[j])
                     if amt_match:
                         try:
-                            amount = float(amt_match.group(1).replace(',', ''))
-                            break
+                            val = float(amt_match.group(1).replace(',', ''))
+                            if 10 <= val <= 10000000:
+                                amount_positions.append(val)
+                                break
                         except:
                             pass
-                
-                # Only add if we found a reasonable amount
-                if amount > 0:
-                    parsed.append({'code': code, 'amount': amount, 'source': line.strip()[:50]})
         
-        # If the above didn't work well, try a simpler approach:
-        # Assume codes and amounts are in order
-        if len(parsed) < len(fund_codes) // 2 and len(clean_amounts) >= len(fund_codes):
+        # Match codes with amounts by position: first code with first amount, etc.
+        # This works because in 支付宝, codes and amounts are in the same order
+        for i, cp in enumerate(code_positions):
+            if i < len(amount_positions):
+                parsed.append({
+                    'code': cp['code'], 
+                    'amount': amount_positions[i],
+                    'source': 'alipay_match'
+                })
+        
+        # Fallback: if matching didn't work well
+        if len(parsed) < 3 and len(clean_amounts) >= len(fund_codes) // 2:
             parsed = []
             for i, code in enumerate(fund_codes):
-                if i < len(clean_amounts):
-                    # Check if it's a valid fund code
-                    if code[0] in ['0', '1', '2', '3', '5', '6', '7', '8', '9']:
-                        parsed.append({'code': code, 'amount': clean_amounts[i], 'source': 'matched'})
+                if code[0] in ['0', '1', '2', '3', '5', '6', '7', '8', '9'] and i < len(clean_amounts):
+                    if clean_amounts[i] >= 10:
+                        parsed.append({'code': code, 'amount': clean_amounts[i], 'source': 'sequential'})
         
-        # Filter valid codes
+        # Filter valid codes and remove duplicates
         valid_codes = []
         seen = set()
         for p in parsed:

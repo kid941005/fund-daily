@@ -580,6 +580,7 @@
             <span style="cursor:pointer;" onclick="toggleDropdown()">▾</span>
             <div class="user-dropdown-content" id="dropdownMenu">
                 <button class="user-dropdown-item export" onclick="exportData()">📥 导出数据</button>
+                <button class="user-dropdown-item" onclick="showDingTalkSettings()">🔔 钉钉通知</button>
                 <button class="user-dropdown-item" onclick="logout()">🚪 退出登录</button>
             </div>
         </div>
@@ -900,6 +901,51 @@
         function exportData() {
             const format = confirm('确定要导出CSV格式吗？\n点击"确定"导出CSV，点击"取消"导出JSON') ? 'csv' : 'json';
             window.location.href = `/api/export?format=${format}`;
+        }
+        
+        // 钉钉通知设置
+        async function showDingTalkSettings() {
+            // 关闭下拉菜单
+            document.getElementById('dropdownMenu').classList.remove('show');
+            
+            // 检查配置状态
+            const resp = await fetch('/api/dingtalk/config');
+            const data = await resp.json();
+            
+            const webhook = data.webhook || '';
+            const isConfigured = data.configured;
+            
+            const message = isConfigured 
+                ? `当前已配置钉钉通知\n地址: ${webhook}\n\n是否修改?`
+                : '请输入钉钉Webhook地址\n\n获取方式:\n钉钉群 → 设置 → 智能群助手 → 添加机器人 → Webhook';
+            
+            const newWebhook = prompt(message, isConfigured ? '' : 'https://');
+            
+            if (newWebhook !== null) {
+                if (newWebhook.trim() === '') {
+                    alert('请输入Webhook地址');
+                    return;
+                }
+                
+                // 保存配置
+                const saveResp = await fetch('/api/dingtalk/config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({webhook: newWebhook.trim()})
+                });
+                const saveData = await saveResp.json();
+                
+                if (saveData.success) {
+                    // 询问是否测试
+                    if (confirm('配置保存成功！是否发送测试消息?')) {
+                        const testResp = await fetch('/api/dingtalk/test', {method: 'POST'});
+                        const testData = await testResp.json();
+                        alert(testData.success ? '测试消息已发送，请检查钉钉' : '发送失败: ' + testData.error);
+                    }
+                } else {
+                    alert('保存失败: ' + saveData.error);
+                }
+            }
         }
         
         document.addEventListener('click', function(e) {
@@ -1373,10 +1419,14 @@
                             </div>
                         `).join('');
                         html += `<button class="btn btn-success" style="margin-top:10px;width:100%;" onclick="importParsedData(${parsed.length})">确认导入</button>`;
+                        html += `<div style="margin-top:10px;color:#666;font-size:12px;">💡 识别到 ${parsed.length} 个基金，请确认金额后点击"确认导入"</div>`;
                     } else {
                         html = '<div style="color:#666;">未能识别到基金代码，请尝试手动输入</div>';
                     }
                     document.getElementById('parsedList').innerHTML = html;
+                    
+                    // Scroll to results
+                    document.getElementById('ocrResult').scrollIntoView({behavior: 'smooth', block: 'center'});
                 } else {
                     alert('识别失败: ' + result.error);
                 }
