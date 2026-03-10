@@ -22,27 +22,9 @@
 | 📱 PWA支持 | 可添加到手机桌面 |
 | 🐳 Docker | 一键部署 |
 
-## 🖼️ 界面预览
-
-![Fund Daily](https://via.placeholder.com/800x400?text=Fund+Daily+Web+UI)
-
 ## 🚀 快速开始
 
-### 方式 1: 直接运行
-
-```bash
-# 克隆仓库
-git clone https://github.com/kid941005/fund-daily.git
-cd fund-daily
-
-# 安装依赖
-pip3 install -r requirements.txt
-
-# 运行
-python3 scripts/fund-daily.py share 000001,110022
-```
-
-### 方式 2: Docker Compose 部署（推荐）
+### 方式 1: Docker Compose（推荐）
 
 ```bash
 # 克隆仓库
@@ -57,35 +39,25 @@ docker-compose up -d
 
 **版本说明**：
 - `kid941005/fund-daily:latest` - 最新版
-- `kid941005/fund-daily:1.5.2` - 指定版本
+- `kid941005/fund-daily:1.5.3` - 指定版本
 
-**更新部署**：
-```bash
-docker-compose down
-docker-compose pull
-docker-compose up -d
-```
-
-### 方式 3: Docker 单容器
+### 方式 2: Docker 单容器
 
 ```bash
 # 拉取镜像
 docker pull kid941005/fund-daily:latest
 
 # 运行
-docker run -d -p 5000:5000 \
-  -e FUND_DAILY_SECRET_KEY=your_secret_key \
-  -v ./data:/app/data \
-  kid941005/fund-daily:latest
+docker run -d -p 5000:5000 kid941005/fund-daily:latest
 ```
 
-# 运行
-docker run --rm fund-daily share 000001,110022
-```
-
-### 方式 3: Web UI
+### 方式 3: 本地运行
 
 ```bash
+# 克隆仓库
+git clone https://github.com/kid941005/fund-daily.git
+cd fund-daily
+
 # 安装依赖
 pip3 install -r requirements.txt
 
@@ -183,6 +155,11 @@ docker-compose logs -f
 
 # 重启
 docker-compose restart
+
+# 更新
+docker-compose down
+docker-compose pull
+docker-compose up -d
 ```
 
 ### 数据持久化
@@ -205,28 +182,13 @@ docker-compose restart
 
 ### 环境变量
 
-在 `.env` 文件中配置：
-
-```bash
-# 安全设置
-FUND_DAILY_SECRET_KEY=your_secret_key  # 会话密钥
-FLASK_ENV=development                   # 生产环境设为 production
-FUND_DAILY_SSL_VERIFY=1               # 0 关闭SSL验证
-
-# 缓存设置
-FUND_DAILY_CACHE_DURATION=300         # 缓存秒数，默认5分钟
-```
-
-### 配置文件
-
-编辑 `config/config.json`：
-
-```json
-{
-  "default_funds": ["000001", "110022", "161725"],
-  "report_time": "15:00"
-}
-```
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| FUND_DAILY_SECRET_KEY | 会话密钥 | 自动生成 |
+| FLASK_ENV | 运行环境 | production |
+| FUND_DAILY_SSL_VERIFY | SSL验证 | 1 |
+| FUND_DAILY_DB_PATH | 数据库路径 | /app/data/fund-daily.db |
+| FUND_CODES | 默认基金代码 | 000001,110022,161725 |
 
 ## 📄 项目结构
 
@@ -242,10 +204,9 @@ fund-daily/
 │   ├── database.py      # SQLite 操作
 │   └── dingtalk.py      # 钉钉通知
 ├── config/              # 配置文件
-├── SKILL.md             # OpenClaw 技能配置
-├── Dockerfile           # CLI 版本
-├── Dockerfile.web       # Web 版本
-└── docker-compose.yml   # Docker 编排
+├── docker-compose.yml    # Docker 编排
+├── Dockerfile           # 容器定义
+└── README.md            # 说明文档
 ```
 
 ## 🛠️ 技术栈
@@ -285,10 +246,6 @@ fund-daily/
 ## 📄 许可证
 
 MIT License
-
-## 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request！
 
 ## 🙏 致谢
 
