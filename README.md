@@ -45,8 +45,14 @@ python3 scripts/fund-daily.py share 000001,110022
 ### 方式 2: Docker 部署
 
 ```bash
-# 构建镜像
-docker build -t fund-daily .
+# 拉取镜像 (Docker Hub)
+docker pull kid941005/fund-daily:latest
+
+# 运行
+docker run -d -p 5000:5000 kid941005/fund-daily:latest
+```
+
+或者使用阿里云镜像：
 
 # 运行
 docker run --rm fund-daily share 000001,110022
