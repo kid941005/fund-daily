@@ -1049,8 +1049,13 @@
         // 加载热门资讯
         async function loadHotNews() {
             console.log('Loading hot news...');
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
             try {
-                const response = await fetch('/api/news?limit=8');
+                const response = await fetch('/api/news?limit=8', { 
+                    signal: controller.signal 
+                });
+                clearTimeout(timeoutId);
                 console.log('News response:', response.status);
                 const data = await response.json();
                 console.log('News data:', data);
@@ -1060,7 +1065,8 @@
                 }
             } catch (e) {
                 console.error('News load error:', e);
-                document.getElementById('hotNewsList').innerHTML = '<div class="error">加载失败: ' + e.message + '</div>';
+                const el = document.getElementById('hotNewsList');
+                if (el) el.innerHTML = '<div class="error">加载超时，请刷新</div>';
             }
         }
         
@@ -1100,15 +1106,21 @@
         // 加载板块数据
         async function loadSectors() {
             console.log('Loading sectors...');
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
             try {
-                const response = await fetch('/api/sectors?limit=10');
+                const response = await fetch('/api/sectors?limit=10', { 
+                    signal: controller.signal 
+                });
+                clearTimeout(timeoutId);
                 console.log('Sectors response:', response.status);
                 const data = await response.json();
                 console.log('Sectors data:', data);
                 if (data.success) renderSectors(data.sectors);
             } catch (e) {
                 console.error('Sectors load error:', e);
-                document.getElementById('sectorList').innerHTML = '<div class="error">加载失败: ' + e.message + '</div>';
+                const el = document.getElementById('sectorList');
+                if (el) el.innerHTML = '<div class="error">加载超时，请刷新</div>';
             }
         }
         
