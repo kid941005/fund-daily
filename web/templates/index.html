@@ -56,6 +56,60 @@
             background: rgba(255,255,255,0.3);
         }
         
+        .user-dropdown {
+            position: absolute;
+            top: 12px;
+            right: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .user-dropdown .username {
+            color: white;
+            font-weight: 500;
+        }
+        
+        .user-dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            min-width: 150px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 1000;
+            overflow: hidden;
+        }
+        
+        .user-dropdown-content.show {
+            display: block;
+        }
+        
+        .user-dropdown-item {
+            display: block;
+            padding: 12px 16px;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+        
+        .user-dropdown-item:hover {
+            background: #f5f5f5;
+        }
+        
+        .user-dropdown-item.export {
+            color: #667eea;
+        }
+        
         @media (min-width: 768px) {
             .header { padding: 20px; }
             .header h1 { font-size: 24px; }
@@ -516,8 +570,18 @@
     <div class="header">
         <h1>📊 Fund Daily</h1>
         <div class="date" id="currentDate">加载中...</div>
+        
         <div class="user-bar" id="userBar">
             <button onclick="showLoginModal()">登录/注册</button>
+        </div>
+        
+        <div class="user-dropdown" id="userDropdown" style="display:none;">
+            <span class="username" id="dropdownUsername" onclick="toggleDropdown()" style="cursor:pointer;">用户名</span>
+            <span style="cursor:pointer;" onclick="toggleDropdown()">▾</span>
+            <div class="user-dropdown-content" id="dropdownMenu">
+                <button class="user-dropdown-item export" onclick="exportData()">📥 导出数据</button>
+                <button class="user-dropdown-item" onclick="logout()">🚪 退出登录</button>
+            </div>
         </div>
     </div>
     
@@ -547,7 +611,11 @@
             <div class="card">
                 <div class="section-title-main">
                     <span>我的持仓</span>
-                    <button class="add-btn" onclick="showAddModal()">+ 添加持仓</button>
+                    <div>
+                        <button class="add-btn" onclick="showImportModal()" style="margin-right:5px;background:#667eea;">📥 导入</button>
+                        <button class="add-btn" onclick="showScreenshotModal()" style="margin-right:5px;background:#43a047;">📷 截图导入</button>
+                        <button class="add-btn" onclick="showAddModal()">+ 添加持仓</button>
+                    </div>
                 </div>
                 <div class="summary-stats" id="holdingsSummary">
                     <div class="stat-box">
@@ -599,6 +667,54 @@
             <div class="modal-buttons">
                 <button class="btn btn-secondary" onclick="hideAddModal()">取消</button>
                 <button class="btn btn-success" onclick="saveHoldings()">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Import Holdings Modal -->
+    <div class="modal" id="importModal">
+        <div class="modal-content">
+            <div class="modal-title">导入持仓</div>
+            <div style="margin-bottom:15px;font-size:13px;color:#666;">
+                <p>方式1: 上传CSV文件 | 方式2: 手动输入</p>
+            </div>
+            <div class="input-group">
+                <label>上传CSV文件（可选）</label>
+                <input type="file" id="importFile" accept=".csv,.txt" onchange="handleImportFile(this)">
+            </div>
+            <div style="text-align:center;margin:10px 0;color:#999;">— 或手动输入 —</div>
+            <div class="input-group">
+                <label>持仓数据（每行：基金代码,基金名称,持仓金额）</label>
+                <textarea id="importData" rows="6" placeholder="000001,华夏成长混合,10000" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:14px;resize:vertical;"></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="hideImportModal()">取消</button>
+                <button class="btn btn-success" onclick="doImport()">导入</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Screenshot Import Modal -->
+    <div class="modal" id="screenshotModal">
+        <div class="modal-content">
+            <div class="modal-title">📷 截图导入持仓</div>
+            <div style="margin-bottom:15px;font-size:13px;color:#666;">
+                <p>上传基金持仓截图，自动识别基金代码和金额</p>
+            </div>
+            <div class="input-group">
+                <label>选择图片</label>
+                <input type="file" id="screenshotFile" accept="image/*" onchange="previewScreenshot(this)">
+            </div>
+            <div id="screenshotPreview" style="display:none;margin:10px 0;">
+                <img id="previewImg" style="max-width:100%;max-height:200px;border-radius:8px;">
+            </div>
+            <div id="ocrResult" style="display:none;margin:10px 0;">
+                <div style="font-weight:bold;margin-bottom:5px;">识别结果：</div>
+                <div id="parsedList" style="font-size:13px;max-height:150px;overflow-y:auto;background:#f5f5f5;padding:10px;border-radius:4px;"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="hideScreenshotModal()">取消</button>
+                <button class="btn btn-primary" onclick="uploadScreenshot()">识别</button>
             </div>
         </div>
     </div>
@@ -665,10 +781,10 @@
         }
         
         function updateUserBar(username) {
-            document.getElementById('userBar').innerHTML = `
-                <span class="username">${username}</span>
-                <button onclick="doLogout()">退出</button>
-            `;
+            document.getElementById('userBar').style.display = 'none';
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.style.display = 'block';
+            document.getElementById('dropdownUsername').textContent = username;
         }
         
         function showLoginModal() {
@@ -763,13 +879,36 @@
                 await fetch('/api/logout', {method: 'POST'});
                 currentUser = null;
                 holdingsData = JSON.parse(localStorage.getItem('fundHoldings') || '[]');
-                document.getElementById('userBar').innerHTML = '<button onclick="showLoginModal()">登录/注册</button>';
+                document.getElementById('userBar').style.display = 'block';
+                document.getElementById('userDropdown').style.display = 'none';
                 loadFunds();
                 switchTab('hot');
             } catch (e) {
                 alert('退出失败');
             }
         }
+        
+        function logout() {
+            doLogout();
+        }
+        
+        function toggleDropdown() {
+            const menu = document.getElementById('dropdownMenu');
+            menu.classList.toggle('show');
+        }
+        
+        function exportData() {
+            const format = confirm('确定要导出CSV格式吗？\n点击"确定"导出CSV，点击"取消"导出JSON') ? 'csv' : 'json';
+            window.location.href = `/api/export?format=${format}`;
+        }
+        
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('userDropdown');
+            const menu = document.getElementById('dropdownMenu');
+            if (dropdown && !dropdown.contains(e.target)) {
+                menu.classList.remove('show');
+            }
+        });
         
         async function loadUserHoldings() {
             try {
@@ -1077,6 +1216,208 @@
             document.getElementById('addModal').style.display = 'none';
             document.getElementById('holdingsCode').value = '';
             document.getElementById('holdingsAmount').value = '';
+        }
+        
+        function showImportModal() {
+            document.getElementById('importModal').style.display = 'flex';
+        }
+        
+        function hideImportModal() {
+            document.getElementById('importModal').style.display = 'none';
+            document.getElementById('importData').value = '';
+            document.getElementById('importFile').value = '';
+        }
+        
+        function handleImportFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('importData').value = e.target.result;
+            };
+            reader.readAsText(file);
+        }
+        
+        async function doImport() {
+            const fileInput = document.getElementById('importFile');
+            
+            // If file is selected, upload via form data
+            if (fileInput.files && fileInput.files[0]) {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                
+                try {
+                    const response = await fetch('/api/import', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert(`成功导入 ${result.imported} 条持仓数据！`);
+                        hideImportModal();
+                        loadUserHoldings();
+                    } else {
+                        alert('导入失败: ' + result.error);
+                    }
+                } catch (e) {
+                    alert('导入失败: ' + e.message);
+                }
+                return;
+            }
+            
+            // Otherwise, use text input
+            const importText = document.getElementById('importData').value.trim();
+            if (!importText) {
+                alert('请输入持仓数据或上传CSV文件');
+                return;
+            }
+            
+            // Parse CSV-like data
+            const lines = importText.split('\n');
+            const data = [];
+            
+            for (let line of lines) {
+                line = line.trim();
+                if (!line) continue;
+                
+                const parts = line.split(',');
+                if (parts.length >= 2) {
+                    const code = parts[0].trim();
+                    const name = parts[1] ? parts[1].trim() : '';
+                    const amount = parts[2] ? parseFloat(parts[2].trim()) || 0 : 0;
+                    
+                    if (code && code.length === 6) {
+                        data.push({ code, name, amount });
+                    }
+                }
+            }
+            
+            if (data.length === 0) {
+                alert('未找到有效的持仓数据');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ format: 'csv', data })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`成功导入 ${result.imported} 条持仓数据！`);
+                    hideImportModal();
+                    loadUserHoldings();
+                } else {
+                    alert('导入失败: ' + result.error);
+                }
+            } catch (e) {
+                alert('导入失败: ' + e.message);
+            }
+        }
+        
+        function showScreenshotModal() {
+            document.getElementById('screenshotModal').style.display = 'flex';
+            document.getElementById('screenshotFile').value = '';
+            document.getElementById('screenshotPreview').style.display = 'none';
+            document.getElementById('ocrResult').style.display = 'none';
+        }
+        
+        function hideScreenshotModal() {
+            document.getElementById('screenshotModal').style.display = 'none';
+        }
+        
+        function previewScreenshot(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('previewImg').src = e.target.result;
+                    document.getElementById('screenshotPreview').style.display = 'block';
+                    document.getElementById('ocrResult').style.display = 'none';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        async function uploadScreenshot() {
+            const fileInput = document.getElementById('screenshotFile');
+            if (!fileInput.files || !fileInput.files[0]) {
+                alert('请先选择图片');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            try {
+                const response = await fetch('/api/import-screenshot', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Show OCR result
+                    document.getElementById('ocrResult').style.display = 'block';
+                    
+                    const parsed = result.parsed || [];
+                    let html = '';
+                    if (parsed.length > 0) {
+                        html = parsed.map((p, i) => `
+                            <div style="margin-bottom:8px;padding:8px;background:white;border-radius:4px;">
+                                <div>基金代码: <input type="text" id="parseCode${i}" value="${p.code}" style="width:80px;padding:4px;"></div>
+                                <div style="margin-top:5px;">金额(元): <input type="number" id="parseAmount${i}" value="${p.amount || ''}" placeholder="请输入金额" style="width:100px;padding:4px;"></div>
+                            </div>
+                        `).join('');
+                        html += `<button class="btn btn-success" style="margin-top:10px;width:100%;" onclick="importParsedData(${parsed.length})">确认导入</button>`;
+                    } else {
+                        html = '<div style="color:#666;">未能识别到基金代码，请尝试手动输入</div>';
+                    }
+                    document.getElementById('parsedList').innerHTML = html;
+                } else {
+                    alert('识别失败: ' + result.error);
+                }
+            } catch (e) {
+                alert('上传失败: ' + e.message);
+            }
+        }
+        
+        async function importParsedData(count) {
+            const data = [];
+            for (let i = 0; i < count; i++) {
+                const code = document.getElementById('parseCode' + i).value.trim();
+                const amount = parseFloat(document.getElementById('parseAmount' + i).value) || 0;
+                if (code && amount > 0) {
+                    data.push({ code, amount });
+                }
+            }
+            
+            if (data.length === 0) {
+                alert('没有有效的持仓数据');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ format: 'csv', data })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`成功导入 ${result.imported} 条持仓数据！`);
+                    hideScreenshotModal();
+                    loadUserHoldings();
+                } else {
+                    alert('导入失败: ' + result.error);
+                }
+            } catch (e) {
+                alert('导入失败: ' + e.message);
+            }
         }
         
         async function saveHoldings() {

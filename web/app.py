@@ -452,6 +452,243 @@ def export_holdings():
         }
     )
 
+@app.route('/api/import', methods=['POST'])
+@login_required
+def import_holdings():
+    """Import holdings data from CSV file or JSON"""
+    import csv
+    import io
+    
+    user_id = session.get('user_id')
+    
+    # Check if file is uploaded
+    if 'file' in request.files and request.files['file']:
+        file = request.files['file']
+        content = file.read().decode('utf-8')
+        import_format = 'csv'
+    else:
+        # Get data from JSON request
+        data = request.json
+        import_format = data.get('format', 'csv').lower() if data else 'csv'
+        content = None
+        import_data = data.get('data', []) if data else []
+    
+    # Parse CSV content if file was uploaded
+    if content:
+        import_data = []
+        lines = content.strip().split('\n')
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            # Handle CSV format
+            parts = line.split(',')
+            if len(parts) >= 2:
+                code = parts[0].strip()
+                name = parts[1].strip() if len(parts) > 1 else ''
+                amount = 0
+                if len(parts) > 2:
+                    try:
+                        amount = float(parts[2].strip().replace(',', ''))
+                    except:
+                        amount = 0
+                if code and len(code) == 6:
+                    import_data.append({'code': code, 'name': name, 'amount': amount})
+    
+    if not import_data:
+        return jsonify({"success": False, "error": "没有导入数据"})
+    
+    # Get current holdings
+    holdings = get_user_holdings(user_id)
+    existing_codes = {h['code']: h for h in holdings}
+    
+    imported_count = 0
+    errors = []
+    
+    # Field mapping (Chinese to English)
+    field_map = {
+        '基金代码': 'code',
+        '基金名称': 'name',
+        '持仓金额': 'amount',
+        'amount': 'amount',
+        'code': 'code',
+    }
+    
+    for item in import_data:
+        try:
+            # Get fund code
+            code = item.get('code', '')
+            if not code:
+                # Try Chinese field name
+                code = item.get('基金代码', '')
+            
+            if not code:
+                errors.append(f"缺少基金代码: {item}")
+                continue
+            
+            code = str(code).strip()
+            
+            # Get amount
+            amount = item.get('amount', 0)
+            if isinstance(amount, str):
+                amount = float(amount.replace(',', '')) if amount else 0
+            else:
+                amount = float(amount) if amount else 0
+            
+            # Get name (optional)
+            name = item.get('name', item.get('基金名称', ''))
+            
+            # Validate fund exists
+            fund_data = fetch_fund_data_eastmoney(code)
+            if 'error' in fund_data or not fund_data.get('fundcode'):
+                errors.append(f"基金代码 {code} 不存在")
+                continue
+            
+            # Use fetched name if not provided
+            if not name:
+                name = fund_data.get('name', code)
+            
+            # Update or add
+            if code in existing_codes:
+                existing_codes[code]['amount'] = amount
+                existing_codes[code]['name'] = name
+            else:
+                holdings.append({
+                    'code': code,
+                    'name': name,
+                    'amount': amount
+                })
+                existing_codes[code] = holdings[-1]
+            
+            imported_count += 1
+            
+        except Exception as e:
+            errors.append(f"处理失败: {item}, 错误: {str(e)}")
+    
+    # Save updated holdings
+    save_user_holdings(user_id, holdings)
+    
+    return jsonify({
+        "success": True,
+        "imported": imported_count,
+        "total": len(holdings),
+        "errors": errors[:10]  # Limit error messages
+    })
+
+@app.route('/api/import-screenshot', methods=['POST'])
+@login_required
+def import_from_screenshot():
+    """Import holdings from screenshot using OCR"""
+    import re
+    import subprocess
+    import json
+    
+    user_id = session.get('user_id')
+    
+    # Check if image file is uploaded
+    if 'file' not in request.files:
+        return jsonify({"success": False, "error": "请上传图片"})
+    
+    file = request.files['file']
+    if not file.filename:
+        return jsonify({"success": False, "error": "请选择图片文件"})
+    
+    # Save uploaded file temporarily
+    import tempfile
+    import os
+    
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
+        filepath = tmp.name
+        file.save(filepath)
+    
+    try:
+        # Use image-vision skill to OCR
+        ocr_script = os.path.expanduser("~/.openclaw/main/skills/image-vision/scripts/image_vision.py")
+        
+        if os.path.exists(ocr_script):
+            result = subprocess.run(
+                ['python3', ocr_script, 'ocr', filepath],
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+            
+            if result.returncode == 0:
+                try:
+                    ocr_result = json.loads(result.stdout)
+                    text = ocr_result.get('text', '')
+                except:
+                    text = result.stdout
+            else:
+                text = ""
+        else:
+            # Fallback: return error
+            return jsonify({
+                "success": False, 
+                "error": "OCR工具未安装",
+                "hint": "请安装: sudo apt install tesseract-ocr tesseract-ocr-chi-sim"
+            })
+        
+        # Parse fund information from OCR text
+        # Expected patterns:
+        # - 6-digit fund codes: 000001, 110022, etc.
+        # - Amounts: 10000, 10,000, etc.
+        
+        # Find 6-digit codes
+        fund_codes = re.findall(r'\b(\d{6})\b', text)
+        
+        # Find amounts (with or without comma)
+        amounts = re.findall(r'[￥¥]?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*元?', text)
+        
+        # Try to match codes with amounts
+        parsed = []
+        
+        # Simple parsing: assume each code corresponds to an amount found nearby
+        # This is a heuristic and may need manual adjustment
+        
+        # Find lines with fund codes and try to extract amounts
+        lines = text.split('\n')
+        for line in lines:
+            code_match = re.search(r'(\d{6})', line)
+            amount_match = re.search(r'(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)', line)
+            
+            if code_match:
+                code = code_match.group(1)
+                amount = 0
+                if amount_match:
+                    amt_str = amount_match.group(1).replace(',', '')
+                    amount = float(amt_str)
+                
+                if amount > 0:  # Only include if we found an amount
+                    parsed.append({'code': code, 'amount': amount, 'source': line.strip()})
+                elif len(parsed) < len(fund_codes) and fund_codes[len(parsed)] == code:
+                    # Mark code for later
+                    parsed.append({'code': code, 'amount': None, 'source': line.strip()})
+        
+        # Filter valid codes (6 digits, likely fund codes)
+        valid_codes = []
+        for p in parsed:
+            code = p['code']
+            # Check if it's a valid fund code (starts with 0, 1, 2, 3, 5, 6)
+            if code[0] in ['0', '1', '2', '3', '5', '6']:
+                valid_codes.append(p)
+        
+        return jsonify({
+            "success": True,
+            "ocr_text": text[:500],  # First 500 chars for preview
+            "parsed": valid_codes,
+            "message": f"识别到 {len(valid_codes)} 个基金代码，请确认金额后导入"
+        })
+        
+    except subprocess.TimeoutExpired:
+        return jsonify({"success": False, "error": "OCR识别超时"})
+    except Exception as e:
+        return jsonify({"success": False, "error": f"识别失败: {str(e)}"})
+    finally:
+        # Clean up temp file
+        if os.path.exists(filepath):
+            os.remove(filepath)
+
 @app.route('/api/add-fund', methods=['POST'])
 def add_fund():
     """Add fund to watchlist (legacy, for non-logged in users)"""
