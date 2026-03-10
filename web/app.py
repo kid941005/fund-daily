@@ -44,13 +44,6 @@ def import_fund_module():
 # Initialize database
 db.init_db()
 
-# Migrate from JSON if exists
-json_users_file = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/users.json")
-if os.path.exists(json_users_file) and os.path.getsize(json_users_file) > 10:
-    print("Migrating data from JSON to SQLite...")
-    # Note: Migration needs to be done manually for now
-    # db.migrate_from_json(json_users_file)
-
 def import_fund_module():
     script_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scripts', 'fund-daily.py')
     spec = importlib.util.spec_from_file_location("fund_daily", script_path)
@@ -96,16 +89,6 @@ def verify_password(password, stored_hash):
         return new_hash == stored_hash
     except:
         return False
-
-def load_users():
-    """Load users from database (for compatibility)"""
-    # Return a dict-like structure for compatibility
-    # In production, use db.get_user_by_* functions directly
-    return {}  # Legacy - no longer needed with SQLite
-
-def save_users(users):
-    """Save users to file (legacy - no longer needed)"""
-    pass
 
 def get_user_holdings(user_id):
     """Get user's holdings from database"""
