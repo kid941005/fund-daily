@@ -42,17 +42,42 @@ pip3 install -r requirements.txt
 python3 scripts/fund-daily.py share 000001,110022
 ```
 
-### 方式 2: Docker 部署
+### 方式 2: Docker Compose 部署（推荐）
 
 ```bash
-# 拉取镜像 (Docker Hub)
+# 克隆仓库
+git clone https://github.com/kid941005/fund-daily.git
+cd fund-daily
+
+# 启动服务
+docker-compose up -d
+
+# 访问 http://localhost:5000
+```
+
+**版本说明**：
+- `kid941005/fund-daily:latest` - 最新版
+- `kid941005/fund-daily:1.5.2` - 指定版本
+
+**更新部署**：
+```bash
+docker-compose down
+docker-compose pull
+docker-compose up -d
+```
+
+### 方式 3: Docker 单容器
+
+```bash
+# 拉取镜像
 docker pull kid941005/fund-daily:latest
 
 # 运行
-docker run -d -p 5000:5000 kid941005/fund-daily:latest
+docker run -d -p 5000:5000 \
+  -e FUND_DAILY_SECRET_KEY=your_secret_key \
+  -v ./data:/app/data \
+  kid941005/fund-daily:latest
 ```
-
-或者使用阿里云镜像：
 
 # 运行
 docker run --rm fund-daily share 000001,110022
@@ -124,13 +149,47 @@ python3 scripts/fund-daily.py advice
 
 ## 🐳 Docker Compose
 
+### 快速启动
+
 ```bash
-# 启动所有服务
+# 克隆并启动
+git clone https://github.com/kid941005/fund-daily.git
+cd fund-daily
+docker-compose up -d
+```
+
+### 配置说明
+
+`docker-compose.yml` 已包含默认配置：
+
+| 配置 | 值 |
+|------|-----|
+| 端口 | 5000 |
+| 时区 | Asia/Shanghai |
+| 数据库 | /app/data/fund-daily.db |
+| 自动重启 | ✅ |
+
+### 管理命令
+
+```bash
+# 启动
 docker-compose up -d
 
-# 服务列表
-- fund-daily-web: http://localhost:5000 (Web UI)
+# 停止
+docker-compose down
+
+# 查看日志
+docker-compose logs -f
+
+# 重启
+docker-compose restart
 ```
+
+### 数据持久化
+
+数据存储在 `data/` 目录：
+- `data/fund-daily.db` - SQLite 数据库
+- `data/` 目录会在首次运行时自动创建
 
 ## 📋 常用基金代码
 
