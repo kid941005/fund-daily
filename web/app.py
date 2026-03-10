@@ -9,26 +9,25 @@ import sys
 import json
 import hashlib
 import secrets
-from datetime import datetime, timedelta
-from functools import lru_cache
+from datetime import datetime
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from flask import Flask, render_template, jsonify, request, send_from_directory, session, redirect, url_for
 from flask_cors import CORS
-from flask import Flask, session
 from functools import wraps
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
-# Secret key for sessions
-app.secret_key = "fund-daily-secret-key-2026"
+# Secret key for sessions - use environment variable with fallback
+app.secret_key = os.environ.get('FUND_DAILY_SECRET_KEY') or secrets.token_hex(32)
 
 # Configure session
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
 
 # Import fund functions - dynamic import to handle hyphenated filename
 import importlib.util
@@ -61,9 +60,23 @@ os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
 
 # ============== User Account System ==============
 
-def hash_password(password):
+def hash_password(password, salt=None):
     """Hash password with salt"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    if salt is None:
+        salt = secrets.token_hex(16)
+    # Use PBKDF2 for secure password hashing
+    import hashlib
+    key = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+    return f"{salt}${key.hex()}"
+
+def verify_password(password, stored_hash):
+    """Verify password against stored hash"""
+    try:
+        salt, key = stored_hash.split('$')
+        new_hash = hash_password(password, salt)
+        return new_hash == stored_hash
+    except:
+        return False
 
 def load_users():
     """Load users from file"""
@@ -167,8 +180,18 @@ def login():
     user_id = None
     for uid, user in users.items():
         if user.get('username') == username:
-            if user.get('password') == hash_password(password):
-                user_id = uid
+            stored_hash = user.get('password', '')
+            # Support both old SHA256 (no $) and new PBKDF2 (with $) hashes
+            if '$' in stored_hash:
+                if verify_password(password, stored_hash):
+                    user_id = uid
+            else:
+                # Legacy: old SHA256 hash without salt
+                if stored_hash == hashlib.sha256(password.encode()).hexdigest():
+                    user_id = uid
+                    # Upgrade to new hash format
+                    users[uid]['password'] = hash_password(password)
+                    save_users(users)
             break
     
     if not user_id:

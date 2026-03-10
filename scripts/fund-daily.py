@@ -6,18 +6,76 @@ Fetches fund data, analyzes trends, and generates daily reports
 
 import sys
 import json
+import re
 import urllib.request
 import urllib.error
 import ssl
+import os
+import logging
+import time
 from datetime import datetime, timedelta
 
-ctx = ssl.create_default_context()
-ctx.check_hostname = False
-ctx.verify_mode = ssl.CERT_NONE
+# ============== Logging Setup ==============
+def setup_logging(level=logging.INFO):
+    """Setup logging configuration"""
+    logging.basicConfig(
+        level=level,
+        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    return logging.getLogger('fund-daily')
+
+logger = setup_logging()
+
+# ============== SSL Setup ==============
+# SSL context - verify certificates by default, disable only if explicitly set
+if os.environ.get('FUND_DAILY_SSL_VERIFY', '1') == '0':
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+else:
+    ctx = ssl.create_default_context()
+
+# ============== Cache Settings ==============
+# Cache duration in seconds (default 5 minutes)
+CACHE_DURATION = int(os.environ.get('FUND_DAILY_CACHE_DURATION', 300))
+
+# Simple cache storage
+_cache = {}
+
+def get_cache(key):
+    """Get value from cache if not expired"""
+    if key in _cache:
+        value, timestamp = _cache[key]
+        if time.time() - timestamp < CACHE_DURATION:
+            logger.debug(f"Cache hit: {key}")
+            return value
+        else:
+            del _cache[key]
+            logger.debug(f"Cache expired: {key}")
+    return None
+
+def set_cache(key, value):
+    """Set value in cache"""
+    _cache[key] = (value, time.time())
+    logger.debug(f"Cache set: {key}")
+
+def clear_cache():
+    """Clear all cache"""
+    global _cache
+    _cache = {}
+    logger.info("Cache cleared")
 
 def fetch_fund_data_eastmoney(fund_code):
-    """Fetch fund data from East Money web API"""
+    """Fetch fund data from East Money web API with caching"""
+    # Check cache first
+    cache_key = f"fund:{fund_code}"
+    cached = get_cache(cache_key)
+    if cached is not None:
+        return cached
+    
     try:
+        logger.info(f"Fetching fund data: {fund_code}")
         # East Money web API (more stable)
         url = f"https://fundgz.1234567.com.cn/js/{fund_code}.js?rt=1463558676006"
         
@@ -34,10 +92,17 @@ def fetch_fund_data_eastmoney(fund_code):
             # Parse JSONP format: jsonpgz({...})
             if content.startswith('jsonpgz('):
                 json_str = content[8:-2]  # Remove jsonpgz( and );
-                return json.loads(json_str)
+                result = json.loads(json_str)
+                set_cache(cache_key, result)
+                return result
+            logger.warning(f"Invalid response format for fund {fund_code}")
             return {"error": "Invalid response format"}
             
+    except urllib.error.HTTPError as e:
+        logger.error(f"HTTP error fetching fund {fund_code}: {e.code} {e.reason}")
+        return {"error": f"HTTP {e.code}"}
     except Exception as e:
+        logger.error(f"Error fetching fund {fund_code}: {str(e)}")
         return {"error": str(e)}
 
 def analyze_fund(fund_data):
@@ -158,8 +223,15 @@ def format_report_for_share(report):
     return "\n".join(lines)
 
 def fetch_market_hot_news(limit=8):
-    """Fetch market hot news from East Money with real links"""
+    """Fetch market hot news from East Money with caching"""
+    # Check cache first
+    cache_key = f"news:{limit}"
+    cached = get_cache(cache_key)
+    if cached is not None:
+        return cached
+    
     try:
+        logger.info(f"Fetching market news, limit={limit}")
         # East Money 7x24快讯 API
         url = "https://newsapi.eastmoney.com/kuaixun/v1/getlist_102_ajaxResult_50_1_.html"
         req = urllib.request.Request(
@@ -188,72 +260,63 @@ def fetch_market_hot_news(limit=8):
                         "summary": item.get('digest', '')[:100] if item.get('digest') else '',
                         "url": url
                     })
+                set_cache(cache_key, news_list)
                 return news_list
     except Exception as e:
-        print(f"News fetch error: {e}", file=sys.stderr)
+        logger.error(f"News fetch error: {str(e)}")
     
     # Fallback - return empty instead of demo data
     return []
 
 def fetch_hot_sectors(limit=10):
-    """Fetch hot sectors from East Money"""
+    """Fetch hot sectors from East Money with caching"""
+    # Check cache first
+    cache_key = f"sectors:{limit}"
+    cached = get_cache(cache_key)
+    if cached is not None:
+        return cached
+    
     try:
-        url = "https://data.eastmoney.com/bkzj/hy.html"
-        req = urllib.request.Request(
-            url,
-            headers={
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Referer': 'https://data.eastmoney.com/'
-            }
-        )
+        logger.info(f"Fetching hot sectors, limit={limit}")
         
-        with urllib.request.urlopen(req, context=ctx, timeout=10) as response:
-            html = response.read().decode('utf-8')
+        # Use East Money API for sector data
+        url = "https://push2.eastmoney.com/api/qt/clist/get"
+        params = {
+            "pn": 1,
+            "pz": limit,
+            "po": 1,
+            "np": 1,
+            "ut": "bd1d9ddb04089700cf9c27f6f7426281",
+            "fltt": 2,
+            "invt": 2,
+            "fid": "f3",
+            "fs": "m:90+t:2",
+            "fields": "f1,f2,f3,f4,f12,f13,f14"
+        }
+        query_string = urllib.parse.urlencode(params)
+        url = f"{url}?{query_string}"
+        
+        req = urllib.request.Request(url, headers={
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        })
+        
+        with urllib.request.urlopen(req, context=ctx, timeout=10) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            diff = data.get('data', {}).get('diff', [])
             
-            # Extract sector data from HTML
-            import re
             sectors = []
+            for item in diff:
+                sectors.append({
+                    "name": item.get('f14', ''),
+                    "change": item.get('f3', 0),
+                    "code": item.get('f12', '')
+                })
             
-            # Try to find sector data in script tags
-            pattern = r'var[^=]*=\{?"[^"]*":\s*\[(.*?)\]\}'
-            matches = re.findall(pattern, html, re.DOTALL)
+            set_cache(cache_key, sectors)
+            return sectors[:limit]
             
-            # Fallback: use a simpler approach with common sector data
-            # Since the page structure is complex, return mock data for demo
-            # In production, you'd parse the actual API response
-            url2 = "https://push2.eastmoney.com/api/qt/clist/get"
-            params = {
-                "pn": 1,
-                "pz": limit,
-                "po": 1,
-                "np": 1,
-                "ut": "bd1d9ddb04089700cf9c27f6f7426281",
-                "fltt": 2,
-                "invt": 2,
-                "fid": "f3",
-                "fs": "m:90+t:2",
-                "fields": "f1,f2,f3,f4,f12,f13,f14"
-            }
-            query_string = urllib.parse.urlencode(params)
-            url2 = f"{url2}?{query_string}"
-            
-            req2 = urllib.request.Request(url2, headers={
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            })
-            
-            with urllib.request.urlopen(req2, context=ctx, timeout=10) as resp:
-                data = json.loads(resp.read().decode('utf-8'))
-                diff = data.get('data', {}).get('diff', [])
-                
-                for item in diff:
-                    sectors.append({
-                        "name": item.get('f14', ''),
-                        "change": item.get('f3', 0),
-                        "code": item.get('f12', '')
-                    })
-                return sectors[:limit]
     except Exception as e:
-        print(f"Error fetching sectors: {e}", file=sys.stderr)
+        logger.error(f"Error fetching sectors: {str(e)}")
         return []
 
 def generate_advice(funds):
@@ -317,7 +380,6 @@ def get_fund_detail_info(code):
             content = response.read().decode('utf-8')
             
             # Extract metrics
-            import re
             
             #收益率
             syl_1n = re.search(r'syl_1n="([^"]+)"', content)
@@ -372,39 +434,91 @@ def get_fund_detail_info(code):
         return {"error": str(e), "fund_code": code}
 
 def calculate_risk_metrics(month_1, month_3, year_1):
-    """Calculate risk metrics based on returns"""
-    # 简化的风险指标计算
-    # 实际应该基于历史净值数据计算标准差和最大回撤
+    """Calculate risk metrics based on returns
     
-    # 风险等级评估
-    if year_1 > 30:
+    Args:
+        month_1: 近1月收益率 (%)
+        month_3: 近3月收益率 (%)
+        year_1: 近1年收益率 (%)
+    
+    Returns:
+        dict: 风险指标
+    """
+    # 解析输入（处理字符串如 "3.21%" 或 None）
+    def parse_return(val):
+        if val is None:
+            return 0.0
+        if isinstance(val, (int, float)):
+            return float(val)
+        # 去除 % 符号
+        return float(str(val).replace('%', '').strip()) if val else 0.0
+    
+    m1 = parse_return(month_1)
+    m3 = parse_return(month_3)
+    y1 = parse_return(year_1)
+    
+    # 1. 风险等级评估 - 综合考虑收益和波动
+    # 使用年化收益和波动幅度综合判断
+    volatility = abs(m3 - m1)  # 近1月vs近3月的差异作为波动指标
+    risk_score = 0
+    
+    # 基于年化收益
+    if y1 > 30:
+        risk_score += 4
+    elif y1 > 15:
+        risk_score += 3
+    elif y1 > 5:
+        risk_score += 2
+    else:
+        risk_score += 1
+    
+    # 基于波动性（波动越大风险越高）
+    if volatility > 15:
+        risk_score += 4
+    elif volatility > 10:
+        risk_score += 3
+    elif volatility > 5:
+        risk_score += 2
+    else:
+        risk_score += 1
+    
+    # 确定风险等级
+    if risk_score >= 7:
         risk_level = "高风险"
-        risk_score = 8
-    elif year_1 > 15:
+    elif risk_score >= 5:
         risk_level = "中高风险"
-        risk_score = 6
-    elif year_1 > 5:
+    elif risk_score >= 3:
         risk_level = "中等风险"
-        risk_score = 4
     else:
         risk_level = "中低风险"
-        risk_score = 2
     
-    # 波动性评估（基于不同周期的收益率差异）
-    volatility = abs(month_3 - month_1) / 3 if month_1 else 0
+    # 2. 年化波动率（简化估算）
+    # 使用不同周期收益率的标准差估算
+    returns = [m1, m3, y1 / 12]  # 将年化转为月化
+    std_dev = (max(returns) - min(returns)) / 2 if len(returns) > 1 else 0
     
-    # 收益风险比（简化版）
-    if volatility > 0:
-        return_ratio = year_1 / volatility if volatility > 0 else 0
+    # 3. 夏普比率（简化版，假设无风险利率 3%）
+    risk_free_rate = 3.0
+    if std_dev > 0:
+        sharpe_ratio = (y1 - risk_free_rate) / (std_dev * 12)  # 年化
     else:
-        return_ratio = 0
+        sharpe_ratio = 0
+    
+    # 4. 最大回撤估算（基于波动性的简化估算）
+    # 波动越大，可能回撤越大
+    estimated_max_drawdown = min(volatility * 1.5, 50)  # 估算上限50%
+    
+    # 5. 收益风险比
+    return_ratio = y1 / volatility if volatility > 0 else 0
     
     return {
         "risk_level": risk_level,
         "risk_score": risk_score,
         "volatility": round(volatility, 2),
+        "sharpe_ratio": round(sharpe_ratio, 2),
+        "estimated_max_drawdown": round(estimated_max_drawdown, 2),
         "return_ratio": round(return_ratio, 2),
-        "suggestion": get_risk_suggestion(risk_level, year_1)
+        "suggestion": get_risk_suggestion(risk_level, y1)
     }
 
 def get_risk_suggestion(risk_level, year_return):
