@@ -13,7 +13,8 @@
 | 🧠 市场情绪 | 综合板块+新闻计算市场情绪得分 |
 | 📉 风险分析 | 夏普比率、最大回撤、风险评分 |
 | 💰 持仓管理 | 用户账号系统，添加/修改持仓 |
-| 📥 数据导出 | CSV/JSON格式导出持仓数据 |
+| 📥 数据导入 | CSV文件/截图OCR识别导入 |
+| 📤 数据导出 | CSV/JSON格式导出持仓数据 |
 | 📋 每日报告 | 生成多基金对比报告 |
 | 💬 分享格式 | 一键生成适合分享的文字 |
 | 🌐 Web UI | 可视化界面，操作建议 |
@@ -104,6 +105,7 @@ python3 scripts/fund-daily.py advice
 
 - 注册账号：点击右上角"登录/注册"
 - 添加持仓：在"持仓"页面点击"+ 添加持仓"
+- 导入数据：支持 CSV 文件上传 或 截图 OCR 识别
 - 导出数据：登录后点击右上角用户名 → "导出数据"
 
 ## 🐳 Docker Compose
@@ -114,7 +116,6 @@ docker-compose up -d
 
 # 服务列表
 - fund-daily-web: http://localhost:5000 (Web UI)
-- fund-daily-cron: 定时推送服务
 ```
 
 ## 📋 常用基金代码
@@ -162,14 +163,23 @@ fund-daily/
 │   └── fund-daily.py    # 主程序
 ├── web/                  # Web UI
 │   ├── app.py           # Flask 应用
-│   ├── templates/        # HTML 模板
+│   ├── templates/       # HTML 模板
 │   └── static/          # 静态资源
+├── db/                   # 数据库
+│   └── database.py      # SQLite 操作
 ├── config/              # 配置文件
 ├── SKILL.md             # OpenClaw 技能配置
 ├── Dockerfile           # CLI 版本
 ├── Dockerfile.web       # Web 版本
 └── docker-compose.yml   # Docker 编排
 ```
+
+## 🛠️ 技术栈
+
+- **后端**: Flask + SQLite
+- **前端**: HTML + CSS + JavaScript (PWA)
+- **数据源**: 东方财富公开 API
+- **OCR**: Tesseract (截图识别)
 
 ## ⚠️ 免责声明
 
@@ -188,4 +198,4 @@ MIT License
 ## 🙏 致谢
 
 - 数据来源：[东方财富](https://fund.eastmoney.com/)
-- 参考项目：[daily_stock_analysis](https://github.com/ZhuLinsen/daily_stock_analysis)
+- OCR 引擎：[Tesseract](https://github.com/tesseract-ocr/tesseract)
