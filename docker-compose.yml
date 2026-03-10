@@ -9,7 +9,7 @@ services:
     environment:
       - TZ=Asia/Shanghai
       - FLASK_ENV=production
-      - FUND_DAILY_SECRET_KEY=${FUND_DAILY_SECRET_KEY:-}
+      - FUND_DAILY_SECRET_KEY=db9bde58bbf336f7c33ada3870a3811b16d3c5222bcb20c2e949cada81864b33
       - FUND_DAILY_SSL_VERIFY=1
       - FUND_DAILY_DB_PATH=/app/data/fund-daily.db
       - FUND_CODES=000001,110022,161725
