@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY web/ ./web/
 COPY scripts/fund-daily.py ./scripts/
+COPY db/ ./db/
 
 RUN mkdir -p /app/data
 
