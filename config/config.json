@@ -1,9 +1,24 @@
 {
   "default_funds": ["000001", "110022", "161725"],
   "report_time": "15:00",
+  "alert_threshold": 3.0,
+  "alert_cooldown": 3600,
+  "check_interval": 300,
+  "dingtalk": {
+    "enabled": false,
+    "webhook": ""
+  },
   "telegram": {
     "enabled": false,
     "bot_token": "",
     "chat_id": ""
+  },
+  "email": {
+    "enabled": false,
+    "smtp_server": "",
+    "smtp_port": 587,
+    "username": "",
+    "password": "",
+    "to_addr": ""
   }
 }

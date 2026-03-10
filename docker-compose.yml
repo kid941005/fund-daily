@@ -7,12 +7,33 @@ services:
     ports:
       - "5000:5000"
     environment:
+      # 时区
       - TZ=Asia/Shanghai
+      # Flask配置
       - FLASK_ENV=production
-      - FUND_DAILY_SECRET_KEY=db9bde58bbf336f7c33ada3870a3811b16d3c5222bcb20c2e949cada81864b33
-      - FUND_DAILY_SSL_VERIFY=1
+      - FUND_DAILY_SECRET_KEY=${FUND_DAILY_SECRET_KEY:-db9bde58bbf336f7c33ada3870a3811b16d3c5222bcb20c2e949cada81864b33}
+      - FUND_DAILY_SSL_VERIFY=${FUND_DAILY_SSL_VERIFY:-1}
       - FUND_DAILY_DB_PATH=/app/data/fund-daily.db
-      - FUND_CODES=000001,110022,161725
+      - FUND_DAILY_CACHE_DURATION=${FUND_DAILY_CACHE_DURATION:-300}
+      # 基金配置
+      - FUND_CODES=${FUND_CODES:-000001,110022,161725}
+      # 报告配置
+      - REPORT_TIME=${REPORT_TIME:-15:00}
+      # 涨跌幅提醒
+      - ALERT_THRESHOLD=${ALERT_THRESHOLD:-3.0}
+      - ALERT_COOLDOWN=${ALERT_COOLDOWN:-3600}
+      - CHECK_INTERVAL=${CHECK_INTERVAL:-300}
+      # 钉钉通知 (可选)
+      - DINGTALK_WEBHOOK=${DINGTALK_WEBHOOK:-}
+      # Telegram通知 (可选)
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+      # 邮件通知 (可选)
+      - SMTP_SERVER=${SMTP_SERVER:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - MAIL_TO=${MAIL_TO:-}
     volumes:
       - ./data:/app/data
       - ./config:/app/config

@@ -596,7 +596,7 @@
             <span style="cursor:pointer;" onclick="toggleDropdown()">▾</span>
             <div class="user-dropdown-content" id="dropdownMenu">
                 <button class="user-dropdown-item export" onclick="exportData()">📥 导出数据</button>
-                <button class="user-dropdown-item" onclick="showDingTalkSettings()">🔔 钉钉通知</button>
+                <button class="user-dropdown-item" onclick="showSettingsModal()">⚙️ 设置</button>
                 <button class="user-dropdown-item" onclick="logout()">🚪 退出登录</button>
             </div>
         </div>
@@ -769,6 +769,113 @@
             <div class="modal-body" id="newsModalBody"></div>
         </div>
     </div>
+    
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content" style="max-width:600px;max-height:90vh;overflow-y:auto;">
+            <div class="modal-title">
+                <span>⚙️ 设置</span>
+                <span class="modal-close" onclick="closeSettingsModal()">&times;</span>
+            </div>
+            <div class="modal-body" style="padding:20px;">
+                <!-- 基础设置 -->
+                <div style="margin-bottom:25px;">
+                    <h4 style="margin:0 0 15px 0;color:#333;border-bottom:1px solid #eee;padding-bottom:8px;">📊 基础设置</h4>
+                    <div class="input-group">
+                        <label>默认基金代码</label>
+                        <input type="text" id="configFundCodes" placeholder="用逗号分隔，如: 000001,110022,161725" style="width:100%;">
+                        <small style="color:#999;">多个基金代码用逗号分隔</small>
+                    </div>
+                    <div class="input-group">
+                        <label>报告发送时间</label>
+                        <input type="time" id="configReportTime" style="width:100%;">
+                    </div>
+                </div>
+                
+                <!-- 涨跌幅提醒 -->
+                <div style="margin-bottom:25px;">
+                    <h4 style="margin:0 0 15px 0;color:#333;border-bottom:1px solid #eee;padding-bottom:8px;">🔔 涨跌幅提醒</h4>
+                    <div class="input-group">
+                        <label>涨跌幅阈值 (%)</label>
+                        <input type="number" id="configAlertThreshold" placeholder="3.0" step="0.1" min="0" max="20" style="width:100%;">
+                        <small style="color:#999;">超过此涨跌幅时发送提醒，默认 3%</small>
+                    </div>
+                    <div class="input-group">
+                        <label>提醒冷却时间 (秒)</label>
+                        <input type="number" id="configAlertCooldown" placeholder="3600" step="100" min="60" style="width:100%;">
+                        <small style="color:#999;">同一基金提醒间隔，默认 3600秒 (1小时)</small>
+                    </div>
+                </div>
+                
+                <!-- 钉钉通知 -->
+                <div style="margin-bottom:25px;">
+                    <h4 style="margin:0 0 15px 0;color:#333;border-bottom:1px solid #eee;padding-bottom:8px;">
+                        <label style="display:flex;align-items:center;cursor:pointer;">
+                            <input type="checkbox" id="configDingtalkEnabled" style="margin-right:8px;">
+                            🔔 钉钉通知
+                        </label>
+                    </h4>
+                    <div class="input-group">
+                        <label>Webhook 地址</label>
+                        <input type="text" id="configDingtalkWebhook" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxx" style="width:100%;">
+                    </div>
+                </div>
+                
+                <!-- Telegram -->
+                <div style="margin-bottom:25px;">
+                    <h4 style="margin:0 0 15px 0;color:#333;border-bottom:1px solid #eee;padding-bottom:8px;">
+                        <label style="display:flex;align-items:center;cursor:pointer;">
+                            <input type="checkbox" id="configTelegramEnabled" style="margin-right:8px;">
+                            🐦 Telegram
+                        </label>
+                    </h4>
+                    <div class="input-group">
+                        <label>Bot Token</label>
+                        <input type="text" id="configTelegramToken" placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz" style="width:100%;">
+                    </div>
+                    <div class="input-group">
+                        <label>Chat ID</label>
+                        <input type="text" id="configTelegramChatId" placeholder="123456789" style="width:100%;">
+                    </div>
+                </div>
+                
+                <!-- 邮件通知 -->
+                <div style="margin-bottom:25px;">
+                    <h4 style="margin:0 0 15px 0;color:#333;border-bottom:1px solid #eee;padding-bottom:8px;">
+                        <label style="display:flex;align-items:center;cursor:pointer;">
+                            <input type="checkbox" id="configEmailEnabled" style="margin-right:8px;">
+                            📧 邮件通知
+                        </label>
+                    </h4>
+                    <div class="input-group">
+                        <label>SMTP 服务器</label>
+                        <input type="text" id="configSmtpServer" placeholder="smtp.qq.com" style="width:100%;">
+                    </div>
+                    <div class="input-group">
+                        <label>SMTP 端口</label>
+                        <input type="number" id="configSmtpPort" placeholder="587" style="width:100%;">
+                    </div>
+                    <div class="input-group">
+                        <label>用户名</label>
+                        <input type="text" id="configSmtpUsername" placeholder="your@email.com" style="width:100%;">
+                    </div>
+                    <div class="input-group">
+                        <label>密码/授权码</label>
+                        <input type="password" id="configSmtpPassword" placeholder="授权码" style="width:100%;">
+                    </div>
+                    <div class="input-group">
+                        <label>收件人</label>
+                        <input type="email" id="configMailTo" placeholder="recipient@example.com" style="width:100%;">
+                    </div>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button class="btn btn-secondary" onclick="closeSettingsModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         let holdingsData = [];
@@ -802,6 +909,99 @@
             const dropdown = document.getElementById('userDropdown');
             dropdown.style.display = 'block';
             document.getElementById('dropdownUsername').textContent = username;
+        }
+        
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+        
+        async function showSettingsModal() {
+            // 关闭下拉菜单
+            document.getElementById('dropdownMenu').classList.remove('show');
+            
+            // 加载配置
+            try {
+                const resp = await fetch('/api/config');
+                const data = await resp.json();
+                if (data.success) {
+                    const config = data.config;
+                    
+                    // 基础设置
+                    document.getElementById('configFundCodes').value = (config.default_funds || []).join(',');
+                    document.getElementById('configReportTime').value = config.report_time || '15:00';
+                    
+                    // 涨跌幅提醒
+                    document.getElementById('configAlertThreshold').value = config.alert_threshold || 3.0;
+                    document.getElementById('configAlertCooldown').value = config.alert_cooldown || 3600;
+                    
+                    // 钉钉
+                    const dingtalk = config.dingtalk || {};
+                    document.getElementById('configDingtalkEnabled').checked = dingtalk.enabled;
+                    document.getElementById('configDingtalkWebhook').value = dingtalk.webhook || '';
+                    
+                    // Telegram
+                    const telegram = config.telegram || {};
+                    document.getElementById('configTelegramEnabled').checked = telegram.enabled;
+                    document.getElementById('configTelegramToken').value = telegram.bot_token || '';
+                    document.getElementById('configTelegramChatId').value = telegram.chat_id || '';
+                    
+                    // 邮件
+                    const email = config.email || {};
+                    document.getElementById('configEmailEnabled').checked = email.enabled;
+                    document.getElementById('configSmtpServer').value = email.smtp_server || '';
+                    document.getElementById('configSmtpPort').value = email.smtp_port || 587;
+                    document.getElementById('configSmtpUsername').value = email.username || '';
+                    document.getElementById('configSmtpPassword').value = '';
+                    document.getElementById('configMailTo').value = email.to_addr || '';
+                }
+            } catch (e) {
+                console.error('加载配置失败:', e);
+            }
+            
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+        
+        async function saveSettings() {
+            const config = {
+                default_funds: (document.getElementById('configFundCodes').value || '').split(',').map(s => s.trim()).filter(s => s),
+                report_time: document.getElementById('configReportTime').value,
+                alert_threshold: parseFloat(document.getElementById('configAlertThreshold').value) || 3.0,
+                alert_cooldown: parseInt(document.getElementById('configAlertCooldown').value) || 3600,
+                dingtalk: {
+                    enabled: document.getElementById('configDingtalkEnabled').checked,
+                    webhook: document.getElementById('configDingtalkWebhook').value
+                },
+                telegram: {
+                    enabled: document.getElementById('configTelegramEnabled').checked,
+                    bot_token: document.getElementById('configTelegramToken').value,
+                    chat_id: document.getElementById('configTelegramChatId').value
+                },
+                email: {
+                    enabled: document.getElementById('configEmailEnabled').checked,
+                    smtp_server: document.getElementById('configSmtpServer').value,
+                    smtp_port: parseInt(document.getElementById('configSmtpPort').value) || 587,
+                    username: document.getElementById('configSmtpUsername').value,
+                    password: document.getElementById('configSmtpPassword').value,
+                    to_addr: document.getElementById('configMailTo').value
+                }
+            };
+            
+            try {
+                const resp = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(config)
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    alert('设置保存成功！');
+                    closeSettingsModal();
+                } else {
+                    alert('保存失败: ' + (data.error || '未知错误'));
+                }
+            } catch (e) {
+                alert('保存失败: ' + e);
+            }
         }
         
         function showLoginModal() {

@@ -71,7 +71,8 @@ get_fund_detail_info = fund_module.get_fund_detail_info
 # Config
 DATA_DIR = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/data")
 USERS_FILE = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/users.json")
-CONFIG_FILE = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/config/config.json")
+# 配置保存在项目目录
+CONFIG_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'config.json')
 
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
@@ -1120,19 +1121,81 @@ def calculate_summary(funds):
     }
 
 def load_config():
-    """Load user config (legacy)"""
+    """Load user config (环境变量优先)"""
+    # 默认配置
+    default = {
+        "default_funds": os.environ.get("FUND_CODES", "000001,110022,161725").split(","),
+        "report_time": os.environ.get("REPORT_TIME", "15:00"),
+        "alert_threshold": float(os.environ.get("ALERT_THRESHOLD", "3.0")),
+        "alert_cooldown": int(os.environ.get("ALERT_COOLDOWN", "3600")),
+        "check_interval": int(os.environ.get("CHECK_INTERVAL", "300")),
+        "dingtalk": {"enabled": bool(os.environ.get("DINGTALK_WEBHOOK")), "webhook": os.environ.get("DINGTALK_WEBHOOK", "")},
+        "telegram": {"enabled": bool(os.environ.get("TELEGRAM_BOT_TOKEN")), "bot_token": os.environ.get("TELEGRAM_BOT_TOKEN", ""), "chat_id": os.environ.get("TELEGRAM_CHAT_ID", "")},
+        "email": {"enabled": bool(os.environ.get("SMTP_SERVER")), "smtp_server": os.environ.get("SMTP_SERVER", ""), "smtp_port": int(os.environ.get("SMTP_PORT", "587")), "username": os.environ.get("SMTP_USERNAME", ""), "password": os.environ.get("SMTP_PASSWORD", ""), "to_addr": os.environ.get("MAIL_TO", "")}
+    }
+    
+    # 尝试从配置文件读取（环境变量优先）
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return {
-        "default_funds": ["000001", "110022", "161725"],
-        "report_time": "15:00"
-    }
+            try:
+                config = json.load(f)
+                # 环境变量优先，不覆盖
+                for key in default:
+                    if key not in config:
+                        config[key] = default[key]
+                return config
+            except:
+                return default
+    return default
 
 def save_config(config):
-    """Save user config (legacy)"""
+    """Save user config"""
     with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
         json.dump(config, f, ensure_ascii=False, indent=2)
+
+
+# ========== 配置 API ==========
+@app.route('/api/config', methods=['GET'])
+def get_config():
+    """获取配置"""
+    config = load_config()
+    # 隐藏敏感信息
+    safe_config = config.copy()
+    if 'dingtalk' in safe_config:
+        safe_config['dingtalk'] = {**safe_config['dingtalk'], 'webhook': '***' if safe_config['dingtalk'].get('webhook') else ''}
+    if 'telegram' in safe_config:
+        safe_config['telegram'] = {**safe_config['telegram'], 'bot_token': '***' if safe_config['telegram'].get('bot_token') else ''}
+    if 'email' in safe_config:
+        safe_config['email'] = {**safe_config['email'], 'password': '***' if safe_config['email'].get('password') else ''}
+    return jsonify({"success": True, "config": safe_config})
+
+@app.route('/api/config', methods=['POST'])
+def update_config():
+    """更新配置"""
+    data = request.json or {}
+    config = load_config()
+    
+    # 更新基础配置
+    for key in ['default_funds', 'report_time', 'alert_threshold', 'alert_cooldown', 'check_interval']:
+        if key in data:
+            config[key] = data[key]
+    
+    # 更新通知配置
+    for notifier in ['dingtalk', 'telegram', 'email']:
+        if notifier in data:
+            notifier_data = data[notifier]
+            if isinstance(notifier_data, dict):
+                # 保留敏感信息如果不更新
+                if notifier == 'dingtalk' and notifier_data.get('webhook', '').startswith('***'):
+                    notifier_data['webhook'] = config.get(notifier, {}).get('webhook', '')
+                if notifier == 'telegram' and notifier_data.get('bot_token', '').startswith('***'):
+                    notifier_data['bot_token'] = config.get(notifier, {}).get('bot_token', '')
+                if notifier == 'email' and notifier_data.get('password', '').startswith('***'):
+                    notifier_data['password'] = config.get(notifier, {}).get('password', '')
+                config[notifier] = notifier_data
+    
+    save_config(config)
+    return jsonify({"success": True})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
