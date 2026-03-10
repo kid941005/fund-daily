@@ -1,19 +1,21 @@
 version: '3.8'
 
 services:
-  # Web UI 版本
   fund-daily-web:
     image: kid941005/fund-daily:latest
     container_name: fund-daily-web
     ports:
       - "5000:5000"
-    volumes:
-      - ./data:/app/data
-      - ./config:/app/config
     environment:
       - TZ=Asia/Shanghai
       - FLASK_ENV=production
       - FUND_DAILY_SECRET_KEY=${FUND_DAILY_SECRET_KEY:-}
+      - FUND_DAILY_SSL_VERIFY=1
+      - FUND_DAILY_DB_PATH=/app/data/fund-daily.db
+      - FUND_CODES=000001,110022,161725
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/"]
