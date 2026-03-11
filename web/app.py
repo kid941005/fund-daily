@@ -53,13 +53,7 @@ def import_fund_module():
 # Initialize database
 db.init_db()
 
-def import_fund_module():
-    script_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scripts', 'fund-daily.py')
-    spec = importlib.util.spec_from_file_location("fund_daily", script_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
+# Load fund module functions
 fund_module = import_fund_module()
 fetch_fund_data_eastmoney = fund_module.fetch_fund_data_eastmoney
 analyze_fund = fund_module.analyze_fund
@@ -713,84 +707,97 @@ def import_from_screenshot():
                 })
         
         # Parse fund information from OCR text
-        # Enhanced parsing for multiple fund app formats (支付宝, 天天基金, 银行, etc.)
+        # Enhanced parsing for multiple fund app formats (支付宝, 天天基金, 银行, 微信理财通, etc.)
         
-        # Find all 6-digit fund codes
-        fund_codes = re.findall(r'\b(\d{6})\b', text)
-        
-        # Enhanced amount patterns:
-        # - 1,234.56 (with comma)
-        # - 1234.56 (no comma)
-        # - ¥1234.56 / ￥1234.56
-        # - 1234 (integer)
-        amount_patterns = [
-            r'[\￥¥￥]?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)',  # With decimals
-            r'[\￥¥￥]?\s*(\d{1,6})(?!\d)',  # Integer amounts
-        ]
-        
-        amounts = []
-        for pattern in amount_patterns:
-            amounts.extend(re.findall(pattern, text))
-        
-        # Clean amounts
-        clean_amounts = []
-        seen_amounts = set()
-        for a in amounts:
-            try:
-                val = float(a.replace(',', ''))
-                # Filter unrealistic amounts (too small or too large)
-                if 10 <= val <= 10000000 and val not in seen_amounts:
-                    clean_amounts.append(val)
-                    seen_amounts.add(val)
-            except:
-                pass
-        
-        # Match codes with amounts using line-by-line analysis
-        # For支付宝/天天基金: code on left, amount on right (not same line)
-        # Strategy: "持有金额" markers appear in order with amounts below them
         parsed = []
         lines = text.split('\n')
         
-        # Find all fund codes in order
-        code_positions = []
-        for i, line in enumerate(lines):
-            code_match = re.search(r'(\d{6})', line)
-            if code_match:
-                code_positions.append({'line': i, 'code': code_match.group(1)})
+        # 关键词模式
+        fund_keywords = ['基金', '持仓', '持有', '金额', '份额', '昨日收益', '累计收益']
         
-        # Find all amount positions (look for "持有金额" then amount below)
-        amount_positions = []
-        for i, line in enumerate(lines):
-            if '持有金额' in line or '持有' in line:
-                # Look for amount in next 1-2 lines
-                for j in range(i+1, min(i+3, len(lines))):
-                    amt_match = re.search(r'(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)', lines[j])
-                    if amt_match:
-                        try:
-                            val = float(amt_match.group(1).replace(',', ''))
-                            if 10 <= val <= 10000000:
-                                amount_positions.append(val)
+        # 方法1: 行内同时有代码和金额 (如: 000001  ¥1,234.56)
+        for line in lines:
+            # 匹配 6位代码 + 金额
+            match = re.search(r'(\d{6}).*?([￥¥]?\s*[\d,]+\.?\d*)', line)
+            if match and any(kw in line for kw in fund_keywords):
+                code = match.group(1)
+                amount_str = match.group(2).replace('￥', '').replace('¥', '').replace(',', '').strip()
+                try:
+                    amount = float(amount_str)
+                    if 10 <= amount <= 10000000:
+                        # 检查基金名称 (在同一行或下一行)
+                        name = ""
+                        for other_line in lines:
+                            if code in other_line and any(w in other_line for w in ['混合', 'ETF', '联接', '股票', '债券', '货币']):
+                                name = re.sub(r'[\d\s￥¥,，.]', '', other_line).strip()[:20]
                                 break
+                        parsed.append({'code': code, 'amount': amount, 'name': name})
+                except:
+                    pass
+        
+        # 方法2: 代码在左，金额在右/下 (支付宝/天天基金格式)
+        for i, line in enumerate(lines):
+            # 查找包含"持有金额"的行
+            if '持有金额' in line or ('金额' in line and '持有' in line):
+                # 在下方1-2行找金额
+                for j in range(i+1, min(i+3, len(lines))):
+                    amount_match = re.findall(r'[\￥¥]?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)', lines[j])
+                    for amt in amount_match:
+                        try:
+                            amount = float(amt.replace(',', ''))
+                            if amount >= 10 and amount <= 10000000:
+                                # 回溯找代码
+                                code = None
+                                for k in range(max(0, i-3), i+1):
+                                    code_match = re.search(r'\b(\d{6})\b', lines[k])
+                                    if code_match:
+                                        code = code_match.group(1)
+                                        break
+                                if code:
+                                    parsed.append({'code': code, 'amount': amount, 'name': '', 'source': 'vertical'})
+                                    break
                         except:
                             pass
         
-        # Match codes with amounts by position: first code with first amount, etc.
-        # This works because in 支付宝, codes and amounts are in the same order
-        for i, cp in enumerate(code_positions):
-            if i < len(amount_positions):
-                parsed.append({
-                    'code': cp['code'], 
-                    'amount': amount_positions[i],
-                    'source': 'alipay_match'
-                })
+        # 方法3: 简单顺序匹配 (兜底)
+        all_codes = re.findall(r'\b(\d{6})\b', text)
+        all_amounts = re.findall(r'[\￥¥]?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)', text)
         
-        # Fallback: if matching didn't work well
-        if len(parsed) < 3 and len(clean_amounts) >= len(fund_codes) // 2:
-            parsed = []
-            for i, code in enumerate(fund_codes):
-                if code[0] in ['0', '1', '2', '3', '5', '6', '7', '8', '9'] and i < len(clean_amounts):
-                    if clean_amounts[i] >= 10:
-                        parsed.append({'code': code, 'amount': clean_amounts[i], 'source': 'sequential'})
+        # 清洗金额
+        clean_amounts = []
+        for a in all_amounts:
+            try:
+                val = float(a.replace(',', ''))
+                if 10 <= val <= 10000000:
+                    clean_amounts.append(val)
+            except:
+                pass
+        
+        # 去重
+        seen_codes = set(p['code'] for p in parsed)
+        seen_amounts = set(p['amount'] for p in parsed)
+        
+        # 顺序匹配
+        for i, code in enumerate(all_codes):
+            if code in seen_codes:
+                continue
+            if i < len(clean_amounts):
+                amount = clean_amounts[i]
+                if amount not in seen_amounts and amount >= 10:
+                    parsed.append({'code': code, 'amount': amount, 'name': '', 'source': 'sequential'})
+                    seen_codes.add(code)
+                    seen_amounts.add(amount)
+        
+        # 去重
+        unique_parsed = {}
+        for p in parsed:
+            key = p['code']
+            if key not in unique_parsed:
+                unique_parsed[key] = p
+            elif unique_parsed[key].get('amount', 0) < p.get('amount', 0):
+                unique_parsed[key] = p
+        
+        parsed = list(unique_parsed.values())
         
         # Filter valid codes and remove duplicates
         valid_codes = []
