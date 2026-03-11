@@ -34,8 +34,9 @@ COPY VERSION .
 
 RUN mkdir -p /app/data
 
-# Set version from VERSION file
-ENV VERSION=$(cat VERSION)
+# Set version
+ARG VERSION=1.9.2
+ENV VERSION=${VERSION}
 RUN sed -i "s/VERSION = \".*\"/VERSION = \"$(cat VERSION)\"/" web/app.py
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=web/app.py
