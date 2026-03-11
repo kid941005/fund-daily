@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies in one layer
+# Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
@@ -14,29 +14,26 @@ RUN apt-get update && \
         libxrender1 && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first
+# Copy requirements
 COPY web/requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Install EasyOCR (CPU only, no CUDA)
-RUN pip install --no-cache-dir \
-    torch torchvision --index-url https://download.pytorch.org/whl/cpu && \
+# Install Python deps
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir easyocr && \
-    rm -rf /root/.cache/torch/hub/checkpoints/*
+    rm -rf /root/.cache /root/.pip /tmp/pip-* && \
+    find /usr/local/lib/python3.11/site-packages -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
 
-# Copy application files
+# Copy app files
 COPY web/ ./web/
 COPY scripts/fund-daily.py ./scripts/
 COPY db/ ./db/
 
 RUN mkdir -p /app/data
 
-# Set version from build-arg
+# Set version
 ARG VERSION=latest
 ENV VERSION=${VERSION}
-RUN sed -i "s/VERSION = \".*\"/VERSION = \"${VERSION}\"/" web/app.py
 
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=web/app.py

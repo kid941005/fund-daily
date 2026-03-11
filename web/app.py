@@ -5,7 +5,7 @@ With user account system
 """
 
 # 版本号
-VERSION = "1.9.0"
+VERSION = "1.9.3"
 
 import os
 import sys
