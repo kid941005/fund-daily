@@ -120,7 +120,7 @@ def login_required(f):
 @app.route('/')
 def index():
     """Main page"""
-    return render_template('index.html')
+    return render_template('index.html', version=VERSION)
 
 @app.route('/api/register', methods=['POST'])
 def register():
@@ -473,7 +473,7 @@ def dingtalk_config_get():
     return jsonify({
         "success": True,
         "configured": bool(webhook),
-        "webhook": webhook[:20] + "..." if webhook and len(webhook) > 20 else webhook
+        "webhook": webhook[:15] + "..." if webhook and len(webhook) > 15 else webhook
     })
 
 @app.route('/api/dingtalk/test', methods=['POST'])

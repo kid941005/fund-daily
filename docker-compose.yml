@@ -5,7 +5,7 @@ services:
     image: kid941005/fund-daily:latest
     container_name: fund-daily-web
     ports:
-      - "5000:5000"
+      - 5000:5000
     environment:
       # 时区
       - TZ=Asia/Shanghai

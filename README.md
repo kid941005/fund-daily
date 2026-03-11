@@ -39,7 +39,9 @@ docker-compose up -d
 
 **版本说明**：
 - `kid941005/fund-daily:latest` - 最新版
-- `kid941005/fund-daily:1.5.3` - 指定版本
+- `kid941005/fund-daily:v1.9.1` - 指定版本
+
+GitHub Actions 自动构建推送至 Docker Hub
 
 ### 方式 2: Docker 单容器
 
@@ -214,7 +216,7 @@ fund-daily/
 - **后端**: Flask + SQLite
 - **前端**: HTML + CSS + JavaScript (PWA)
 - **数据源**: 东方财富公开 API
-- **OCR**: Tesseract (截图识别)
+- **OCR**: EasyOCR (本地离线识别)
 
 ## 📊 买卖逻辑
 
@@ -250,4 +252,4 @@ MIT License
 ## 🙏 致谢
 
 - 数据来源：[东方财富](https://fund.eastmoney.com/)
-- OCR 引擎：[Tesseract](https://github.com/tesseract-ocr/tesseract)
+- OCR 引擎：[EasyOCR](https://github.com/JaidedAI/EasyOCR)

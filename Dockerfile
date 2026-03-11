@@ -19,11 +19,13 @@ RUN pip install --no-cache-dir easyocr torch torchvision --index-url https://dow
 COPY web/ ./web/
 COPY scripts/fund-daily.py ./scripts/
 COPY db/ ./db/
+COPY VERSION .
 
 RUN mkdir -p /app/data
 
-# Set version
-ENV VERSION=1.9.0
+# Set version from VERSION file
+ENV VERSION=$(cat VERSION)
+RUN sed -i "s/VERSION = \".*\"/VERSION = \"$(cat VERSION)\"/" web/app.py
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=web/app.py
 ENV FUND_DAILY_DB_PATH=/app/data/fund-daily.db
