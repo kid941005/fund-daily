@@ -1,28 +1,46 @@
-FROM python:3.11-slim
+# 第一阶段：构建
+FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
-# Install system dependencies
+# Install build deps
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        curl \
-        ca-certificates \
         libgl1 \
         libglib2.0-0 \
         libsm6 \
         libxext6 \
-        libxrender1 && \
-    rm -rf /var/lib/apt/lists/*
-
-# Copy requirements
-COPY web/requirements.txt .
+        libxrender1 \
+        && rm -rf /var/lib/apt/lists/*
 
 # Install Python deps
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu && \
+COPY web/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install EasyOCR deps (lightweight)
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir easyocr && \
-    rm -rf /root/.cache /root/.pip /tmp/pip-* && \
-    find /usr/local/lib/python3.11/site-packages -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
+    rm -rf /root/.cache /root/.pip /tmp/pip-*
+
+# 第二阶段：运行
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install runtime deps only
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libgl1 \
+        libglib2.0-0 \
+        libsm6 \
+        libxext6 \
+        libxrender1 \
+        && rm -rf /var/lib/apt/lists/*
+
+# Copy from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages/ /usr/local/lib/python3.11/site-packages/
+COPY --from=builder /usr/local/bin/ /usr/local/bin/
+COPY --from=builder /app /app/
 
 # Copy app files
 COPY web/ ./web/
