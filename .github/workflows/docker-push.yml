@@ -18,14 +18,13 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT          
 
-      # Release创建需要OAuth token，暂跳过
-      # - name: Create Release
-      #   uses: softprops/action-gh-release@v1
-      #   with:
-      #     tag_name: ${{ github.ref_name }}
-      #     generate_release_notes: true
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - uses: docker/setup-buildx-action@v3
 
@@ -42,4 +41,4 @@ jobs:
             kid941005/fund-daily:latest
             kid941005/fund-daily:${{ steps.version.outputs.version }}            
           build-args: |
-            VERSION=${{ steps.version.outputs.version }}    
+            VERSION=${{ steps.version.outputs.version }}
