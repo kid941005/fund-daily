@@ -16,7 +16,7 @@ jobs:
         id: version
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT                    
+          echo "version=$VERSION" >> $GITHUB_OUTPUT          
 
       - uses: docker/setup-buildx-action@v3
 
@@ -29,6 +29,8 @@ jobs:
         with:
           context: .
           push: true
+          no-cache: true
+          pull: true
           tags: |
             kid941005/fund-daily:latest
             kid941005/fund-daily:${{ steps.version.outputs.version }}                        
