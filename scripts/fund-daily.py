@@ -678,6 +678,18 @@ def generate_advice(funds):
     drawdown_days = int(avg_drawdown * 2) if avg_drawdown > 0 else 0
     drawdown_days = min(drawdown_days, 30)  # 最多30天
     
+    # ========== 新增：计算总仓位和平均收益率 ==========
+    total_amount = sum(f.get('amount', 0) for f in funds)
+    total_value = sum(f.get('total_value', f.get('amount', 0)) for f in funds)
+    
+    # 估算平均收益率（简化计算：假设成本=持仓金额*0.8）
+    total_cost = sum(f.get('amount', 0) * 0.8 for f in funds)
+    avg_profit_pct = ((total_value - total_cost) / total_cost * 100) if total_cost > 0 else 0
+    
+    # 计算持仓占比（简化：假设总资产100万）
+    total_assets = 1000000  # 可配置
+    position_ratio = (total_value / total_assets * 100) if total_assets > 0 else 0
+    
     # 综合评分
     score = 0
     
@@ -725,7 +737,27 @@ def generate_advice(funds):
         advice = "市场情绪偏空，建议减仓观望，等待机会"
         action = "卖出"
     
-    # 风险等级
+    # ========== 新增：边界条件判断 ==========
+    # 1. 仓位判断
+    if position_ratio >= 90 and action == "买入":
+        action = "持有"
+        advice = f"⚠️ 当前仓位约{position_ratio:.0f}%已较高，建议持有为主"
+    elif position_ratio >= 70 and action == "买入":
+        advice += "（仓位较高，请谨慎加仓）"
+    
+    # 2. 收益率判断
+    if avg_profit_pct < -30:
+        action = "减仓/止损"
+        advice = f"⚠️ 平均亏损{abs(avg_profit_pct):.1f}%，建议止损或减仓"
+    elif avg_profit_pct < -15:
+        if action == "买入":
+            action = "持有"
+            advice = f"亏损{abs(avg_profit_pct):.1f}%，建议轻仓摊低成本"
+    elif avg_profit_pct > 30:
+        if action == "持有":
+            advice += "（收益较高，可考虑部分止盈）"
+    
+    # 3. 风险等级
     if avg_risk >= 7:
         risk_level = "高风险"
     elif avg_risk >= 5:
@@ -734,6 +766,10 @@ def generate_advice(funds):
         risk_level = "中等风险"
     else:
         risk_level = "中低风险"
+    
+    # 4. 高风险提示
+    if avg_risk >= 7 and action in ["买入", "持有"]:
+        advice += "（⚠️ 组合风险较高）"
     
     # 获取大宗商品信息
     commodity = get_commodity_sentiment()
@@ -764,7 +800,11 @@ def generate_advice(funds):
         "sharpe_ratio": round(avg_sharpe, 2),
         "max_drawdown": round(avg_drawdown, 2),
         "drawdown_days": drawdown_days,
-        "risk_score": round(avg_risk, 1)
+        "risk_score": round(avg_risk, 1),
+        # 新增字段
+        "position_ratio": round(position_ratio, 1),
+        "avg_profit_pct": round(avg_profit_pct, 1),
+        "total_value": round(total_value, 2)
     }
 
 def get_fund_detail_info(code):
