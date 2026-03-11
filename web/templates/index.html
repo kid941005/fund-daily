@@ -668,6 +668,10 @@
                         <div class="stat-num" id="totalChange">0%</div>
                         <div class="stat-label">平均涨跌</div>
                     </div>
+                    <div class="stat-box">
+                        <div class="stat-num" id="totalDailyProfit">0</div>
+                        <div class="stat-label">当日收益(元)</div>
+                    </div>
                 </div>
                 <div id="holdingsList"><div class="loading">加载中...</div></div>
             </div>
@@ -1394,6 +1398,7 @@
             
             let totalAmount = 0;
             let totalChangeSum = 0;
+            let totalDailyProfitSum = 0;
             let validCount = 0;
             
             const html = holdingsData.map((h, index) => {
@@ -1404,6 +1409,15 @@
                 const nav = fund.nav || '-';
                 const estimateNav = fund.estimate_nav || '-';
                 const navDate = fund.date || '-';
+                
+                // 计算当日收益
+                let dailyProfit = '-';
+                let dailyProfitClass = '';
+                if (h.daily_profit !== undefined && h.daily_profit !== null) {
+                    const dp = parseFloat(h.daily_profit);
+                    dailyProfit = (dp > 0 ? '+' : '') + dp.toFixed(2);
+                    dailyProfitClass = dp >= 0 ? 'up' : 'down';
+                }
                 
                 // 计算持有收益（如果有买入净值）
                 let holdingProfit = '-';
@@ -1429,6 +1443,10 @@
                 if (h.amount > 0) {
                     totalAmount += h.amount;
                     totalChangeSum += change;
+                    // 累加当日收益
+                    if (h.daily_profit !== undefined && h.daily_profit !== null) {
+                        totalDailyProfitSum += parseFloat(h.daily_profit) || 0;
+                    }
                     validCount++;
                 }
                 
@@ -1463,6 +1481,7 @@
                             <span>净值: ${nav}</span>
                             <span>估算: ${estimateNav}</span>
                             <span>日期: ${navDate}</span>
+                            <span class="${dailyProfitClass}">当日: ${dailyProfit}</span>
                         </div>
                         <div class="holding-amount-row">
                             <label>修改持仓:</label>
@@ -1485,6 +1504,9 @@
             const avgChangeStr = (avgChange > 0 ? '+' : '') + avgChange.toFixed(2) + '%';
             document.getElementById('totalChange').textContent = avgChangeStr;
             document.getElementById('totalChange').className = 'stat-num ' + (avgChange > 0 ? 'up' : 'down');
+            const totalDailyProfitStr = (totalDailyProfitSum > 0 ? '+' : '') + totalDailyProfitSum.toFixed(2);
+            document.getElementById('totalDailyProfit').textContent = totalDailyProfitStr;
+            document.getElementById('totalDailyProfit').className = 'stat-num ' + (totalDailyProfitSum >= 0 ? 'up' : 'down');
         }
         
         function updateAmount(index, value) {

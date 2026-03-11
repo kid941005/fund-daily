@@ -5,7 +5,7 @@ With user account system
 """
 
 # 版本号
-VERSION = "1.9.6"
+VERSION = "1.9.7"
 
 import os
 import sys
@@ -295,6 +295,14 @@ def manage_holdings():
     
     if request.method == 'GET':
         holdings = get_user_holdings(user_id)
+        # 为每个持仓添加涨跌幅和当日收益
+        for h in holdings:
+            if h.get('amount', 0) > 0:
+                fund_data = fetch_fund_data_eastmoney(h['code'])
+                daily_change = float(fund_data.get('gszzl', 0) or 0)
+                h['daily_change'] = daily_change
+                if daily_change != 0:
+                    h['daily_profit'] = round(h.get('amount', 0) * daily_change / 100, 2)
         return jsonify({"success": True, "holdings": holdings})
     
     elif request.method == 'POST':
@@ -378,6 +386,16 @@ def export_holdings():
             'max_drawdown': detail.get('risk_metrics', {}).get('estimated_max_drawdown', ''),
             'fee_rate': detail.get('fee_rate', ''),
         }
+        
+        # 计算当日收益
+        try:
+            daily_change = float(fund_data.get('gszzl', 0) or 0)
+            amount = float(h.get('amount', 0))
+            if daily_change != 0 and amount > 0:
+                row['daily_profit'] = round(amount * daily_change / 100, 2)
+                row['daily_change_pct'] = round(daily_change, 2)
+        except:
+            pass
         
         if h.get('amount', 0) > 0 and h.get('buyNav') and fund_data.get('dwjz'):
             try:
