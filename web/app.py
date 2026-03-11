@@ -686,25 +686,10 @@ def import_from_screenshot():
     
     try:
         # Use EasyOCR for better Chinese recognition
-        text = ""
-        try:
-            import easyocr
-            reader = easyocr.Reader(['ch_sim', 'en'], gpu=False, verbose=False)
-            results = reader.readtext(filepath, detail=0)
-            text = '\n'.join(results)
-        except ImportError:
-            # Fallback to pytesseract
-            try:
-                import pytesseract
-                from PIL import Image
-                img = Image.open(filepath)
-                text = pytesseract.image_to_string(img, lang='chi_sim+eng')
-            except ImportError:
-                return jsonify({
-                    "success": False, 
-                    "error": "OCR依赖未安装",
-                    "hint": "请更新Docker镜像"
-                })
+        import easyocr
+        reader = easyocr.Reader(['ch_sim', 'en'], gpu=False, verbose=False)
+        results = reader.readtext(filepath, detail=0)
+        text = '\n'.join(results)
         
         # Parse fund information from OCR text
         # Enhanced parsing for multiple fund app formats (支付宝, 天天基金, 银行, 微信理财通, etc.)
