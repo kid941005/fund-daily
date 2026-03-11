@@ -98,7 +98,7 @@ python3 scripts/fund-daily.py advice
 
 ### Web 界面功能
 
-访问 http://localhost:5000：
+访问 http://localhost:5000
 
 | Tab | 功能 |
 |-----|------|
