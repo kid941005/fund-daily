@@ -580,6 +580,27 @@
         }
         
         .empty-hint { text-align: center; padding: 40px; color: #999; }
+        
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -1626,12 +1647,23 @@
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
             
+            // Show loading
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '识别中...';
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> 识别中...';
+            
             try {
                 const response = await fetch('/api/import-screenshot', {
                     method: 'POST',
                     body: formData
                 });
                 const result = await response.json();
+                
+                // Reset button
+                btn.textContent = originalText;
+                btn.disabled = false;
                 
                 if (result.success) {
                     // Show OCR result
@@ -1659,6 +1691,9 @@
                     alert('识别失败: ' + result.error);
                 }
             } catch (e) {
+                // Reset button on error
+                btn.textContent = originalText;
+                btn.disabled = false;
                 alert('上传失败: ' + e.message);
             }
         }
@@ -2097,7 +2132,7 @@
         }
     </script>
     <footer style="text-align:center;padding:20px;color:#888;font-size:12px;">
-        Fund Daily v1.8 | <a href="https://github.com/kid941005/fund-daily" target="_blank" style="color:#666;">GitHub</a>
+        Fund Daily v1.9 | <a href="https://github.com/kid941005/fund-daily" target="_blank" style="color:#666;">GitHub</a>
     </footer>
 </body>
 </html>
