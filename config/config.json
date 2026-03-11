@@ -1,11 +1,15 @@
 {
-  "default_funds": ["000001", "110022", "161725"],
+  "default_funds": [
+    "000001",
+    "110022",
+    "161725"
+  ],
   "report_time": "15:00",
-  "alert_threshold": 3.0,
+  "alert_threshold": 3,
   "alert_cooldown": 3600,
   "check_interval": 300,
   "dingtalk": {
-    "enabled": false,
+    "enabled": true,
     "webhook": ""
   },
   "telegram": {

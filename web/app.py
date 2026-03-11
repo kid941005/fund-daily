@@ -688,31 +688,23 @@ def import_from_screenshot():
         file.save(filepath)
     
     try:
-        # Use image-vision skill to OCR
-        ocr_script = os.path.expanduser("~/.openclaw/main/skills/image-vision/scripts/image_vision.py")
-        
-        if os.path.exists(ocr_script):
-            result = subprocess.run(
-                ['python3', ocr_script, 'ocr', filepath],
-                capture_output=True,
-                text=True,
-                timeout=60
-            )
+        # Use pytesseract for OCR
+        try:
+            import pytesseract
+            from PIL import Image
             
-            if result.returncode == 0:
-                try:
-                    ocr_result = json.loads(result.stdout)
-                    text = ocr_result.get('text', '')
-                except:
-                    text = result.stdout
-            else:
-                text = ""
-        else:
-            # Fallback: return error
+            # Open and process image
+            img = Image.open(filepath)
+            
+            # Extract text (prefer Chinese)
+            text = pytesseract.image_to_string(img, lang='chi_sim+eng')
+            
+        except ImportError:
+            # Fallback: return error message
             return jsonify({
                 "success": False, 
-                "error": "OCR工具未安装",
-                "hint": "请安装: sudo apt install tesseract-ocr tesseract-ocr-chi-sim"
+                "error": "OCR依赖未安装",
+                "hint": "请更新Docker镜像"
             })
         
         # Parse fund information from OCR text
