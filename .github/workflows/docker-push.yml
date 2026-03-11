@@ -34,3 +34,11 @@ jobs:
             kid941005/fund-daily:${{ steps.version.outputs.version }}                        
           build-args: |
             VERSION=${{ steps.version.outputs.version }}   
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
