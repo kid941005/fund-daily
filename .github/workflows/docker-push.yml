@@ -37,3 +37,5 @@ jobs:
           tags: |
             kid941005/fund-daily:latest
             kid941005/fund-daily:${{ steps.version.outputs.version }}
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
