@@ -30,14 +30,14 @@ RUN pip install --no-cache-dir \
 COPY web/ ./web/
 COPY scripts/fund-daily.py ./scripts/
 COPY db/ ./db/
-COPY VERSION .
 
 RUN mkdir -p /app/data
 
-# Set version
-ARG VERSION=1.9.2
+# Set version from build-arg
+ARG VERSION=latest
 ENV VERSION=${VERSION}
-RUN sed -i "s/VERSION = \".*\"/VERSION = \"$(cat VERSION)\"/" web/app.py
+RUN sed -i "s/VERSION = \".*\"/VERSION = \"${VERSION}\"/" web/app.py
+
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=web/app.py
 ENV FUND_DAILY_DB_PATH=/app/data/fund-daily.db
