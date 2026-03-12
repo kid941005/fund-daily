@@ -3,7 +3,15 @@
 Fund Daily Web UI - Simplified with modular structure
 """
 
-VERSION = "2.0"
+import os
+import sys
+# Get version from VERSION file
+VERSION_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'VERSION')
+if os.path.exists(VERSION_FILE):
+    with open(VERSION_FILE, 'r') as f:
+        VERSION = f.read().strip() or "2.2.0"
+else:
+    VERSION = "2.2.0"
 
 import os
 import sys

@@ -9,8 +9,6 @@ import logging
 from flask import Blueprint, jsonify, request, session, Response
 
 from web.services import fund_service
-=======
-from web.services import fund_service
 
 logger = logging.getLogger(__name__)
 
