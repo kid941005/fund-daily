@@ -20,5 +20,5 @@ def verify_password(password: str, stored_hash: str) -> bool:
         salt, key = stored_hash.split('$')
         new_hash = hash_password(password, salt)
         return new_hash == stored_hash
-    except:
+    except (ValueError, TypeError):
         return False

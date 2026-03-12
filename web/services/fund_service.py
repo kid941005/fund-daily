@@ -163,7 +163,7 @@ def get_portfolio_analysis(holdings: List[Dict], holdings_dict: Dict = None, def
                     profit_pct = (current_nav - buy_nav) / buy_nav * 100
                     detail['holding_profit'] = round(profit_pct, 2)
                     detail['holding_profit_amount'] = round(amount * profit_pct / 100, 2)
-                except:
+                except Exception:
                     pass
             
             funds_detail.append(detail)
@@ -211,7 +211,7 @@ def analyze_portfolio_risk(funds: List[Dict], total_amount: float) -> Dict:
     # Return analysis
     try:
         avg_return_1y = sum(float(f.get('return_1y', 0) or 0) * f.get('weight', 0) for f in funds) / 100
-    except:
+    except Exception:
         avg_return_1y = 0
     
     return {

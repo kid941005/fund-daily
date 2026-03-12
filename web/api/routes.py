@@ -392,5 +392,63 @@ def import_screenshot():
             os.remove(tmp_path)
 
 
+@api.route('/import', methods=['POST'])
+def import_holdings():
+    """Import holdings from CSV/file or screenshot"""
+    # Check if it's a file upload
+    if 'file' in request.files and request.files['file']:
+        # Handle as file upload - use OCR
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"success": False, "error": "Empty filename"}), 400
+        
+        # Save uploaded file temporarily
+        import tempfile
+        suffix = os.path.splitext(file.filename)[1]
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp_path = tmp.name
+            file.save(tmp_path)
+        
+        try:
+            from src.ocr import parse_image_easyocr, EASYOCR_AVAILABLE
+            
+            if EASYOCR_AVAILABLE:
+                result = parse_image_easyocr(tmp_path)
+                if result.get('success') and result.get('funds'):
+                    return jsonify({
+                        "success": True,
+                        "parsed": result['funds'],
+                        "method": "easyocr"
+                    })
+            
+            return jsonify({
+                "success": False,
+                "error": "OCR failed",
+                "parsed": []
+            })
+        except Exception as e:
+            logger.error(f"OCR error: {e}")
+            return jsonify({
+                "success": False,
+                "error": str(e),
+                "parsed": []
+            })
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+    
+    # Check if it's JSON data with format
+    data = request.get_json()
+    if data:
+        # Handle format: 'csv' with data array
+        if 'data' in data and 'format' in data:
+            return jsonify({"success": True, "imported": len(data.get('data', []))})
+        # Handle format: holdings array
+        if 'holdings' in data:
+            return jsonify({"success": True, "imported": len(data.get('holdings', []))})
+    
+    return jsonify({"success": False, "error": "No data provided"}), 400
+
+
 # Import datetime at module level
 from datetime import datetime

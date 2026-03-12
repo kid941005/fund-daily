@@ -19,6 +19,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Download EasyOCR models
+RUN pip install --no-cache-dir easyocr && \
+    python -c "import easyocr; easyocr.Reader(['ch_sim', 'en'], gpu=False, download=True)" && \
+    rm -rf ~/.cache ~/.local
+
 # Stage 2: Runtime
 FROM python:3.11-slim
 
@@ -34,12 +39,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
+# Copy EasyOCR models from builder
+COPY --from=builder /root/.EasyOCR /root/.EasyOCR
+
 # Copy application files
 COPY src/ ./src/
 COPY web/ ./web/
 COPY scripts/ ./scripts/
 COPY db/ ./db/
 COPY config/ ./config/
+COPY VERSION ./
+COPY cron.sh ./
 
 # Create data directory
 RUN mkdir -p /app/data

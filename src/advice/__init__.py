@@ -32,7 +32,7 @@ def analyze_fund(fund_data: Dict) -> Dict:
     
     try:
         gszzl = float(fund_data.get("gszzl", 0))
-    except:
+    except Exception:
         gszzl = 0
     
     analysis = {
@@ -190,7 +190,7 @@ def generate_advice(funds: List[Dict]) -> Dict:
                     total_drawdown += risk.get('estimated_max_drawdown', 0)
                     total_risk_score += risk.get('risk_score', 4)
                     funds_with_risk += 1
-            except:
+            except Exception:
                 pass
     
     if funds_with_risk > 0:

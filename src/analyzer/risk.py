@@ -166,7 +166,7 @@ def fetch_historical_nav(fund_code: str, days: int = 365) -> List[Dict]:
                                 'date': parts[0].strip('"'),
                                 'nav': float(parts[1])
                             })
-                        except:
+                        except Exception:
                             continue
             
             if nav_data:

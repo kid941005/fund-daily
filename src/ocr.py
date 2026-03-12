@@ -52,7 +52,7 @@ class FundOcrParser:
             (r'([1-9]\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?)', 0.9),
         ]
         
-        # Only use simple number pattern as last resort, and exclude fund codes
+        # Only use simple number pattern as last resort, but exclude fund codes
         simple_pattern = r'\b([1-9]\d{2,7})\b'
         
         best_amount = None
@@ -91,10 +91,31 @@ class FundOcrParser:
                             continue
                         best_amount = amount
                         break
-                except:
+                except (ValueError, AttributeError):
                     continue
         
         return best_amount
+    
+    def _extract_all_amounts(self, text: str) -> List[float]:
+        """Extract all potential amounts from text"""
+        amounts = []
+        # Match numbers with comma: 1,234.56 or 1,234
+        # Also match standalone integers >= 50
+        patterns = [
+            r'([1-9]\d{0,2}(?:,\d{3})+(?:\.\d{1,2})?)',  # 1,234.56
+            r'([1-9]\d{2,6}(?:\.\d{1,2})?)',  # 1234.56 (no comma)
+            r'\b([1-9]\d{2,4})\b',  # 1234 (integer 100-99999)
+        ]
+        for pattern in patterns:
+            matches = re.findall(pattern, text)
+            for match in matches:
+                try:
+                    amount = float(match.replace(',', ''))
+                    if amount >= 50:  # Minimum 50 yuan
+                        amounts.append(amount)
+                except (ValueError, AttributeError):
+                    continue
+        return amounts
     
     def parse(self, ocr_text: str) -> List[OcrResult]:
         """Parse OCR text and extract fund data"""
@@ -105,8 +126,53 @@ class FundOcrParser:
         
         lines = [l.strip() for l in ocr_text.split('\n') if l.strip()]
         
-        # Method 1: Same line - code and amount on same line
+        # Improved parsing: Group by vertical position (rows)
+        # The screenshot has: code line above, name+amount line below
+        code_pattern = self.CODE_PATTERN
+        
+        # For each line, find codes
+        codes_by_line = {}
+        amounts_by_line = {}
+        
+        for i, line in enumerate(lines):
+            codes = code_pattern.findall(line)
+            if codes:
+                codes_by_line[i] = codes
+            
+            # Find amounts using improved method
+            amounts = self._extract_all_amounts(line)
+            if amounts:
+                amounts_by_line[i] = max(amounts)
+        
+        # Match codes with amounts from nearby lines (within 5 lines)
+        for code_line_idx, codes in codes_by_line.items():
+            # Look for amounts in the next few lines
+            for look_ahead in range(1, 6):
+                amount_line_idx = code_line_idx + look_ahead
+                if amount_line_idx in amounts_by_line:
+                    for code in codes:
+                        self.results.append(OcrResult(
+                            code=code,
+                            amount=amounts_by_line[amount_line_idx],
+                            confidence=0.9,
+                            method="row_match"
+                        ))
+                    break
+        
+        # Backup: Same line parsing
         for line in lines:
+            codes = code_pattern.findall(line)
+            amount = self._extract_amount(line)
+            
+            if codes and amount:
+                for code in codes:
+                    if not any(r.code == code for r in self.results):
+                        self.results.append(OcrResult(
+                            code=code,
+                            amount=amount,
+                            confidence=0.8,
+                            method="same_line"
+                        ))
             codes = self.CODE_PATTERN.findall(line)
             amount = self._extract_amount(line)
             
@@ -200,7 +266,7 @@ def _get_easyocr_reader():
     global _easyocr_reader
     if _easyocr_reader is None and EASYOCR_AVAILABLE:
         try:
-            _easyocr_reader = easyocr.Reader(['ch_sim', 'en'], gpu=True)
+            _easyocr_reader = easyocr.Reader(['ch_sim', 'en'], gpu=False)
             logger.info("EasyOCR reader initialized successfully")
         except Exception as e:
             logger.warning(f"Failed to initialize EasyOCR: {e}")
@@ -218,6 +284,9 @@ def parse_image_easyocr(image_path: str) -> Dict:
     Returns:
         dict: Parsed fund data
     """
+    from PIL import Image, ImageEnhance
+    import numpy as np
+    
     if not EASYOCR_AVAILABLE:
         return {
             'success': False,
@@ -236,8 +305,23 @@ def parse_image_easyocr(image_path: str) -> Dict:
         }
     
     try:
-        # Run OCR
-        results = reader.readtext(image_path)
+        # Load image using PIL
+        img = Image.open(image_path)
+        
+        # Image preprocessing for better OCR
+        # Convert to grayscale
+        if img.mode != 'L':
+            img = img.convert('L')
+        
+        # Enhance contrast
+        enhancer = ImageEnhance.Contrast(img)
+        img = enhancer.enhance(1.5)  # Increase contrast by 50%
+        
+        # Convert to numpy array
+        img_array = np.array(img)
+        
+        # Run OCR on preprocessed image
+        results = reader.readtext(img_array)
         
         # Combine all text
         ocr_text = ""

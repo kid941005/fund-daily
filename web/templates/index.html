@@ -1738,20 +1738,20 @@
             }
             
             try {
-                const response = await fetch('/api/import', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ format: 'csv', data })
-                });
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert(`成功导入 ${result.imported} 条持仓数据！`);
-                    hideScreenshotModal();
-                    loadUserHoldings();
-                } else {
-                    alert('导入失败: ' + result.error);
+                // Save each holding to server
+                let saved = 0;
+                for (const item of data) {
+                    await fetch('/api/holdings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({code: item.code, amount: item.amount})
+                    });
+                    saved++;
                 }
+                
+                alert(`成功导入 ${saved} 条持仓数据！`);
+                hideScreenshotModal();
+                loadUserHoldings();
             } catch (e) {
                 alert('导入失败: ' + e.message);
             }

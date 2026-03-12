@@ -74,7 +74,7 @@ def load_config():
                     if key not in config:
                         config[key] = default[key]
                 return config
-            except:
+            except (KeyError, TypeError):
                 return default
     return default
 
