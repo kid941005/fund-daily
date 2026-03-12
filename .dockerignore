@@ -1,0 +1,29 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+.venv
+venv/
+*.egg-info
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Docs
+*.md
+
+# Build outputs
+dist/
+build/
+*.log
+
+# Temp
+*.tmp
+*.bak

@@ -298,6 +298,8 @@
         
         .holding-stats .stat-value.up { color: #e74c3c; }
         .holding-stats .stat-value.down { color: #27ae60; }
+        .holding-stats .stat-value.profit-up { color: #e74c3c; }  /* 红色正收益 */
+        .holding-stats .stat-value.profit-down { color: #27ae60; }  /* 绿色负收益 */
         
         .holding-nav-info {
             display: flex;
@@ -1410,13 +1412,13 @@
                 const estimateNav = fund.estimate_nav || '-';
                 const navDate = fund.date || '-';
                 
-                // 计算当日收益
+                // 计算当日收益（红色正收益，绿色负收益）
                 let dailyProfit = '-';
                 let dailyProfitClass = '';
                 if (h.daily_profit !== undefined && h.daily_profit !== null) {
                     const dp = parseFloat(h.daily_profit);
                     dailyProfit = (dp > 0 ? '+' : '') + dp.toFixed(2);
-                    dailyProfitClass = dp >= 0 ? 'up' : 'down';
+                    dailyProfitClass = dp >= 0 ? 'profit-up' : 'profit-down';
                 }
                 
                 // 计算持有收益（如果有买入净值）
@@ -1471,6 +1473,10 @@
                             <div class="stat-item">
                                 <span class="stat-label">今日涨跌</span>
                                 <span class="stat-value ${trend}">${changeStr}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">当日收益</span>
+                                <span class="stat-value ${dailyProfitClass}">${dailyProfit}</span>
                             </div>
                             <div class="stat-item">
                                 <span class="stat-label">持有天数</span>
