@@ -17,8 +17,9 @@ RUN apt-get update && \
 COPY web/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install EasyOCR deps (lightweight)
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu && \
+# Install EasyOCR deps (CPU only, lightweight)
+RUN pip install --no-cache-dir \
+    torch torchvision --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir easyocr && \
     rm -rf /root/.cache /root/.pip /tmp/pip-*
 
@@ -37,8 +38,12 @@ RUN apt-get update && \
         libxrender1 \
         && rm -rf /var/lib/apt/lists/*
 
-# Copy from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages/ /usr/local/lib/python3.11/site-packages/
+# Copy virtualenv from builder
+ENV VIRTUAL_ENV=/opt/venv
+RUN python -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+COPY --from=builder $VIRTUAL_ENV/lib/python3.11/site-packages/ $VIRTUAL_ENV/lib/python3.11/site-packages/
 COPY --from=builder /usr/local/bin/ /usr/local/bin/
 COPY --from=builder /app /app/
 
