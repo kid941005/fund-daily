@@ -8,7 +8,7 @@ from typing import List, Dict, Optional
 from datetime import datetime
 
 from ..fetcher import fetch_fund_data, fetch_fund_detail
-from ..analyzer import calculate_risk_metrics
+from ..analyzer import calculate_risk_metrics, get_market_sentiment, get_commodity_sentiment
 
 logger = logging.getLogger(__name__)
 
@@ -205,7 +205,7 @@ def generate_advice(funds: List[Dict]) -> Dict:
     drawdown_days = int(avg_drawdown * 2) if avg_drawdown > 0 else 0
     drawdown_days = min(drawdown_days, 30)
     
-    # 估算仓位和收益率
+    # 仓位和收益率计算
     total_value = sum(f.get('amount', f.get('total_value', 0)) for f in funds)
     total_cost = sum(f.get('amount', 0) * 0.8 for f in funds)
     avg_profit_pct = ((total_value - total_cost) / total_cost * 100) if total_cost > 0 else 0
@@ -225,6 +225,15 @@ def generate_advice(funds: List[Dict]) -> Dict:
     # 基金当日表现
     score += avg_change * 10
     
+    # 趋势判断（近1月 vs 近3月）
+    return_1m = kwargs.get('return_1m', 0) if 'kwargs' in dir() else 0
+    return_3m = kwargs.get('return_3m', 0) if 'kwargs' in dir() else 0
+    if return_1m and return_3m:
+        if return_1m > return_3m * 1.5:
+            score += 15  # 加速上涨
+        elif return_1m < return_3m * 0.5:
+            score -= 15  # 减速上涨，可能回调
+    
     # 夏普比率
     if avg_sharpe > 1:
         score += 20
@@ -242,16 +251,16 @@ def generate_advice(funds: List[Dict]) -> Dict:
         score += 10
     
     # 确定操作建议
-    if score > 40:
-        advice = "市场情绪乐观，基金表现良好，适合适度加仓"
+    if score > 50:
+        advice = "市场情绪乐观，基金表现良好，趋势向上，适合适度加仓"
         action = "买入"
-    elif score > 20:
+    elif score > 30:
         advice = "市场偏多，建议继续持有，可少量加仓"
         action = "持有"
-    elif score > -10:
+    elif score > 10:
         advice = "市场整体平稳，建议保持当前配置"
         action = "持有"
-    elif score > -30:
+    elif score > -10:
         advice = "市场偏谨慎，注意风险，可适当减仓"
         action = "减仓"
     else:
@@ -259,23 +268,39 @@ def generate_advice(funds: List[Dict]) -> Dict:
         action = "卖出"
     
     # 边界条件判断
+    # === 仓位控制 ===
     if position_ratio >= 90 and action == "买入":
         action = "持有"
         advice = f"⚠️ 当前仓位约{position_ratio:.0f}%已较高，建议持有为主"
     elif position_ratio >= 70 and action == "买入":
         advice += "（仓位较高，请谨慎加仓）"
     
+    # === 止损逻辑 ===
     if avg_profit_pct < -30:
         action = "减仓/止损"
-        advice = f"⚠️ 平均亏损{abs(avg_profit_pct):.1f}%，建议止损或减仓"
-    elif avg_profit_pct < -15:
+        advice = f"⚠️ 平均亏损{abs(avg_profit_pct):.1f}%，触发止损线，建议立即减仓"
+    elif avg_profit_pct < -20:
+        if action in ["买入", "持有"]:
+            action = "持有/减仓"
+            advice = f"⚠️ 亏损{abs(avg_profit_pct):.1f}%，接近止损线，建议减仓或观察"
+    elif avg_profit_pct < -10:
         if action == "买入":
             action = "持有"
-            advice = f"亏损{abs(avg_profit_pct):.1f}%，建议轻仓摊低成本"
-    elif avg_profit_pct > 30:
-        if action == "持有":
-            advice += "（收益较高，可考虑部分止盈）"
+            advice = f"亏损{abs(avg_profit_pct):.1f}%，建议持有观察，逢低补仓"
     
+    # === 止盈逻辑 (新增) ===
+    if avg_profit_pct > 50:
+        if action in ["持有", "买入"]:
+            action = "部分止盈"
+            advice = f"🎉 收益已达{avg_profit_pct:.1f}%，建议分批止盈，锁定收益"
+    elif avg_profit_pct > 40:
+        if action == "持有":
+            advice += "（收益较高，建议设置止盈点）"
+    elif avg_profit_pct > 25:
+        if action == "持有":
+            advice += "（收益可观，可考虑部分止盈）"
+    
+    # === 风险等级判断 ===
     if avg_risk >= 7:
         risk_level = "高风险"
     elif avg_risk >= 5:
@@ -286,7 +311,7 @@ def generate_advice(funds: List[Dict]) -> Dict:
         risk_level = "中低风险"
     
     if avg_risk >= 7 and action in ["买入", "持有"]:
-        advice += "（⚠️ 组合风险较高）"
+        advice += "（⚠️ 组合风险较高，注意仓位）"
     
     # 大宗商品信息
     commodity = get_commodity_sentiment()
