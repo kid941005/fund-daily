@@ -19,9 +19,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download EasyOCR models
+# Download EasyOCR models (automatic in v1.7+)
 RUN pip install --no-cache-dir easyocr && \
-    python -c "import easyocr; easyocr.Reader(['ch_sim', 'en'], gpu=False, download=True)" && \
+    python -c "from easyocr import Reader; Reader(['ch_sim', 'en'], gpu=False)" && \
     rm -rf ~/.cache ~/.local
 
 # Stage 2: Runtime
