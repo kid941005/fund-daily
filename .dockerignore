@@ -6,24 +6,68 @@
 __pycache__
 *.pyc
 *.pyo
+*.pyd
+.Python
+*.so
 .venv
 venv/
+ENV/
+.eggs
 *.egg-info
+dist/
+build/
 
 # IDE
 .idea
 .vscode
 *.swp
 *.swo
+*.swn
+.project
+.classpath
 
-# Docs
+# Documentation (keep README for Docker Hub)
+!README.md
+!DOCKER.md
+docs/
 *.md
 
-# Build outputs
-dist/
-build/
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+azure-pipelines.yml
+
+# Testing (not needed in production)
+tests/
+test/
+*.test.py
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Development files
+.env
+.env.local
+.env.*.local
+*.example
+config/local/
 *.log
 
-# Temp
+# Temp files
 *.tmp
 *.bak
+*.temp
+.DS_Store
+Thumbs.db
+
+# Documentation build
+site/
+._*
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
