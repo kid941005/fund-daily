@@ -3,6 +3,7 @@ Data fetcher module for Fund Daily
 Fetches fund data from East Money with caching support
 """
 
+import re
 import os
 import json
 import time
@@ -324,3 +325,94 @@ def fetch_commodity_prices() -> Dict:
     
     set_cache(cache_key, commodities)
     return commodities
+
+
+# ============== Historical NAV Data ==============
+
+def fetch_fund_nav_history(fund_code: str, days: int = 90) -> List[Dict]:
+    """
+    Fetch historical NAV data for a fund
+    
+    Args:
+        fund_code: 6-digit fund code
+        days: Number of days to fetch (default 90)
+    
+    Returns:
+        List of dict with 'date', 'nav', 'acc_nav' keys
+    """
+    from datetime import datetime
+    
+    # East Money historical NAV API
+    url = f"https://fund.eastmoney.com/pingzhongdata/{fund_code}.js"
+    
+    try:
+        req = urllib.request.Request(url)
+        req.add_header('User-Agent', 'Mozilla/5.0')
+        with urllib.request.urlopen(req, timeout=10) as response:
+            content = response.read().decode('utf-8')
+        
+        # Find Data_netWorthTrend - contains historical NAV with timestamps
+        pattern = r'Data_netWorthTrend\s*=\s*\[([^\]]+)\]'
+        match = re.search(pattern, content)
+        
+        if not match:
+            logger.warning(f"No historical data found for {fund_code}")
+            return []
+        
+        data_str = match.group(1)
+        # Parse: {"x":timestamp,"y":nav_value}
+        items = re.findall(r'\{"x":(\d+),"y":([\d.]+)', data_str)
+        
+        results = []
+        for ts, nav in items[-days:]:
+            try:
+                dt = datetime.fromtimestamp(int(ts) / 1000)
+                results.append({
+                    'date': dt.strftime('%Y-%m-%d'),
+                    'nav': float(nav),
+                    'acc_nav': float(nav)  # Same as nav for this API
+                })
+            except (ValueError, OSError):
+                continue
+        
+        logger.info(f"Fetched {len(results)} historical records for {fund_code}")
+        return results
+        
+    except Exception as e:
+        logger.error(f"Failed to fetch historical data for {fund_code}: {e}")
+        return []
+
+
+def calculate_technical_from_history(closes: List[float]) -> Dict:
+    """
+    Calculate technical indicators from historical NAV data
+    
+    Args:
+        closes: List of NAV values (oldest to newest)
+    
+    Returns:
+        Technical indicators dict
+    """
+    if len(closes) < 5:
+        return {'ma5': None, 'ma10': None, 'ma20': None, 'macd': {}, 'rsi': None}
+    
+    from src.advice import calculate_ma, calculate_macd, calculate_rsi
+    
+    # Calculate moving averages
+    ma5 = calculate_ma(closes, 5)
+    ma10 = calculate_ma(closes, 10)
+    ma20 = calculate_ma(closes, 20)
+    
+    # Calculate MACD
+    macd = calculate_macd(closes)
+    
+    # Calculate RSI
+    rsi = calculate_rsi(closes, 14)
+    
+    return {
+        'ma5': ma5,
+        'ma10': ma10,
+        'ma20': ma20,
+        'macd': macd,
+        'rsi': rsi
+    }

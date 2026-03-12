@@ -262,6 +262,64 @@ def generate_advice(funds: List[Dict]) -> Dict:
         # 大跌，可能超卖
         score += 5
     
+    # === 获取真实技术指标 ===
+    technical_score = 0
+    technical_details = []
+    
+    # 尝试获取历史净值并计算技术指标
+    try:
+        from src.fetcher import fetch_fund_nav_history, calculate_technical_from_history
+        
+        # 获取第一个基金的历史数据
+        if funds:
+            first_fund_code = funds[0].get('fund_code') or funds[0].get('code', '000001')
+            nav_history = fetch_fund_nav_history(first_fund_code, days=60)
+            
+            if nav_history and len(nav_history) >= 20:
+                closes = [d['nav'] for d in nav_history]
+                tech = calculate_technical_from_history(closes)
+                
+                # MA 均线判断
+                if tech['ma5'] and tech['ma10'] and tech['ma20']:
+                    if tech['ma5'] > tech['ma10'] > tech['ma20']:
+                        technical_score += 10  # 多头排列
+                        technical_details.append("MA均线多头排列")
+                    elif tech['ma5'] < tech['ma10'] < tech['ma20']:
+                        technical_score -= 10  # 空头排列
+                        technical_details.append("MA均线空头排列")
+                
+                # RSI 判断
+                if tech['rsi']:
+                    if tech['rsi'] > 70:
+                        technical_score -= 10  # 超买
+                        technical_details.append(f"RSI超买({tech['rsi']:.0f})")
+                    elif tech['rsi'] < 30:
+                        technical_score += 10  # 超卖
+                        technical_details.append(f"RSI超卖({tech['rsi']:.0f})")
+                
+                # MACD 判断
+                if tech['macd']:
+                    macd_trend = tech['macd'].get('trend', 'neutral')
+                    if macd_trend == 'golden_cross':
+                        technical_score += 15
+                        technical_details.append("MACD金叉")
+                    elif macd_trend == 'death_cross':
+                        technical_score -= 15
+                        technical_details.append("MACD死叉")
+                    elif macd_trend == 'bullish':
+                        technical_score += 5
+                        technical_details.append("MACD多头")
+                    elif macd_trend == 'bearish':
+                        technical_score -= 5
+                        technical_details.append("MACD空头")
+                
+                logger.info(f"技术指标分析: {technical_details}, score={technical_score}")
+    except Exception as e:
+        logger.warning(f"技术指标计算失败: {e}")
+    
+    # 将技术指标分数加入总分
+    score += technical_score
+    
     # 确定操作建议
     if score > 50:
         advice = "市场情绪乐观，基金表现良好，趋势向上，适合适度加仓"
@@ -354,6 +412,8 @@ def generate_advice(funds: List[Dict]) -> Dict:
         "max_drawdown": round(avg_drawdown, 2),
         "drawdown_days": drawdown_days,
         "risk_score": round(avg_risk, 1),
+        "technical_score": technical_score,
+        "technical_details": technical_details,
         "position_ratio": round(position_ratio, 1),
         "avg_profit_pct": round(avg_profit_pct, 1),
         "total_value": round(total_value, 2)
