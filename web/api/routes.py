@@ -339,5 +339,58 @@ def get_portfolio_analysis():
     return jsonify({"success": True, "analysis": analysis})
 
 
+@api.route('/import-screenshot', methods=['POST'])
+def import_screenshot():
+    """Import holdings from screenshot using OCR"""
+    if 'file' not in request.files:
+        return jsonify({"success": False, "error": "No file provided"}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"success": False, "error": "Empty filename"}), 400
+    
+    # Save uploaded file temporarily
+    import tempfile
+    import uuid
+    
+    suffix = os.path.splitext(file.filename)[1]
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp_path = tmp.name
+        file.save(tmp_path)
+    
+    try:
+        # Try EasyOCR first, then fall back to rule-based
+        from src.ocr import parse_image_easyocr, parse_ocr_result, EASYOCR_AVAILABLE
+        
+        if EASYOCR_AVAILABLE:
+            result = parse_image_easyocr(tmp_path)
+            if result.get('success') and result.get('funds'):
+                return jsonify({
+                    "success": True,
+                    "parsed": result['funds'],
+                    "method": "easyocr"
+                })
+        
+        # Fall back to rule-based parsing (requires manual text input)
+        return jsonify({
+            "success": False,
+            "error": "OCR failed",
+            "message": "请手动输入基金代码和金额",
+            "parsed": []
+        })
+        
+    except Exception as e:
+        logger.error(f"OCR error: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "parsed": []
+        })
+    finally:
+        # Clean up temp file
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+
 # Import datetime at module level
 from datetime import datetime

@@ -1,6 +1,7 @@
 """
 OCR Module for Fund Daily
 Improved fund screenshot recognition with robust parsing
+Supports both EasyOCR and rule-based parsing
 """
 
 import re
@@ -9,6 +10,14 @@ from typing import List, Dict, Optional
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+# Try to import EasyOCR
+try:
+    import easyocr
+    EASYOCR_AVAILABLE = True
+except ImportError:
+    EASYOCR_AVAILABLE = False
+    logger.warning("EasyOCR not available, using rule-based parsing only")
 
 
 @dataclass
@@ -180,6 +189,75 @@ def validate_fund_code(code: str) -> bool:
     if not re.match(r'^\d{6}$', code):
         return False
     return int(code[0]) in [0, 1, 2, 3, 5, 6]
+
+
+# EasyOCR reader instance (lazy initialization)
+_easyocr_reader = None
+
+
+def _get_easyocr_reader():
+    """Get or create EasyOCR reader"""
+    global _easyocr_reader
+    if _easyocr_reader is None and EASYOCR_AVAILABLE:
+        try:
+            _easyocr_reader = easyocr.Reader(['ch_sim', 'en'], gpu=True)
+            logger.info("EasyOCR reader initialized successfully")
+        except Exception as e:
+            logger.warning(f"Failed to initialize EasyOCR: {e}")
+            return None
+    return _easyocr_reader
+
+
+def parse_image_easyocr(image_path: str) -> Dict:
+    """
+    Parse fund screenshot using EasyOCR
+    
+    Args:
+        image_path: Path to the image file
+        
+    Returns:
+        dict: Parsed fund data
+    """
+    if not EASYOCR_AVAILABLE:
+        return {
+            'success': False,
+            'error': 'EasyOCR not available',
+            'funds': [],
+            'message': '请安装 easyocr: pip install easyocr'
+        }
+    
+    reader = _get_easyocr_reader()
+    if reader is None:
+        return {
+            'success': False,
+            'error': 'Failed to initialize EasyOCR',
+            'funds': [],
+            'message': 'EasyOCR 初始化失败'
+        }
+    
+    try:
+        # Run OCR
+        results = reader.readtext(image_path)
+        
+        # Combine all text
+        ocr_text = ""
+        for bbox, text, conf in results:
+            if conf > 0.3:  # Filter low confidence
+                ocr_text += text + "\n"
+        
+        logger.info(f"EasyOCR extracted {len(results)} text regions")
+        
+        # Parse using rule-based parser
+        return parse_ocr_result(ocr_text)
+        
+    except Exception as e:
+        logger.error(f"EasyOCR error: {e}")
+        return {
+            'success': False,
+            'error': str(e),
+            'funds': [],
+            'message': f'EasyOCR 处理失败: {str(e)}'
+        }
 
 
 def parse_ocr_result(ocr_text: str) -> Dict:

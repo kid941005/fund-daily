@@ -4,6 +4,5 @@ flask-cors==4.0.0
 requests==2.31.0
 numpy>=1.24.0  # For accurate risk calculations
 
-# Optional: For OCR functionality (install manually if needed)
-# pip install easyocr  # ~2GB, large!
-# Or use cloud OCR APIs instead
+# Optional: OCR functionality
+# pip install easyocr  # ~2GB, includes PyTorch
