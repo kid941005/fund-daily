@@ -250,6 +250,18 @@ def generate_advice(funds: List[Dict]) -> Dict:
     elif avg_drawdown < 5:
         score += 10
     
+    # 技术指标分析（基于当日涨跌趋势）
+    # 模拟技术指标信号（实际需要历史净值数据）
+    daily_change = avg_change
+    
+    # 基于当日走势的技术信号
+    if daily_change > 2:
+        # 大涨，可能进入超买
+        score -= 5
+    elif daily_change < -2:
+        # 大跌，可能超卖
+        score += 5
+    
     # 确定操作建议
     if score > 50:
         advice = "市场情绪乐观，基金表现良好，趋势向上，适合适度加仓"
@@ -399,3 +411,117 @@ def get_fund_detail_info(code: str) -> Dict:
         
     except Exception as e:
         return {"error": str(e), "fund_code": code}
+
+
+# ============== Technical Indicators ==============
+
+def calculate_ma(closes: List[float], period: int) -> Optional[float]:
+    """Calculate moving average"""
+    if len(closes) < period:
+        return None
+    return sum(closes[-period:]) / period
+
+
+def calculate_macd(closes: List[float]) -> Dict[str, float]:
+    """
+    Calculate MACD indicator
+    
+    Returns:
+        - macd: MACD line
+        - signal: Signal line
+        - histogram: MACD histogram
+    """
+    if len(closes) < 26:
+        return {'macd': 0, 'signal': 0, 'histogram': 0, 'trend': 'unknown'}
+    
+    # EMA calculation
+    def ema(data, period):
+        ema_values = []
+        multiplier = 2 / (period + 1)
+        for i, price in enumerate(data):
+            if i < period - 1:
+                ema_values.append(sum(data[:period]) / period)
+            elif i == period - 1:
+                ema_values.append(sum(data[:period]) / period)
+            else:
+                ema_values.append((price - ema_values[-1]) * multiplier + ema_values[-1])
+        return ema_values
+    
+    ema_12 = ema(closes, 12)
+    ema_26 = ema(closes, 26)
+    
+    macd_line = [ema_12[i] - ema_26[i] for i in range(len(closes))]
+    signal_line = ema(macd_line, 9)
+    histogram = macd_line[-1] - signal_line[-1] if signal_line else 0
+    
+    # Determine trend
+    if histogram > 0 and histogram > histogram - (macd_line[-1] - signal_line[-2] if len(signal_line) > 1 else 0):
+        trend = 'golden_cross'  # 金叉
+    elif histogram < 0 and histogram < histogram - (macd_line[-1] - signal_line[-2] if len(signal_line) > 1 else 0):
+        trend = 'death_cross'  # 死叉
+    elif histogram > 0:
+        trend = 'bullish'  # 多头
+    elif histogram < 0:
+        trend = 'bearish'  # 空头
+    else:
+        trend = 'neutral'
+    
+    return {
+        'macd': macd_line[-1] if macd_line else 0,
+        'signal': signal_line[-1] if signal_line else 0,
+        'histogram': histogram,
+        'trend': trend
+    }
+
+
+def calculate_rsi(closes: List[float], period: int = 14) -> Optional[float]:
+    """Calculate RSI indicator"""
+    if len(closes) < period + 1:
+        return None
+    
+    gains = []
+    losses = []
+    for i in range(1, len(closes)):
+        change = closes[i] - closes[i-1]
+        if change > 0:
+            gains.append(change)
+            losses.append(0)
+        else:
+            gains.append(0)
+            losses.append(abs(change))
+    
+    if len(gains) < period:
+        return None
+    
+    avg_gain = sum(gains[-period:]) / period
+    avg_loss = sum(losses[-period:]) / period
+    
+    if avg_loss == 0:
+        return 100
+    
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
+
+
+def analyze_technical_indicators(fund_code: str) -> Dict:
+    """
+    Analyze technical indicators for a fund
+    
+    Returns:
+        - ma5, ma10, ma20: Moving averages
+        - macd: MACD indicator
+        - rsi: RSI value
+        - recommendation: 'buy', 'sell', 'hold'
+    """
+    # Note: In production, you would fetch historical NAV data
+    # For now, return a placeholder that uses available data
+    
+    return {
+        'ma5': None,
+        'ma10': None,
+        'ma20': None,
+        'macd': {'trend': 'neutral'},
+        'rsi': None,
+        'recommendation': 'hold'
+    }
