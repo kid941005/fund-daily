@@ -19,6 +19,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install CPU-only PyTorch first (to avoid installing CUDA version)
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
 # Download EasyOCR models (automatic in v1.7+)
 RUN pip install --no-cache-dir easyocr && \
     python -c "from easyocr import Reader; Reader(['ch_sim', 'en'], gpu=False)" && \
