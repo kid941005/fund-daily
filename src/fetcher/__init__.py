@@ -18,8 +18,10 @@ logger = logging.getLogger(__name__)
 
 # ============== Cache ==============
 CACHE_DURATION = int(os.environ.get("FUND_DAILY_CACHE_DURATION", 300))
+REQUEST_INTERVAL = float(os.environ.get("FUND_DAILY_REQUEST_INTERVAL", 0.5))  # 请求间隔（秒）
 
 _cache = {}
+_last_request_time = 0.0  # 上次请求时间
 
 
 def get_cache(key: str) -> Optional[Any]:
@@ -65,7 +67,16 @@ _ctx = _get_ssl_context()
 
 # ============== HTTP Helpers ==============
 def _make_request(url: str, timeout: int = 10) -> Optional[str]:
-    """Make HTTP request with error handling"""
+    """Make HTTP request with error handling and rate limiting"""
+    global _last_request_time
+
+    # Rate limiting: wait if needed
+    elapsed = time.time() - _last_request_time
+    if elapsed < REQUEST_INTERVAL:
+        sleep_time = REQUEST_INTERVAL - elapsed
+        logger.debug(f"Rate limiting: sleeping {sleep_time:.2f}s")
+        time.sleep(sleep_time)
+
     try:
         req = urllib.request.Request(
             url,
@@ -75,6 +86,7 @@ def _make_request(url: str, timeout: int = 10) -> Optional[str]:
             },
         )
         with urllib.request.urlopen(req, context=_ctx, timeout=timeout) as response:
+            _last_request_time = time.time()  # 更新请求时间
             return response.read().decode("utf-8")
     except urllib.error.HTTPError as e:
         logger.error(f"HTTP error: {e.code} {e.reason}")
