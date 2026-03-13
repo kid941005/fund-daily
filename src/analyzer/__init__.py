@@ -4,7 +4,7 @@ Handles risk metrics and market sentiment analysis
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List
 from datetime import datetime
 
 from ..fetcher import (
@@ -14,8 +14,7 @@ from ..fetcher import (
 )
 
 # Import enhanced modules
-from .risk import calculate_real_risk_metrics, calculate_risk_metrics
-from .sentiment import get_enhanced_market_sentiment, analyze_sector_sentiment
+from .sentiment import get_enhanced_market_sentiment
 
 logger = logging.getLogger(__name__)
 
@@ -369,7 +368,7 @@ def calculate_expected_return(holdings: List[Dict], funds_data: List[Dict]) -> D
         'return_percentage': round(return_pct, 2),
         'holdings_analysis': holdings_analysis,
         'top_sectors': [
-            {'name': s.get('name', ''), 'change': s.get('change', 0)} 
+            {'name': s.get('name', ''), 'change': s.get('change', 0)}
             for s in top_sectors
         ],
         'market_sentiment': get_market_sentiment().get('sentiment', '平稳')

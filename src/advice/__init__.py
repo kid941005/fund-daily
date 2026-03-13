@@ -225,15 +225,6 @@ def generate_advice(funds: List[Dict]) -> Dict:
     # 基金当日表现
     score += avg_change * 10
     
-    # 趋势判断（近1月 vs 近3月）
-    return_1m = kwargs.get('return_1m', 0) if 'kwargs' in dir() else 0
-    return_3m = kwargs.get('return_3m', 0) if 'kwargs' in dir() else 0
-    if return_1m and return_3m:
-        if return_1m > return_3m * 1.5:
-            score += 15  # 加速上涨
-        elif return_1m < return_3m * 0.5:
-            score -= 15  # 减速上涨，可能回调
-    
     # 夏普比率
     if avg_sharpe > 1:
         score += 20
@@ -389,7 +380,6 @@ def generate_advice(funds: List[Dict]) -> Dict:
     commodity_info = []
     for name, data in commodity.get('details', {}).items():
         change = data.get('change', 0) or 0
-        price = data.get('price', 'N/A')
         emoji = "📈" if change > 0 else "📉" if change < 0 else "➖"
         commodity_info.append(f"{emoji}{data.get('name', name)}: {change:+.2f}%")
     
@@ -439,7 +429,6 @@ def get_fund_detail_info(code: str) -> Dict:
         
         # Extract metrics
         syl_1n = re.search(r'syl_1n="([^"]+)"', detail_data.get('raw_html', ''))
-        syl_6y = re.search(r'syl_6y="([^"]+)"', detail_data.get('raw_html', ''))
         syl_3y = re.search(r'syl_3y="([^"]+)"', detail_data.get('raw_html', ''))
         syl_1y = re.search(r'syl_1y="([^"]+)"', detail_data.get('raw_html', ''))
         
@@ -542,7 +531,7 @@ def calculate_rsi(closes: List[float], period: int = 14) -> Optional[float]:
     gains = []
     losses = []
     for i in range(1, len(closes)):
-        change = closes[i] - closes[i-1]
+        change = closes[i] - closes[i - 1]
         if change > 0:
             gains.append(change)
             losses.append(0)

@@ -124,7 +124,7 @@ class FundOcrParser:
         if not ocr_text or len(ocr_text.strip()) < 10:
             return []
         
-        lines = [l.strip() for l in ocr_text.split('\n') if l.strip()]
+        lines = [line.strip() for line in ocr_text.split('\n') if line.strip()]
         
         # Improved parsing: Group by vertical position (rows)
         # The screenshot has: code line above, name+amount line below
@@ -222,7 +222,7 @@ class FundOcrParser:
             
             # Search nearby (within 2 lines) for amounts
             amount = None
-            for j in range(max(0, i-2), min(len(lines), i+3)):
+            for j in range(max(0, i - 2), min(len(lines), i + 3)):
                 if j == i:
                     continue
                 amt = self._extract_amount(lines[j])

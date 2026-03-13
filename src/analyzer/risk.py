@@ -3,10 +3,8 @@ Enhanced risk calculation with real historical data
 """
 
 import re
-import json
 import logging
-from typing import Dict, List, Optional, Tuple
-from datetime import datetime, timedelta
+from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -138,14 +136,8 @@ def fetch_historical_nav(fund_code: str, days: int = 365) -> List[Dict]:
         nav_pattern = r'var netAssetValue=\[([^\]]+)\]'
         nav_match = re.search(nav_pattern, content)
         
-        date_pattern = r'var accumNav=\[([^\]]+)\]'  
-        date_match = re.search(date_pattern, content)
-        
         if not nav_match:
             return []
-        
-        # Parse the arrays
-        nav_str = nav_match.group(1)
         
         # Parse JSON-like array
         try:
@@ -228,7 +220,7 @@ def calculate_real_risk_metrics(fund_code: str) -> Dict:
         # Simplified calculation without numpy
         returns = []
         for i in range(1, len(navs)):
-            ret = (navs[i] - navs[i-1]) / navs[i-1]
+            ret = (navs[i] - navs[i - 1]) / navs[i - 1]
             returns.append(ret)
         
         # Annual return
