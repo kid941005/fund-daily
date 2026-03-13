@@ -49,7 +49,7 @@ class TestAnalyzeFund:
     
     def test_generate_summary_positive(self):
         """Test summary generation for positive change"""
-        fund_data = {"name": "测试基金", "dwjz": "1.5", "gszzl": "3.5"}
+        fund_data = {"fundcode": "000001", "name": "测试基金", "dwjz": "1.5", "gszzl": "3.5"}
         
         result = analyze_fund(fund_data)
         
@@ -57,7 +57,7 @@ class TestAnalyzeFund:
     
     def test_generate_summary_negative(self):
         """Test summary generation for negative change"""
-        fund_data = {"name": "测试基金", "dwjz": "1.5", "gszzl": "-3.5"}
+        fund_data = {"fundcode": "000001", "name": "测试基金", "dwjz": "1.5", "gszzl": "-3.5"}
         
         result = analyze_fund(fund_data)
         
@@ -262,7 +262,7 @@ class TestGetFundDetailInfo:
     @patch('src.advice.fetch_fund_data')
     def test_get_detail_error(self, mock_fetch_data):
         """Test detail fetch error"""
-        mock_fetch_data.return_value = {"error": "Not found"}
+        mock_fetch_data.side_effect = Exception("Not found")
         
         result = get_fund_detail_info("000001")
         

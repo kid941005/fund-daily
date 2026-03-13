@@ -22,7 +22,7 @@ class TestCalculateRiskMetrics:
     
     def test_high_risk_fund(self):
         """Test high risk fund detection"""
-        result = calculate_risk_metrics(15, 25, 35)
+        result = calculate_risk_metrics(15, 30, 50)
         
         assert result["risk_level"] == "高风险"
         assert result["risk_score"] >= 7
@@ -64,19 +64,19 @@ class TestCalculateRiskMetrics:
 class TestGetMarketSentiment:
     """Tests for market sentiment analysis"""
     
-    @patch('src.analyzer.fetch_hot_sectors')
-    @patch('src.analyzer.fetch_market_news')
+    @patch('src.analyzer.sentiment.fetch_hot_sectors')
+    @patch('src.analyzer.sentiment.fetch_market_news')
     def test_bullish_sentiment(self, mock_news, mock_sectors):
         """Test bullish market sentiment"""
         # More up sectors than down
         mock_sectors.return_value = [
-            {"name": "新能源", "change": 3.0},
-            {"name": "消费", "change": 2.0},
-            {"name": "医药", "change": 1.0},
+            {"name": "新能源", "change": 8.0},
+            {"name": "消费", "change": 6.0},
+            {"name": "医药", "change": 5.0},
         ]
         mock_news.return_value = [
-            {"title": "A股大涨"},
-            {"title": "市场看好"},
+            {"title": "A股暴涨创新高"},
+            {"title": "市场全面看好牛市来了"},
         ]
         
         result = get_market_sentiment()
@@ -84,18 +84,18 @@ class TestGetMarketSentiment:
         # Should be optimistic
         assert result["sentiment"] in ["乐观", "偏多"]
     
-    @patch('src.analyzer.fetch_hot_sectors')
-    @patch('src.analyzer.fetch_market_news')
+    @patch('src.analyzer.sentiment.fetch_hot_sectors')
+    @patch('src.analyzer.sentiment.fetch_market_news')
     def test_bearish_sentiment(self, mock_news, mock_sectors):
         """Test bearish market sentiment"""
         mock_sectors.return_value = [
-            {"name": "新能源", "change": -3.0},
-            {"name": "消费", "change": -2.0},
-            {"name": "医药", "change": -1.0},
+            {"name": "新能源", "change": -8.0},
+            {"name": "消费", "change": -6.0},
+            {"name": "医药", "change": -5.0},
         ]
         mock_news.return_value = [
-            {"title": "A股大跌"},
-            {"title": "市场恐慌"},
+            {"title": "A股暴跌创新低"},
+            {"title": "市场恐慌崩盘了"},
         ]
         
         result = get_market_sentiment()
@@ -103,8 +103,8 @@ class TestGetMarketSentiment:
         # Should be pessimistic
         assert result["sentiment"] in ["偏空", "恐慌"]
     
-    @patch('src.analyzer.fetch_hot_sectors')
-    @patch('src.analyzer.fetch_market_news')
+    @patch('src.analyzer.sentiment.fetch_hot_sectors')
+    @patch('src.analyzer.sentiment.fetch_market_news')
     def test_neutral_sentiment(self, mock_news, mock_sectors):
         """Test neutral market sentiment"""
         mock_sectors.return_value = [

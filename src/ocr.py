@@ -254,6 +254,9 @@ def validate_fund_code(code: str) -> bool:
     """Validate fund code"""
     if not re.match(r'^\d{6}$', code):
         return False
+    # Valid first digits: 0, 1, 2, 3, 5, 6 (but not all zeros)
+    if code == '000000':
+        return False
     return int(code[0]) in [0, 1, 2, 3, 5, 6]
 
 
