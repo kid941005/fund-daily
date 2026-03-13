@@ -83,18 +83,44 @@ class FundOcrParser:
 
         # If no specific pattern matched, try simple pattern but exclude fund codes
         if not best_amount:
-            matches = re.findall(simple_pattern, text)
+            # First try to find numbers WITH decimal points
+            decimal_pattern = r"\b([1-9]\d{0,2}(?:\.\d{1,2}))\b"
+            matches = re.findall(decimal_pattern, text)
             for match in matches:
                 try:
                     amount = float(match)
-                    if amount > 0:  # Accept any positive amount
-                        # Exclude if it matches a fund code in the text
+                    if amount > 0:
                         if match in fund_codes_in_text:
                             continue
                         best_amount = amount
                         break
                 except (ValueError, AttributeError):
                     continue
+            
+            # If still no match, try integer pattern but try to insert decimal for 4-6 digit numbers
+            if not best_amount:
+                matches = re.findall(simple_pattern, text)
+                for match in matches:
+                    try:
+                        amount = float(match)
+                        if amount > 0:
+                            # Exclude if it matches a fund code in the text
+                            if match in fund_codes_in_text:
+                                continue
+                            # For 4-6 digit numbers, assume they might have lost decimal point
+                            # e.g., "1234" could be "12.34" or "123.4"
+                            if len(match) >= 4 and len(match) <= 6:
+                                # Try inserting decimal at different positions
+                                for pos in range(1, len(match)):
+                                    potential = float(match[:pos] + "." + match[pos:])
+                                    if potential > 0 and potential < amount:
+                                        # Prefer the smaller value (likely the decimal version)
+                                        amount = potential
+                                        break
+                            best_amount = amount
+                            break
+                    except (ValueError, AttributeError):
+                        continue
 
         # Round to 2 decimal places
         if best_amount:
