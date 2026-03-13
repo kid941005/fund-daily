@@ -37,12 +37,6 @@ services:
     volumes:
       - ./data:/app/data
       - ./config:/app/config
-    # 资源限制
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 512M
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/"]
