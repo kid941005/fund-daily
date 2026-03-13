@@ -15,8 +15,8 @@ services:
       - FUND_DAILY_SSL_VERIFY=${FUND_DAILY_SSL_VERIFY:-1}
       - FUND_DAILY_DB_PATH=/app/data/fund-daily.db
       - FUND_DAILY_CACHE_DURATION=${FUND_DAILY_CACHE_DURATION:-300}
-      # 基金配置
-      - FUND_CODES=${FUND_CODES:-000001,110022,161725}
+      # 基金配置 (无默认值，用户需配置)
+      - FUND_CODES=${FUND_CODES:-}
       # 报告配置
       - REPORT_TIME=${REPORT_TIME:-15:00}
       # 涨跌幅提醒
@@ -37,9 +37,20 @@ services:
     volumes:
       - ./data:/app/data
       - ./config:/app/config
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/"]
       interval: 30s
       timeout: 10s
       retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
