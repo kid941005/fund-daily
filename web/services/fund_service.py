@@ -92,7 +92,16 @@ def get_advice_for_user(holdings: List[Dict], holdings_dict: Dict = None, defaul
         holdings_dict = {}
 
     report = generate_daily_report(codes)
-    advice = generate_advice(report.get("funds", []))
+    
+    # Inject holdings amount into funds
+    funds = report.get("funds", [])
+    for fund in funds:
+        code = fund.get("fund_code")
+        holding = holdings_dict.get(code, {})
+        amount = holding.get("amount", 0)
+        fund["amount"] = amount
+    
+    advice = generate_advice(funds)
 
     # Add holdings info to advice
     advice["holdings"] = []

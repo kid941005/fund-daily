@@ -165,6 +165,17 @@ def get_holdings(user_id):
     return [dict(row) for row in rows]
 
 
+def get_all_holdings():
+    """Get all holdings from all users"""
+    conn = get_db()
+    cursor = conn.execute(
+        "SELECT user_id, code, name, amount, buy_nav, buy_date FROM holdings WHERE amount > 0"
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
 def save_holdings(user_id, holdings):
     """Save/更新 holdings for a user"""
     conn = get_db()

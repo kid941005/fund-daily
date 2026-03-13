@@ -13,12 +13,18 @@ from flask import Flask, render_template
 from flask_cors import CORS
 
 # Get version from VERSION file (after flask import to satisfy lint)
-VERSION_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "VERSION")
-if os.path.exists(VERSION_FILE):
-    with open(VERSION_FILE, "r") as f:
-        VERSION = f.read().strip() or "2.2.0"
-else:
-    VERSION = "2.2.0"
+
+
+def get_version():
+
+    VERSION_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "VERSION")
+    if os.path.exists(VERSION_FILE):
+        with open(VERSION_FILE, "r") as f:
+            return f.read().strip() or "2.2.0"
+    return "2.2.0"
+
+
+VERSION = get_version()
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -55,7 +61,7 @@ os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
 @app.route("/")
 def index():
     """Main page"""
-    return render_template("index.html", version=VERSION)
+    return render_template("index.html", version=get_version())
 
 
 # ============== Config ==============

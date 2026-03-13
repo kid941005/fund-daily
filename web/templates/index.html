@@ -349,6 +349,27 @@
         .advice-emoji { font-size: 64px; margin-bottom: 20px; }
         .advice-title { font-size: 24px; font-weight: bold; margin-bottom: 15px; }
         .advice-desc { font-size: 16px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 20px; }
+        .advice-fund-ratio {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+            font-size: 12px;
+        }
+        .ratio-item {
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .ratio-item.target {
+            color: var(--primary-color);
+            background: rgba(59, 130, 246, 0.1);
+        }
+        .ratio-arrow {
+            color: var(--text-secondary);
+        }
+
         
         .advice-funds { text-align: left; margin-top: 20px; }
         
@@ -1283,6 +1304,49 @@
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         });
         
+        // 缓存数据，避免重复请求
+        const dataCache = {
+            hot: { data: null, time: 0 },
+            holdings: { data: null, time: 0 },
+            advice: { data: null, time: 0 },
+            analysis: { data: null, time: 0 }
+        };
+        const CACHE_DURATION = 30000; // 30秒缓存
+        
+        // 预加载所有数据
+        async function preloadAllData() {
+            console.log('预加载数据...');
+            try {
+                const [fundsRes, holdingsRes, adviceRes] = await Promise.all([
+                    fetch('/api/funds'),
+                    fetch('/api/holdings'),
+                    fetch('/api/advice')
+                ]);
+                
+                const fundsData = await fundsRes.json();
+                const holdingsData = await holdingsRes.json();
+                const adviceData = await adviceRes.json();
+                
+                if (fundsData.success) {
+                    dataCache.hot.data = fundsData;
+                    dataCache.hot.time = Date.now();
+                    fundsCache = fundsData.funds || [];
+                }
+                if (holdingsData.success) {
+                    dataCache.holdings.data = holdingsData;
+                    dataCache.holdings.time = Date.now();
+                }
+                if (adviceData.success) {
+                    dataCache.advice.data = adviceData;
+                    dataCache.advice.time = Date.now();
+                    window.fundRecommendations = adviceData.advice?.fund_recommendations || [];
+                }
+                console.log('预加载完成');
+            } catch (e) {
+                console.error('预加载失败:', e);
+            }
+        }
+        
         function switchTab(tabName) {
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.classList.remove('active');
@@ -1294,15 +1358,34 @@
             });
             document.getElementById('tab-' + tabName).classList.add('active');
             
+            const now = Date.now();
+            
             if (tabName === 'hot') {
-                loadHotNews();
-                loadSectors();
+                if (!dataCache.hot.data || now - dataCache.hot.time > CACHE_DURATION) {
+                    loadHotNews();
+                    loadSectors();
+                } else {
+                    console.log('使用缓存的热门数据');
+                }
             } else if (tabName === 'holdings') {
-                loadFundsAndHoldings();
+                if (!dataCache.holdings.data || now - dataCache.holdings.time > CACHE_DURATION) {
+                    loadFundsAndHoldings();
+                } else {
+                    console.log('使用缓存的持仓数据');
+                }
             } else if (tabName === 'advice') {
-                loadAdviceData();
+                if (!dataCache.advice.data || now - dataCache.advice.time > CACHE_DURATION) {
+                    loadAdviceData();
+                } else {
+                    console.log('使用缓存的建议数据');
+                    renderAdvice(fundsCache);
+                }
             } else if (tabName === 'analysis') {
-                loadAnalysisData();
+                if (!dataCache.analysis.data || now - dataCache.analysis.time > CACHE_DURATION) {
+                    loadAnalysisData();
+                } else {
+                    console.log('使用缓存的分析数据');
+                }
             }
         }
         
@@ -1938,17 +2021,44 @@
         // 加载建议数据
         async function loadAdviceData() {
             try {
-                const response = await fetch('/api/funds');
-                const data = await response.json();
+                console.log('Loading advice data...');
+                // 并行获取基金数据和建议数据
+                const [fundsRes, adviceRes] = await Promise.all([
+                    fetch('/api/funds'),
+                    fetch('/api/advice')
+                ]);
                 
-                if (!data.success) {
-                    document.getElementById('adviceContent').innerHTML = '<div class="error">加载失败</div>';
+                console.log('Response received');
+                const fundsData = await fundsRes.json();
+                const adviceData = await adviceRes.json();
+                
+                console.log('fundsData:', fundsData);
+                console.log('adviceData:', adviceData);
+                
+                if (!fundsData.success) {
+                    document.getElementById('adviceContent').innerHTML = '<div class="error">加载失败: fundsData.success=false</div>';
                     return;
                 }
                 
-                fundsCache = data.funds;
-                renderAdvice(data.funds);
+                if (!adviceData.success) {
+                    document.getElementById('adviceContent').innerHTML = '<div class="error">加载失败: adviceData.success=false</div>';
+                    return;
+                }
+                
+                fundsCache = fundsData.funds;
+                
+                // 保存建议数据供renderAdvice使用
+                window.fundRecommendations = adviceData.advice?.fund_recommendations || [];
+                console.log('fundRecommendations:', window.fundRecommendations);
+                
+                try {
+                    renderAdvice(fundsData.funds);
+                } catch (e) {
+                    console.error('renderAdvice error:', e);
+                    document.getElementById('adviceContent').innerHTML = '<div class="error">渲染失败: ' + e.message + '</div>';
+                }
             } catch (e) {
+                console.error('Advice load error:', e);
                 document.getElementById('adviceContent').innerHTML = '<div class="error">加载失败</div>';
             }
         }
@@ -2075,7 +2185,59 @@
             document.getElementById('analysisContent').innerHTML = riskHtml + allocationHtml + fundsHtml;
         }
         
-        function renderAdvice(funds) {
+        // 板块分类函数 - 细分版本
+            function getSector(name) {
+                name = name || '';
+                // 食品饮料
+                if (name.includes('白酒') || name.includes('食品') || name.includes('饮料') || name.includes('调味')) return '食品饮料';
+                // 家电
+                if (name.includes('家电') || name.includes('空调') || name.includes('冰箱') || name.includes('洗衣机')) return '家电';
+                // 纺织服装
+                if (name.includes('纺织') || name.includes('服装') || name.includes('鞋服') || name.includes('美妆')) return '纺织服装';
+                // 医疗医药
+                if (name.includes('医药') || name.includes('医疗') || name.includes('中药') || name.includes('生物') || name.includes('创新药') || name.includes('疫苗')) return '医疗医药';
+                // 半导体芯片
+                if (name.includes('半导体') || name.includes('芯片') || name.includes('集成电路') || name.includes('光刻机')) return '半导体芯片';
+                // 电子
+                if (name.includes('电子') || name.includes('消费电子') || name.includes('面板') || name.includes('PCB')) return '电子';
+                // 计算机软件
+                if (name.includes('计算机') || name.includes('软件') || name.includes('云计算') || name.includes('大数据') || name.includes('AI') || name.includes('人工智能')) return '计算机AI';
+                // 新能源车
+                if (name.includes('新能源车') || name.includes('智能汽车') || name.includes('汽车')) return '新能源车';
+                // 光伏
+                if (name.includes('光伏') || name.includes('硅片') || name.includes('组件') || name.includes('逆变器')) return '光伏';
+                // 锂电池
+                if (name.includes('锂电') || name.includes('锂电池') || name.includes('动力电池') || name.includes('储能')) return '锂电池';
+                // 电力
+                if (name.includes('电力') || name.includes('电网') || name.includes('发电') || name.includes('绿电')) return '电力';
+                // 石油化工
+                if (name.includes('石油') || name.includes('油气') || name.includes('化工') || name.includes('精细化工')) return '石油化工';
+                // 有色金属
+                if (name.includes('有色') || name.includes('铜') || name.includes('铝') || name.includes('稀土') || name.includes('黄金') || name.includes('金属')) return '有色金属';
+                // 煤炭
+                if (name.includes('煤炭') || name.includes('煤碳')) return '煤炭';
+                // 银行
+                if (name.includes('银行')) return '银行';
+                // 证券保险
+                if (name.includes('证券') || name.includes('保险') || name.includes('金融')) return '证券保险';
+                // 房地产
+                if (name.includes('地产') || name.includes('房地产') || name.includes('建筑') || name.includes('建材') || name.includes('物业')) return '房地产';
+                // 军工
+                if (name.includes('军工') || name.includes('国防') || name.includes('航天') || name.includes('航空') || name.includes('船舶') || name.includes('发动机')) return '军工';
+                // 传媒互联网
+                if (name.includes('传媒') || name.includes('游戏') || name.includes('影视') || name.includes('互联网') || name.includes('短视频')) return '传媒互联网';
+                // 环保
+                if (name.includes('环保') || name.includes('碳中和') || name.includes('污水处理')) return '环保';
+                // 机械制造
+                if (name.includes('机械') || name.includes('制造') || name.includes('工业') || name.includes('机器人') || name.includes('数控')) return '机械制造';
+                // 农业
+                if (name.includes('农业') || name.includes('畜牧') || name.includes('养殖') || name.includes('牧原') || name.includes('种业')) return '农业';
+                // 科创创业板
+                if (name.includes('科创') || name.includes('创业板') || name.includes('北交所')) return '科创';
+                return '其他';
+            }
+            
+            function renderAdvice(funds) {
             const holdingsWithAmount = holdingsData.filter(h => h.amount > 0);
             
             if (holdingsWithAmount.length === 0) {
@@ -2089,62 +2251,53 @@
                 return;
             }
             
-            // 板块分类函数
-            function getSector(name) {
-                name = name || '';
-                if (name.includes('消费') || name.includes('食品') || name.includes('白酒') || name.includes('家电') || name.includes('纺织')) return '消费';
-                if (name.includes('医药') || name.includes('医疗') || name.includes('中药') || name.includes('生物')) return '医药';
-                if (name.includes('科技') || name.includes('半导体') || name.includes('芯片') || name.includes('电子') || name.includes('计算机') || name.includes('软件')) return '科技';
-                if (name.includes('新能源') || name.includes('光伏') || name.includes('锂电') || name.includes('电力') || name.includes('电池')) return '新能源';
-                if (name.includes('金融') || name.includes('银行') || name.includes('证券') || name.includes('保险')) return '金融';
-                if (name.includes('地产') || name.includes('房地产') || name.includes('建筑') || name.includes('建材')) return '地产';
-                if (name.includes('军工') || name.includes('国防') || name.includes('航天') || name.includes('航空')) return '军工';
-                if (name.includes('传媒') || name.includes('游戏') || name.includes('影视') || name.includes('互联网')) return '传媒';
-                if (name.includes('环保') || name.includes('碳中和')) return '环保';
-                if (name.includes('工业') || name.includes('制造') || name.includes('机械') || name.includes('汽车')) return '制造';
-                if (name.includes('能源') || name.includes('煤炭') || name.includes('石油') || name.includes('化工')) return '能源';
-                if (name.includes('农业') || name.includes('畜牧') || name.includes('养殖') || name.includes('牧原')) return '农业';
-                if (name.includes('创业板') || name.includes('科创') || name.includes('人工智能')) return '科技';
-                if (name.includes('碳中和') || name.includes('资源')) return '新能源';
-                return '其他';
-            }
+            // 从API获取的建议数据
+            const recommendations = window.fundRecommendations || [];
             
             const fundAdvices = holdingsWithAmount.map(h => {
                 const fund = funds.find(f => f.fund_code === h.code) || {};
                 const change = parseFloat(fund.daily_change) || 0;
                 const name = h.name || fund.fund_name || h.code;
-                const sector = getSector(name);
                 const amount = h.amount || 0;
                 
-                // 基金建议：越跌越买，越涨越卖（反向操作）
-                // 结合板块趋势和历史波动，给出更稳健的建议
-                let advice, adviceClass, adviceEmoji, advicePercent, adviceDesc;
+                // 使用API返回的评分建议
+                const rec = recommendations.find(r => r.fund_code === h.code);
                 
-                if (change > 3) {
-                    advice = '建议止盈';
-                    advicePercent = 30;
-                    adviceClass = 'sell';
-                    adviceEmoji = '📈';
-                    adviceDesc = '当日大涨30%，可考虑分批止盈，落袋为安。';
-                } else if (change > 1.5) {
-                    advice = '可止盈10%';
-                    advicePercent = 10;
-                    adviceClass = 'sell';
-                    adviceEmoji = '📉';
-                    adviceDesc = '当日涨幅不错，若盈利可考虑部分止盈。';
-                } else if (change < -3) {
-                    advice = '建议加仓';
-                    advicePercent = 20;
-                    adviceClass = 'buy';
-                    adviceEmoji = '💰';
-                    adviceDesc = '当日大跌，此时加仓可降低持仓成本。';
-                } else if (change < -1.5) {
-                    advice = '可加仓10%';
-                    advicePercent = 10;
-                    adviceClass = 'buy';
-                    adviceEmoji = '💪';
-                    adviceDesc = '当日小幅下跌，是低吸的机会。';
+                console.log('Processing fund:', h.code, 'rec:', rec);
+                
+                let advice, adviceClass, adviceEmoji, advicePercent, adviceDesc, score;
+                
+                // 声明变量
+                let currentPct = 0;
+                let targetPct = 0;
+                
+                if (rec) {
+                    score = rec.score;
+                    currentPct = rec.current_pct || 0;
+                    targetPct = rec.target_pct || 0;
+                    const suggestion = rec.suggestion || '保持';
+                    
+                    advice = suggestion;
+                    advicePercent = Math.abs(targetPct - currentPct);
+                    
+                    if (suggestion.includes('增持')) {
+                        adviceClass = 'buy';
+                        adviceEmoji = '💰';
+                        adviceDesc = `建议持仓比例: ${targetPct.toFixed(1)}%`;
+                    } else if (suggestion.includes('减持')) {
+                        adviceClass = 'sell';
+                        adviceEmoji = '📉';
+                        adviceDesc = `建议持仓比例: ${targetPct.toFixed(1)}%`;
+                    } else {
+                        adviceClass = 'hold';
+                        adviceEmoji = '✅';
+                        adviceDesc = `建议持仓比例: ${targetPct.toFixed(1)}%`;
+                    }
                 } else {
+                    // 备用逻辑：如果没有API建议，使用旧的简单逻辑
+                    const currentPct = 0;
+                    const targetPct = 0;
+                    score = 0;
                     advice = '继续持有';
                     advicePercent = 0;
                     adviceClass = 'hold';
@@ -2156,12 +2309,14 @@
                     name: name,
                     code: h.code,
                     amount: amount,
-                    sector: sector,
+                    sector: getSector(name),
                     change: change,
                     advice: advice,
                     advicePercent: advicePercent,
                     adviceClass: adviceClass,
-                    adviceEmoji: adviceEmoji
+                    adviceEmoji: adviceEmoji,
+                    current_pct: currentPct,
+                    target_pct: targetPct
                 };
             });
             
@@ -2223,7 +2378,11 @@
                                     <div>
                                         <div class="advice-fund-name">${f.name}</div>
                                         <div class="advice-fund-change">${f.change > 0 ? '+' : ''}${f.change.toFixed(2)}% · ${f.amount.toLocaleString()}元</div>
-                                        <div class="advice-fund-desc">${f.adviceDesc || ''}</div>
+                                        <div class="advice-fund-ratio">
+                                            <span class="ratio-item">当前: ${f.current_pct || 0}%</span>
+                                            <span class="ratio-arrow">→</span>
+                                            <span class="ratio-item target">建议: ${f.target_pct || 0}%</span>
+                                        </div>
                                     </div>
                                     <div class="advice-tag ${f.adviceClass}">${f.adviceEmoji} ${f.advice}</div>
                                 </div>

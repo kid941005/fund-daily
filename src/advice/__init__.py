@@ -13,8 +13,21 @@ from ..analyzer import calculate_risk_metrics, get_market_sentiment, get_commodi
 
 logger = logging.getLogger(__name__)
 
-
+# ============== 配置常量 ==============
+SCORE_THRESHOLDS = {"BUY": 60, "HOLD": 40, "SELL": 20}
+ALLOCATION_RATIOS = {
+    "HIGH": 0.375, "MEDIUM_HIGH": 0.275, "MEDIUM": 0.225,
+    "LOW": 0.175, "LOWER": 0.125, "MINIMAL": 0.075, "NONE": 0
+}
+WEIGHT_CONFIG = {
+    "DAILY_CHANGE": 10, "M1_CHANGE": 5, "M3_CHANGE": 3,
+    "MOMENTUM": 10, "TREND": 10, "MARKET_SENTIMENT": 10,
+    "HOT_SECTOR": 10, "COMMODITY": 15, "SEASONAL": 10,
+    "SHARPE_HIGH": 25, "SHARPE_LOW": -20, "DRAWDOWN": 10, "SCALE": 10, "POSITION": 5
+}
 # ============== Fund Analysis ==============
+
+
 def analyze_fund(fund_data: Dict) -> Dict:
     """
     Analyze fund data and generate insights
@@ -414,6 +427,57 @@ def generate_advice(funds: List[Dict]) -> Dict:
 
     commodity_desc = " | ".join(commodity_info) if commodity_info else "暂无"
 
+    # 生成每只基金的建议
+    fund_recommendations = []
+    for f in funds:
+        code = f.get("fund_code", "")
+        amount = f.get("amount", 0)
+        
+        # 计算当前持仓比例
+        current_pct = (amount / total_value * 100) if total_value > 0 else 0
+        
+        # 计算目标持仓比例（基于评分）
+        # 使用基金涨跌计算单个基金的简单评分
+        daily_change = f.get("daily_change", 0) or 0
+        if daily_change > 2:
+            score = 70  # 大涨
+        elif daily_change > 0:
+            score = 50  # 上涨
+        elif daily_change > -2:
+            score = 40  # 轻微下跌
+        else:
+            score = 20  # 大跌
+        
+        if score >= 60:
+            target_pct = 25
+        elif score >= 50:
+            target_pct = 20
+        elif score >= 40:
+            target_pct = 15
+        elif score >= 30:
+            target_pct = 10
+        else:
+            target_pct = 5
+        
+        # 生成建议
+        diff = target_pct - current_pct
+        if diff > 5:
+            suggestion = "增持"
+        elif diff < -5:
+            suggestion = "减持"
+        else:
+            suggestion = "保持"
+        
+        fund_recommendations.append({
+            "fund_code": code,
+            "fund_name": f.get("fund_name", ""),
+            "current_pct": round(current_pct, 1),
+            "target_pct": target_pct,
+            "score": score,
+            "suggestion": suggestion,
+            "amount": amount
+        })
+
     return {
         "advice": advice,
         "risk_level": risk_level,
@@ -436,6 +500,7 @@ def generate_advice(funds: List[Dict]) -> Dict:
         "position_ratio": round(position_ratio, 1),
         "avg_profit_pct": round(avg_profit_pct, 1),
         "total_value": round(total_value, 2),
+        "fund_recommendations": fund_recommendations,
     }
 
 

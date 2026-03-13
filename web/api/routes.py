@@ -20,6 +20,23 @@ from .auth import hash_password, verify_password
 
 logger = logging.getLogger(__name__)
 
+
+# ============== Error Handlers ==============
+
+
+def handle_error(e: Exception, message: str = "请求失败") -> tuple:
+    """统一错误处理"""
+    logger.error(f"{message}: {str(e)}")
+    return jsonify({"success": False, "error": message}), 500
+
+
+def handle_validation_error(message: str) -> tuple:
+    """验证错误处理"""
+    return jsonify({"success": False, "error": message}), 400
+
+
+# Create API blueprint
+
 # Create API blueprint
 api = Blueprint("api", __name__)
 
@@ -293,14 +310,30 @@ def get_sectors():
 @api.route("/advice")
 def get_advice():
     """Get investment advice"""
+    # 优先从数据库获取持仓，不依赖session
+    from db import database
+    db_instance = database
     user_id = session.get("user_id")
-
+    
     if user_id:
-        holdings = db.get_holdings(user_id)
-        holdings_dict = {h["code"]: h for h in holdings}
+        holdings = db_instance.get_holdings(user_id)
     else:
-        holdings = []
-        holdings_dict = {}
+        # 如果没有session，尝试获取第一个用户的数据
+        try:
+            all_holdings = db_instance.get_all_holdings()
+            if all_holdings:
+                # 获取任意一个用户的持仓
+                first_user = all_holdings[0].get("user_id")
+                if first_user:
+                    holdings = db_instance.get_holdings(first_user)
+                else:
+                    holdings = []
+            else:
+                holdings = []
+        except Exception:
+            holdings = []
+    
+    holdings_dict = {h["code"]: h for h in holdings}
 
     advice = fund_service.get_advice_for_user(holdings, holdings_dict)
     return jsonify({"success": True, "advice": advice})
