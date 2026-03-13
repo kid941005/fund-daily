@@ -839,7 +839,7 @@
                     <h4 style="margin:0 0 15px 0;color:#333;border-bottom:1px solid #eee;padding-bottom:8px;">📊 基础设置</h4>
                     <div class="input-group">
                         <label>默认基金代码</label>
-                        <input type="text" id="configFundCodes" placeholder="用逗号分隔，如: 000001,110022,161725" style="width:100%;">
+                        <input type="text" id="configFundCodes" placeholder="用逗号分隔" style="width:100%;">
                         <small style="color:#999;">多个基金代码用逗号分隔</small>
                     </div>
                     <div class="input-group">
@@ -1423,21 +1423,29 @@
 
         let currentSort = 'amount';
         
+        let sortDirection = {}; // Track sort direction for each type
+        
         function sortHoldings(type) {
-            currentSort = type;
+            // Toggle direction if same type clicked twice
+            if (currentSort === type) {
+                sortDirection[type] = !sortDirection[type];
+            } else {
+                sortDirection[type] = false; // Default to descending for new type
+                currentSort = type;
+            }
+            
+            // Update button active state
+            document.querySelectorAll('.sort-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.sort === type) {
+                    btn.classList.add('active');
+                }
+            });
+            
             loadFundsAndHoldings();
         }
 
         function renderHoldings(funds, sortType) {
-            // 排序
-            if (sortType === 'amount') {
-                funds.sort((a,b) => (b.nav || 0) - (a.nav || 0));
-            } else if (sortType === 'change') {
-                funds.sort((a,b) => (b.daily_change || 0) - (a.daily_change || 0));
-            } else if (sortType === 'profit') {
-                funds.sort((a,b) => (b.daily_change || 0) - (a.daily_change || 0));
-            }
-            
             // 如果没有持仓数据，默认使用全部基金，金额为0
             if (holdingsData.length === 0) {
                 holdingsData = funds.map(f => ({
@@ -1448,6 +1456,34 @@
                     buyNav: null
                 }));
                 localStorage.setItem('fundHoldings', JSON.stringify(holdingsData));
+            }
+            
+            // 根据 sortType 排序 holdingsData
+            const fundMap = {};
+            funds.forEach(f => { fundMap[f.fund_code] = f; });
+            
+            const isAsc = sortDirection[sortType] || false;
+            const mult = isAsc ? 1 : -1;
+            
+            if (sortType === 'amount') {
+                // 按持仓金额排序
+                holdingsData.sort((a, b) => mult * ((b.amount || 0) - (a.amount || 0)));
+            } else if (sortType === 'change') {
+                // 按今日涨跌排序
+                holdingsData.sort((a, b) => {
+                    const fundA = fundMap[a.code] || {};
+                    const fundB = fundMap[b.code] || {};
+                    return mult * ((fundB.daily_change || 0) - (fundA.daily_change || 0));
+                });
+            } else if (sortType === 'profit') {
+                // 按当日收益排序（需要持仓金额 * 涨跌幅）
+                holdingsData.sort((a, b) => {
+                    const fundA = fundMap[a.code] || {};
+                    const fundB = fundMap[b.code] || {};
+                    const profitA = (a.amount || 0) * (fundA.daily_change || 0) / 100;
+                    const profitB = (b.amount || 0) * (fundB.daily_change || 0) / 100;
+                    return mult * (profitB - profitA);
+                });
             }
             
             let totalAmount = 0;

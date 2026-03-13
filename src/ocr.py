@@ -41,93 +41,46 @@ class FundOcrParser:
         self.results: List[OcrResult] = []
 
     def _extract_amount(self, text: str) -> Optional[float]:
-        """Extract amount from text - must NOT be a 6-digit fund code"""
-        # First, identify any fund codes in the text so we can exclude them
+        """Extract amount from text - prioritize numbers WITH decimal points"""
         fund_codes_in_text = set(self.CODE_PATTERN.findall(text))
 
-        patterns = [
-            # With currency symbol (high confidence)
-            (r"[￥¥]\s*([1-9]\d{0,2}(?:,\d{3})*(?:\.\d{1,2})?)", 1.0),
-            # With unit
-            (r"([1-9]\d{0,2}(?:,\d{3})*(?:\.\d{1,2})?)\s*(?:元|块)", 0.95),
-            # Large amounts with comma (like 10,000 or 1,234,567)
-            (r"([1-9]\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?)", 0.9),
+        # Priority 1: Numbers WITH decimal points (most likely to be amounts)
+        decimal_patterns = [
+            r"([1-9]\d{0,2}(?:,\d{3})*(?:\.\d{1,2})?)",  # 1,234.56
+            r"[￥¥]\s*([1-9]\d{0,2}(?:,\d{3})*(?:\.\d{1,2})?)",  # ¥1234.56
+            r"([1-9]\d{0,2}(?:,\d{3})*(?:\.\d{1,2})?)\s*(?:元|块)",  # 1234.56元
         ]
-
-        # Only use simple number pattern as last resort, but exclude fund codes
-        simple_pattern = r"\b([1-9]\d{2,7})\b"
-
-        best_amount = None
-
-        # First try specific patterns
-        for pattern, base_conf in patterns:
+        
+        for pattern in decimal_patterns:
             matches = re.findall(pattern, text)
             for match in matches:
                 try:
-                    # Clean and convert
-                    amount = float(match.replace(",", "").replace("￥", "").replace("¥", "").strip())
-
-                    # Accept any positive amount (no minimum limit)
+                    amount = float(match.replace(",", "").strip())
                     if amount > 0:
-                        # Skip if it looks like a fund code
                         str_amount = str(int(amount))
                         if len(str_amount) == 6 and str_amount in fund_codes_in_text:
                             continue
-
-                        best_amount = amount
-                        break
+                        return round(amount, 2)
                 except (ValueError, AttributeError):
                     continue
-            if best_amount:
-                break
 
-        # If no specific pattern matched, try simple pattern but exclude fund codes
-        if not best_amount:
-            # First try to find numbers WITH decimal points
-            decimal_pattern = r"\b([1-9]\d{0,2}(?:\.\d{1,2}))\b"
-            matches = re.findall(decimal_pattern, text)
-            for match in matches:
-                try:
-                    amount = float(match)
-                    if amount > 0:
-                        if match in fund_codes_in_text:
-                            continue
-                        best_amount = amount
-                        break
-                except (ValueError, AttributeError):
-                    continue
-            
-            # If still no match, try integer pattern but try to insert decimal for 4-6 digit numbers
-            if not best_amount:
-                matches = re.findall(simple_pattern, text)
-                for match in matches:
-                    try:
-                        amount = float(match)
-                        if amount > 0:
-                            # Exclude if it matches a fund code in the text
-                            if match in fund_codes_in_text:
-                                continue
-                            # For 4-6 digit numbers, assume they might have lost decimal point
-                            # e.g., "1234" could be "12.34" or "123.4"
-                            if len(match) >= 4 and len(match) <= 6:
-                                # Try inserting decimal at different positions
-                                for pos in range(1, len(match)):
-                                    potential = float(match[:pos] + "." + match[pos:])
-                                    if potential > 0 and potential < amount:
-                                        # Prefer the smaller value (likely the decimal version)
-                                        amount = potential
-                                        break
-                            best_amount = amount
-                            break
-                    except (ValueError, AttributeError):
-                        continue
-
-        # Round to 2 decimal places
-        if best_amount:
-            best_amount = round(best_amount, 2)
-
-        return best_amount
-
+        # Priority 2: For integers, try to interpret as having decimal point
+        integer_pattern = r"\b([1-9]\d{2,5})\b"
+        matches = re.findall(integer_pattern, text)
+        for match in matches:
+            try:
+                num = int(match)
+                if num >= 100:
+                    # Try inserting decimal at various positions
+                    for pos in range(1, len(match)):
+                        candidate = float(match[:pos] + "." + match[pos:])
+                        if 1 <= candidate <= 59999:
+                            return round(candidate, 2)
+                    return round(float(num), 2)
+            except (ValueError, AttributeError):
+                continue
+        
+        return None
     def _extract_all_amounts(self, text: str) -> List[float]:
         """Extract all potential amounts from text"""
         amounts = []
@@ -371,6 +324,9 @@ def parse_image_easyocr(image_path: str) -> Dict:
         # Parse based on number of columns
         funds = []
         code_pattern = re.compile(r"^(\d{6})$")
+        
+        # Pattern to detect profit/loss (has + or - sign)
+        profit_pattern = re.compile(r"^[+-]?[\d,.]+$")
 
         for row in rows:
             if len(row) < 2:
@@ -379,34 +335,31 @@ def parse_image_easyocr(image_path: str) -> Dict:
             # Sort by x position
             row = sorted(row, key=lambda x: x["x"])
 
-            if num_cols >= 3:
-                # 3 columns: left=code, middle=amount, right=profit
-                # Code is usually in first column, amount in second, profit in third
-                code = None
-                amount = None
-
-                for item in row:
-                    text = item["text"].strip()
-                    if code_pattern.match(text):
-                        code = text
-                    elif parser._extract_amount(text) and amount is None:
-                        amount = parser._extract_amount(text)
-
+            # Extract all numeric texts from row
+            numeric_items = []
+            for item in row:
+                text = item["text"].strip()
+                # Check if it's a fund code
+                if code_pattern.match(text):
+                    code = text
+                # Check if it looks like a number
+                elif profit_pattern.match(text) or parser._extract_amount(text):
+                    numeric_items.append(text)
+            
+            # For 3+ columns: assume last numeric is profit, second-to-last is amount
+            # For 2 columns: assume last numeric is amount
+            if len(numeric_items) >= 2 and num_cols >= 3:
+                # Last item is likely profit (green/red), second-to-last is amount (black)
+                amount_text = numeric_items[-2]
+                profit_text = numeric_items[-1]
+                amount = parser._extract_amount(amount_text)
+                profit = parser._extract_amount(profit_text)
                 if code and amount:
-                    funds.append({"code": code, "amount": amount, "method": "3col"})
-
-            else:
-                # 2 columns: left=code+name, right=amount
-                code = None
-                amount = None
-
-                for item in row:
-                    text = item["text"].strip()
-                    if code_pattern.match(text):
-                        code = text
-                    elif parser._extract_amount(text):
-                        amount = parser._extract_amount(text)
-
+                    funds.append({"code": code, "amount": amount, "profit": profit, "method": "3col"})
+            elif len(numeric_items) >= 1:
+                # Just amount (no profit column)
+                amount_text = numeric_items[-1]
+                amount = parser._extract_amount(amount_text)
                 if code and amount:
                     funds.append({"code": code, "amount": amount, "method": "2col"})
 

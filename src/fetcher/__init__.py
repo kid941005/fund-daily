@@ -146,6 +146,12 @@ def fetch_fund_detail(fund_code: str) -> Dict:
     Returns:
         dict: Detailed fund data or error
     """
+    # Check cache first
+    cache_key = f"fund_detail:{fund_code}"
+    cached = get_cache(cache_key)
+    if cached is not None:
+        return cached
+    
     # First get basic data
     basic_data = fetch_fund_data(fund_code)
     if "error" in basic_data:
@@ -180,11 +186,16 @@ def fetch_fund_detail(fund_code: str) -> Dict:
         if match:
             result[key] = match.group(1)
 
-    return {
+    final_result = {
         **basic_data,
         **result,
         "fund_code": fund_code,
     }
+    
+    # Cache the result
+    set_cache(cache_key, final_result)
+    
+    return final_result
 
 
 # ============== Market Data ==============

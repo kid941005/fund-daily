@@ -5,6 +5,7 @@ Separates business logic from HTTP handling
 
 import logging
 from typing import List, Dict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from src.fetcher import fetch_fund_data
 from src.advice import (
@@ -126,20 +127,20 @@ def get_portfolio_analysis(holdings: List[Dict], holdings_dict: Dict = None, def
         holdings_dict = {}
         codes = default_codes
 
-    # Get detailed info for each fund
+    # Get detailed info for each fund in parallel
     funds_detail = []
     total_amount = 0
 
-    for code in codes:
+    def fetch_and_enrich(code):
         detail = get_fund_detail_info(code)
         h = holdings_dict.get(code, {})
         amount = h.get("amount", 0)
-
+        
         if detail.get("fund_code"):
             detail["amount"] = amount
             detail["buy_nav"] = h.get("buyNav")
             detail["buy_date"] = h.get("buyDate")
-
+            
             # Calculate holding profit
             if amount > 0 and h.get("buyNav") and detail.get("nav"):
                 try:
@@ -150,9 +151,17 @@ def get_portfolio_analysis(holdings: List[Dict], holdings_dict: Dict = None, def
                     detail["holding_profit_amount"] = round(amount * profit_pct / 100, 2)
                 except Exception:
                     pass
+        
+        return detail, amount
 
-            funds_detail.append(detail)
-            total_amount += amount
+    # Use thread pool for parallel fetching
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {executor.submit(fetch_and_enrich, code): code for code in codes}
+        for future in as_completed(futures):
+            detail, amount = future.result()
+            if detail.get("fund_code"):
+                funds_detail.append(detail)
+                total_amount += amount
 
     # Analyze portfolio risk
     portfolio_analysis = analyze_portfolio_risk(funds_detail, total_amount)
