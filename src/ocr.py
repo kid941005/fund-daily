@@ -96,6 +96,10 @@ class FundOcrParser:
                 except (ValueError, AttributeError):
                     continue
 
+        # Round to 2 decimal places
+        if best_amount:
+            best_amount = round(best_amount, 2)
+
         return best_amount
 
     def _extract_all_amounts(self, text: str) -> List[float]:
@@ -114,7 +118,7 @@ class FundOcrParser:
                 try:
                     amount = float(match.replace(",", ""))
                     if amount >= 1:  # Accept any amount >= 1 yuan
-                        amounts.append(amount)
+                        amounts.append(round(amount, 2))
                 except (ValueError, AttributeError):
                     continue
         return amounts
