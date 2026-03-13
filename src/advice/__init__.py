@@ -3,6 +3,7 @@ Advice generation module for Fund Daily
 Generates investment advice based on fund performance and market indicators
 """
 
+import re
 import logging
 from typing import List, Dict, Optional
 from datetime import datetime
@@ -424,8 +425,6 @@ def get_fund_detail_info(code: str) -> Dict:
     try:
         fund_data = fetch_fund_data(code)
         detail_data = fetch_fund_detail(code)
-        
-        import re
         
         # Extract metrics
         syl_1n = re.search(r'syl_1n="([^"]+)"', detail_data.get('raw_html', ''))

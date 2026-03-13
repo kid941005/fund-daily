@@ -7,8 +7,6 @@ SQLite-based storage for users, holdings, and config
 import sqlite3
 import os
 import json
-from datetime import datetime
-from functools import wraps
 
 # Database path - use environment variable or default to /app/data
 DB_PATH = os.environ.get('FUND_DAILY_DB_PATH', '/app/data/fund-daily.db')
@@ -19,7 +17,7 @@ def get_db():
     db_dir = os.path.dirname(DB_PATH)
     if db_dir and not os.path.exists(db_dir):
         os.makedirs(db_dir, exist_ok=True)
-    
+
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
@@ -28,7 +26,7 @@ def init_db():
     """Initialize database tables"""
     conn = get_db()
     cursor = conn.cursor()
-    
+
     # Users table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
@@ -38,7 +36,7 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-    
+
     # Holdings table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS holdings (
@@ -55,7 +53,7 @@ def init_db():
             UNIQUE(user_id, code)
         )
     ''')
-    
+
     # Watchlist table (funds to track)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS watchlist (
@@ -67,7 +65,7 @@ def init_db():
             UNIQUE(user_id, code)
         )
     ''')
-    
+
     # Config table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS config (
@@ -77,7 +75,7 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users(user_id)
         )
     ''')
-    
+
     # History table (optional, for analytics)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS history (
@@ -89,7 +87,7 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users(user_id)
         )
     ''')
-    
+
     conn.commit()
     conn.close()
     print(f"Database initialized at: {DB_PATH}")
@@ -100,7 +98,7 @@ def create_user(username, password_hash):
     """Create a new user"""
     import secrets
     user_id = secrets.token_hex(8)
-    
+
     conn = get_db()
     try:
         conn.execute(
@@ -170,7 +168,7 @@ def save_holdings(user_id, holdings):
                 buy_nav = excluded.buy_nav,
                 buy_date = excluded.buy_date,
                 updated_at = CURRENT_TIMESTAMP
-        ''', (user_id, h.get('code', ''), h.get('name', ''), 
+        ''', (user_id, h.get('code', ''), h.get('name', ''),
               h.get('amount', 0), h.get('buyNav', ''), h.get('buyDate', '')))
     conn.commit()
     conn.close()
@@ -257,22 +255,22 @@ def migrate_from_json(json_file):
     if not os.path.exists(json_file):
         print(f"JSON file not found: {json_file}")
         return
-    
+
     with open(json_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
-    
+
     conn = get_db()
-    
+
     for user_id, user_data in data.items():
         username = user_data.get('username')
         password = user_data.get('password', '')
-        
+
         try:
             conn.execute(
                 "INSERT INTO users (user_id, username, password) VALUES (?, ?, ?)",
                 (user_id, username, password)
             )
-            
+
             # Migrate holdings
             holdings = user_data.get('holdings', [])
             for h in holdings:
@@ -280,10 +278,10 @@ def migrate_from_json(json_file):
                     INSERT INTO holdings (user_id, code, name, amount)
                     VALUES (?, ?, ?, ?)
                 ''', (user_id, h.get('code', ''), h.get('name', ''), h.get('amount', 0)))
-                
+
         except sqlite3.IntegrityError:
             pass
-    
+
     conn.commit()
     conn.close()
     print(f"Migration complete from {json_file}")

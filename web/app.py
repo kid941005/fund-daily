@@ -5,6 +5,7 @@ Fund Daily Web UI - Simplified with modular structure
 
 import os
 import sys
+
 # Get version from VERSION file
 VERSION_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'VERSION')
 if os.path.exists(VERSION_FILE):
@@ -12,9 +13,6 @@ if os.path.exists(VERSION_FILE):
         VERSION = f.read().strip() or "2.2.0"
 else:
     VERSION = "2.2.0"
-
-import os
-import sys
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

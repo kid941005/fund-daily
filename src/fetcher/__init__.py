@@ -146,8 +146,6 @@ def fetch_fund_detail(fund_code: str) -> Dict:
     if not content:
         return {**basic_data, "error": "Failed to fetch detail"}
     
-    import re
-    
     # Extract metrics using regex
     patterns = {
         'syl_1n': r'syl_1n="([^"]+)"',
