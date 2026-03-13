@@ -166,6 +166,9 @@ def generate_advice(funds: List[Dict]) -> Dict:
     market_sentiment = market.get("sentiment", "平稳")
     market_score = market.get("score", 0)
 
+    # 获取大宗商品情绪（提前获取）
+    commodity = get_commodity_sentiment()
+
     # 计算组合加权指标
     total_sharpe = 0
     total_drawdown = 0
@@ -199,15 +202,37 @@ def generate_advice(funds: List[Dict]) -> Dict:
     drawdown_days = min(drawdown_days, 30)
 
     # 仓位和收益率计算
-    total_value = sum(f.get("amount", f.get("total_value", 0)) for f in funds)
-    total_cost = sum(f.get("amount", 0) * 0.8 for f in funds)
+    # 使用实际买入价格计算成本，若无则跳过收益计算
+    total_value = 0
+    total_cost = 0
+    for f in funds:
+        amount = f.get("amount", 0)
+        if amount > 0:
+            total_value += amount
+            # 使用实际买入净值计算成本
+            buy_nav = f.get("buy_nav")
+            if buy_nav:
+                try:
+                    cost = amount * float(buy_nav)
+                    total_cost += cost
+                except (ValueError, TypeError):
+                    pass
+    
+    # 若无法计算成本（无买入价格），设为与市值相等，避免计算错误
+    if total_cost == 0:
+        total_cost = total_value
+    
     avg_profit_pct = ((total_value - total_cost) / total_cost * 100) if total_cost > 0 else 0
-    position_ratio = (total_value / 1000000 * 100) if total_value > 0 else 0
+    
+    # 仓位计算：假设总投资 = 持仓金额（全部资金都已投入）
+    # position_ratio = 持仓金额 / 总投资 × 100%
+    # 如果持仓为0，则仓位为0%
+    position_ratio = 100.0 if total_value > 0 else 0.0
 
     # 综合评分
     score = 0
 
-    # 市场情绪权重
+    # 市场情绪权重 (最高30分)
     if market_sentiment in ["乐观", "偏多"]:
         score += 30
     elif market_sentiment == "平稳":
@@ -215,10 +240,19 @@ def generate_advice(funds: List[Dict]) -> Dict:
     elif market_sentiment in ["偏空", "恐慌"]:
         score -= 30
 
-    # 基金当日表现
+    # 大宗商品评分权重 (最高15分)
+    commodity_sentiment = commodity.get("sentiment", "平稳")
+    if commodity_sentiment in ["乐观", "偏多"]:
+        score += 15
+    elif commodity_sentiment == "平稳":
+        score += 5
+    elif commodity_sentiment in ["偏空", "恐慌"]:
+        score -= 15
+
+    # 基金当日表现 (最高20分)
     score += avg_change * 10
 
-    # 夏普比率
+    # 夏普比率权重 (最高20分)
     if avg_sharpe > 1:
         score += 20
     elif avg_sharpe > 0.5:
@@ -226,7 +260,7 @@ def generate_advice(funds: List[Dict]) -> Dict:
     elif avg_sharpe < 0:
         score -= 15
 
-    # 最大回撤
+    # 最大回撤权重 (最高20分)
     if avg_drawdown > 20:
         score -= 20
     elif avg_drawdown > 10:
@@ -301,8 +335,11 @@ def generate_advice(funds: List[Dict]) -> Dict:
     except Exception as e:
         logger.warning(f"技术指标计算失败: {e}")
 
-    # 将技术指标分数加入总分
-    score += technical_score
+    # 将技术指标分数加入总分 (最高30分)
+    if technical_score > 0:
+        score += min(technical_score, 30)  # 最多加30分
+    else:
+        score += max(technical_score, -30)  # 最多扣30分
 
     # 确定操作建议
     if score > 50:
@@ -323,10 +360,10 @@ def generate_advice(funds: List[Dict]) -> Dict:
 
     # 边界条件判断
     # === 仓位控制 ===
-    if position_ratio >= 90 and action == "买入":
+    if position_ratio >= 100 and action == "买入":
         action = "持有"
-        advice = f"⚠️ 当前仓位约{position_ratio:.0f}%已较高，建议持有为主"
-    elif position_ratio >= 70 and action == "买入":
+        advice = "⚠️ 当前已满仓，建议持有为主"
+    elif position_ratio >= 80 and action == "买入":
         advice += "（仓位较高，请谨慎加仓）"
 
     # === 止损逻辑 ===
@@ -368,7 +405,6 @@ def generate_advice(funds: List[Dict]) -> Dict:
         advice += "（⚠️ 组合风险较高，注意仓位）"
 
     # 大宗商品信息
-    commodity = get_commodity_sentiment()
 
     commodity_info = []
     for name, data in commodity.get("details", {}).items():

@@ -13,14 +13,22 @@ DB_PATH = os.environ.get("FUND_DAILY_DB_PATH", "/app/data/fund-daily.db")
 
 
 def get_db():
-    """Get database connection"""
+    """Get database connection with optimized settings for concurrency"""
     # Ensure database directory exists
     db_dir = os.path.dirname(DB_PATH)
     if db_dir and not os.path.exists(db_dir):
         os.makedirs(db_dir, exist_ok=True)
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
+    
+    # Enable WAL mode for better concurrency
+    conn.execute("PRAGMA journal_mode=WAL")
+    # Set busy timeout to wait for locks (30 seconds)
+    conn.execute("PRAGMA busy_timeout=30000")
+    # Synchronous mode - NORMAL is safe with WAL
+    conn.execute("PRAGMA synchronous=NORMAL")
+    
     return conn
 
 

@@ -205,6 +205,17 @@ def manage_holdings():
         if not code or len(code) != 6:
             return jsonify({"success": False, "error": "请输入6位基金代码"})
 
+        # Validate amount
+        if amount < 0:
+            return jsonify({"success": False, "error": "持仓金额不能为负数"})
+        
+        # Zero amount = delete holding (sell all)
+        if amount == 0:
+            holdings = db.get_holdings(user_id)
+            holdings = [h for h in holdings if h["code"] != code]
+            db.save_holdings(user_id, holdings)
+            return jsonify({"success": True, "message": "已清空该基金持仓"})
+
         # Verify fund exists
         fund_data = fetch_fund_data(code)
         if "error" in fund_data or not fund_data.get("fundcode"):
