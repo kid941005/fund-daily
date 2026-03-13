@@ -33,7 +33,7 @@ def get_funds_for_user(holdings: List[Dict], default_codes: List[str] = None) ->
         default_codes = ["000001", "110022", "161725"]
 
     if holdings:
-        codes = [h['code'] for h in holdings if h.get('amount', 0) > 0]
+        codes = [h["code"] for h in holdings if h.get("amount", 0) > 0]
         if not codes:
             codes = default_codes
     else:
@@ -43,7 +43,7 @@ def get_funds_for_user(holdings: List[Dict], default_codes: List[str] = None) ->
     for code in codes:
         data = fetch_fund_data(code)
         analysis = analyze_fund(data)
-        if 'error' not in analysis:
+        if "error" not in analysis:
             funds.append(analysis)
 
     return funds
@@ -55,7 +55,7 @@ def get_report_for_user(holdings: List[Dict], default_codes: List[str] = None) -
         default_codes = ["000001", "110022", "161725"]
 
     if holdings:
-        codes = [h['code'] for h in holdings if h.get('amount', 0) > 0]
+        codes = [h["code"] for h in holdings if h.get("amount", 0) > 0]
         if not codes:
             codes = default_codes
     else:
@@ -80,34 +80,32 @@ def get_advice_for_user(holdings: List[Dict], holdings_dict: Dict = None, defaul
         default_codes = ["000001", "110022", "161725"]
 
     if holdings_dict is None:
-        holdings_dict = {h['code']: h for h in holdings}
+        holdings_dict = {h["code"]: h for h in holdings}
 
     if holdings:
-        codes = [h['code'] for h in holdings if h.get('amount', 0) > 0]
+        codes = [h["code"] for h in holdings if h.get("amount", 0) > 0]
         if not codes:
-            return {
-                "action": "empty",
-                "advice": "暂无持仓，请先添加持仓",
-                "holdings": []
-            }
+            return {"action": "empty", "advice": "暂无持仓，请先添加持仓", "holdings": []}
     else:
         codes = default_codes
         holdings_dict = {}
 
     report = generate_daily_report(codes)
-    advice = generate_advice(report.get('funds', []))
+    advice = generate_advice(report.get("funds", []))
 
     # Add holdings info to advice
-    advice['holdings'] = []
-    for fund in report.get('funds', []):
-        code = fund.get('fund_code')
+    advice["holdings"] = []
+    for fund in report.get("funds", []):
+        code = fund.get("fund_code")
         h = holdings_dict.get(code, {})
-        advice['holdings'].append({
-            'code': code,
-            'name': fund.get('fund_name'),
-            'amount': h.get('amount', 0),
-            'change': fund.get('daily_change', 0)
-        })
+        advice["holdings"].append(
+            {
+                "code": code,
+                "name": fund.get("fund_name"),
+                "amount": h.get("amount", 0),
+                "change": fund.get("daily_change", 0),
+            }
+        )
 
     return advice
 
@@ -118,10 +116,10 @@ def get_portfolio_analysis(holdings: List[Dict], holdings_dict: Dict = None, def
         default_codes = ["000001", "110022", "161725"]
 
     if holdings_dict is None:
-        holdings_dict = {h['code']: h for h in holdings}
+        holdings_dict = {h["code"]: h for h in holdings}
 
     if holdings:
-        codes = [h['code'] for h in holdings if h.get('amount', 0) > 0]
+        codes = [h["code"] for h in holdings if h.get("amount", 0) > 0]
         if not codes:
             return {"message": "暂无持仓，无法分析"}
     else:
@@ -135,21 +133,21 @@ def get_portfolio_analysis(holdings: List[Dict], holdings_dict: Dict = None, def
     for code in codes:
         detail = get_fund_detail_info(code)
         h = holdings_dict.get(code, {})
-        amount = h.get('amount', 0)
+        amount = h.get("amount", 0)
 
-        if detail.get('fund_code'):
-            detail['amount'] = amount
-            detail['buy_nav'] = h.get('buyNav')
-            detail['buy_date'] = h.get('buyDate')
+        if detail.get("fund_code"):
+            detail["amount"] = amount
+            detail["buy_nav"] = h.get("buyNav")
+            detail["buy_date"] = h.get("buyDate")
 
             # Calculate holding profit
-            if amount > 0 and h.get('buyNav') and detail.get('nav'):
+            if amount > 0 and h.get("buyNav") and detail.get("nav"):
                 try:
-                    current_nav = float(detail['nav'])
-                    buy_nav = float(h['buyNav'])
+                    current_nav = float(detail["nav"])
+                    buy_nav = float(h["buyNav"])
                     profit_pct = (current_nav - buy_nav) / buy_nav * 100
-                    detail['holding_profit'] = round(profit_pct, 2)
-                    detail['holding_profit_amount'] = round(amount * profit_pct / 100, 2)
+                    detail["holding_profit"] = round(profit_pct, 2)
+                    detail["holding_profit_amount"] = round(amount * profit_pct / 100, 2)
                 except Exception:
                     pass
 
@@ -166,7 +164,7 @@ def get_portfolio_analysis(holdings: List[Dict], holdings_dict: Dict = None, def
         "funds": funds_detail,
         "total_amount": total_amount,
         "risk_metrics": portfolio_analysis,
-        "allocation": allocation
+        "allocation": allocation,
     }
 
 
@@ -177,13 +175,10 @@ def analyze_portfolio_risk(funds: List[Dict], total_amount: float) -> Dict:
 
     # Calculate weights
     for fund in funds:
-        fund['weight'] = round(fund['amount'] / total_amount * 100, 2) if fund.get('amount') else 0
+        fund["weight"] = round(fund["amount"] / total_amount * 100, 2) if fund.get("amount") else 0
 
     # Calculate weighted risk
-    total_risk_score = sum(
-        f.get('risk_metrics', {}).get('risk_score', 4) * f.get('weight', 0)
-        for f in funds
-    ) / 100
+    total_risk_score = sum(f.get("risk_metrics", {}).get("risk_score", 4) * f.get("weight", 0) for f in funds) / 100
 
     # Risk level
     if total_risk_score > 6:
@@ -197,7 +192,7 @@ def analyze_portfolio_risk(funds: List[Dict], total_amount: float) -> Dict:
 
     # Return analysis
     try:
-        avg_return_1y = sum(float(f.get('return_1y', 0) or 0) * f.get('weight', 0) for f in funds) / 100
+        avg_return_1y = sum(float(f.get("return_1y", 0) or 0) * f.get("weight", 0) for f in funds) / 100
     except Exception:
         avg_return_1y = 0
 
@@ -206,7 +201,7 @@ def analyze_portfolio_risk(funds: List[Dict], total_amount: float) -> Dict:
         "risk_score": round(total_risk_score, 1),
         "avg_return_1y": round(avg_return_1y, 2),
         "fund_count": len(funds),
-        "diversification": "良好" if len(funds) >= 5 else "一般" if len(funds) >= 3 else "需分散"
+        "diversification": "良好" if len(funds) >= 5 else "一般" if len(funds) >= 3 else "需分散",
     }
 
 
@@ -221,10 +216,10 @@ def suggest_allocation(funds: List[Dict]) -> Dict:
     low_risk = []
 
     for fund in funds:
-        risk = fund.get('risk_metrics', {}).get('risk_level', '中等风险')
-        if '高' in risk:
+        risk = fund.get("risk_metrics", {}).get("risk_level", "中等风险")
+        if "高" in risk:
             high_risk.append(fund)
-        elif '低' in risk:
+        elif "低" in risk:
             low_risk.append(fund)
         else:
             medium_risk.append(fund)
@@ -251,18 +246,14 @@ def suggest_allocation(funds: List[Dict]) -> Dict:
         "medium_risk_pct": round(medium_pct, 1),
         "low_risk_pct": round(low_pct, 1),
         "suggestions": suggestions,
-        "ideal_allocation": {
-            "high_risk": "20-30%",
-            "medium_risk": "40-50%",
-            "low_risk": "30-40%"
-        }
+        "ideal_allocation": {"high_risk": "20-30%", "medium_risk": "40-50%", "low_risk": "30-40%"},
     }
 
 
 def calculate_summary(funds: List[Dict]) -> Dict:
     """Calculate market summary"""
-    up = sum(1 for f in funds if f['trend'] == 'up')
-    down = sum(1 for f in funds if f['trend'] == 'down')
+    up = sum(1 for f in funds if f["trend"] == "up")
+    down = sum(1 for f in funds if f["trend"] == "down")
     flat = len(funds) - up - down
 
     return {
@@ -270,5 +261,5 @@ def calculate_summary(funds: List[Dict]) -> Dict:
         "up": up,
         "down": down,
         "flat": flat,
-        "sentiment": "乐观" if up > down else "谨慎" if down > up else "平稳"
+        "sentiment": "乐观" if up > down else "谨慎" if down > up else "平稳",
     }

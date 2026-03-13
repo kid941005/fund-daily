@@ -21,16 +21,16 @@ from .auth import hash_password, verify_password
 logger = logging.getLogger(__name__)
 
 # Create API blueprint
-api = Blueprint('api', __name__)
+api = Blueprint("api", __name__)
 
 
 # ============== Auth Routes ==============
-@api.route('/register', methods=['POST'])
+@api.route("/register", methods=["POST"])
 def register():
     """Register a new user"""
     data = request.json
-    username = data.get('username', '').strip()
-    password = data.get('password', '')
+    username = data.get("username", "").strip()
+    password = data.get("password", "")
 
     if not username or not password:
         return jsonify({"success": False, "error": "用户名和密码不能为空"})
@@ -51,74 +51,70 @@ def register():
     if not user_id:
         return jsonify({"success": False, "error": "注册失败"})
 
-    session['user_id'] = user_id
-    session['username'] = username
+    session["user_id"] = user_id
+    session["username"] = username
 
     return jsonify({"success": True, "message": "注册成功", "username": username})
 
 
-@api.route('/login', methods=['POST'])
+@api.route("/login", methods=["POST"])
 def login():
     """User login"""
     data = request.json
-    username = data.get('username', '').strip()
-    password = data.get('password', '')
+    username = data.get("username", "").strip()
+    password = data.get("password", "")
 
     user = db.get_user_by_username(username)
     if not user:
         return jsonify({"success": False, "error": "用户名或密码错误"})
 
-    stored_hash = user.get('password', '')
+    stored_hash = user.get("password", "")
 
     # Verify password
     user_id = None
-    if '$' in stored_hash:
+    if "$" in stored_hash:
         if verify_password(password, stored_hash):
-            user_id = user.get('user_id')
+            user_id = user.get("user_id")
     else:
         # Legacy hash - migrate to new format
         if stored_hash == hashlib.sha256(password.encode()).hexdigest():
-            user_id = user.get('user_id')
-            db.update_user_password(user.get('user_id'), hash_password(password))
+            user_id = user.get("user_id")
+            db.update_user_password(user.get("user_id"), hash_password(password))
 
     if not user_id:
         return jsonify({"success": False, "error": "用户名或密码错误"})
 
-    session['user_id'] = user_id
-    session['username'] = username
+    session["user_id"] = user_id
+    session["username"] = username
 
     return jsonify({"success": True, "message": "登录成功", "username": username})
 
 
-@api.route('/logout', methods=['POST'])
+@api.route("/logout", methods=["POST"])
 def logout():
     """User logout"""
     session.clear()
     return jsonify({"success": True, "message": "已退出登录"})
 
 
-@api.route('/check-login', methods=['GET'])
+@api.route("/check-login", methods=["GET"])
 def check_login():
     """Check if user is logged in"""
-    user_id = session.get('user_id')
+    user_id = session.get("user_id")
     if user_id:
-        return jsonify({
-            "success": True,
-            "logged_in": True,
-            "username": session.get('username', '')
-        })
+        return jsonify({"success": True, "logged_in": True, "username": session.get("username", "")})
     return jsonify({"success": True, "logged_in": False})
 
 
 # ============== Fund Routes ==============
-@api.route('/funds')
+@api.route("/funds")
 def get_funds():
     """Get user's fund list"""
-    user_id = session.get('user_id')
+    user_id = session.get("user_id")
 
     if user_id:
         holdings = db.get_holdings(user_id)
-        codes = [h['code'] for h in holdings if h.get('amount', 0) > 0]
+        codes = [h["code"] for h in holdings if h.get("amount", 0) > 0]
         if not codes:
             codes = ["000001", "110022", "161725"]
     else:
@@ -126,15 +122,17 @@ def get_funds():
 
     funds = fund_service.get_funds_for_user([], codes)
 
-    return jsonify({
-        "success": True,
-        "date": datetime.now().strftime("%Y-%m-%d"),
-        "funds": funds,
-        "summary": fund_service.calculate_summary(funds)
-    })
+    return jsonify(
+        {
+            "success": True,
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "funds": funds,
+            "summary": fund_service.calculate_summary(funds),
+        }
+    )
 
 
-@api.route('/fund/<code>')
+@api.route("/fund/<code>")
 def get_fund_detail(code):
     """Get single fund detail"""
     data = fetch_fund_data(code)
@@ -142,10 +140,10 @@ def get_fund_detail(code):
     return jsonify(analysis)
 
 
-@api.route('/report')
+@api.route("/report")
 def get_report():
     """Generate daily report"""
-    user_id = session.get('user_id')
+    user_id = session.get("user_id")
 
     if user_id:
         holdings = db.get_holdings(user_id)
@@ -156,7 +154,7 @@ def get_report():
     return jsonify(report)
 
 
-@api.route('/history')
+@api.route("/history")
 def get_history():
     """Get historical reports"""
     DATA_DIR = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/data")
@@ -164,106 +162,104 @@ def get_history():
     history = []
     if os.path.exists(DATA_DIR):
         for filename in sorted(os.listdir(DATA_DIR), reverse=True):
-            if filename.startswith('fund_report_') and filename.endswith('.txt'):
-                date_str = filename.replace('fund_report_', '').replace('.txt', '')
+            if filename.startswith("fund_report_") and filename.endswith(".txt"):
+                date_str = filename.replace("fund_report_", "").replace(".txt", "")
                 filepath = os.path.join(DATA_DIR, filename)
-                with open(filepath, 'r', encoding='utf-8') as f:
+                with open(filepath, "r", encoding="utf-8") as f:
                     content = f.read()
-                history.append({
-                    "date": date_str,
-                    "filename": filename,
-                    "preview": content[:200] + "..." if len(content) > 200 else content
-                })
+                history.append(
+                    {
+                        "date": date_str,
+                        "filename": filename,
+                        "preview": content[:200] + "..." if len(content) > 200 else content,
+                    }
+                )
     return jsonify(history[:30])
 
 
 # ============== Holdings Routes ==============
-@api.route('/holdings', methods=['GET', 'POST', 'DELETE'])
+@api.route("/holdings", methods=["GET", "POST", "DELETE"])
 def manage_holdings():
     """Get or update user's holdings"""
-    user_id = session.get('user_id')
+    user_id = session.get("user_id")
     if not user_id:
         return jsonify({"success": False, "error": "请先登录", "need_login": True})
 
-    if request.method == 'GET':
+    if request.method == "GET":
         holdings = db.get_holdings(user_id)
         # Add daily change to each holding
         for h in holdings:
-            if h.get('amount', 0) > 0:
-                fund_data = fetch_fund_data(h['code'])
-                daily_change = float(fund_data.get('gszzl', 0) or 0)
-                h['daily_change'] = daily_change
+            if h.get("amount", 0) > 0:
+                fund_data = fetch_fund_data(h["code"])
+                daily_change = float(fund_data.get("gszzl", 0) or 0)
+                h["daily_change"] = daily_change
                 if daily_change != 0:
-                    h['daily_profit'] = round(h.get('amount', 0) * daily_change / 100, 2)
+                    h["daily_profit"] = round(h.get("amount", 0) * daily_change / 100, 2)
         return jsonify({"success": True, "holdings": holdings})
 
-    elif request.method == 'POST':
+    elif request.method == "POST":
         data = request.json
-        code = data.get('code', '').strip()
-        amount = float(data.get('amount', 0))
+        code = data.get("code", "").strip()
+        amount = float(data.get("amount", 0))
 
         if not code or len(code) != 6:
             return jsonify({"success": False, "error": "请输入6位基金代码"})
 
         # Verify fund exists
         fund_data = fetch_fund_data(code)
-        if 'error' in fund_data or not fund_data.get('fundcode'):
+        if "error" in fund_data or not fund_data.get("fundcode"):
             return jsonify({"success": False, "error": "基金代码不存在"})
 
         holdings = db.get_holdings(user_id)
 
         # Update or add
         for h in holdings:
-            if h['code'] == code:
-                h['amount'] = amount
-                h['name'] = fund_data.get('name', code)
+            if h["code"] == code:
+                h["amount"] = amount
+                h["name"] = fund_data.get("name", code)
                 break
         else:
-            holdings.append({
-                'code': code,
-                'name': fund_data.get('name', code),
-                'amount': amount
-            })
+            holdings.append({"code": code, "name": fund_data.get("name", code), "amount": amount})
 
         db.save_holdings(user_id, holdings)
         return jsonify({"success": True, "message": "持仓已保存"})
 
-    elif request.method == 'DELETE':
+    elif request.method == "DELETE":
         data = request.json
-        code = data.get('code')
+        code = data.get("code")
 
         holdings = db.get_holdings(user_id)
-        holdings = [h for h in holdings if h['code'] != code]
+        holdings = [h for h in holdings if h["code"] != code]
         db.save_holdings(user_id, holdings)
 
         return jsonify({"success": True, "message": "持仓已删除"})
 
 
 # ============== Other Routes ==============
-@api.route('/news')
+@api.route("/news")
 def get_news():
     """Get market hot news"""
-    limit = request.args.get('limit', 8, type=int)
+    limit = request.args.get("limit", 8, type=int)
     news = fetch_market_news(limit)
     return jsonify({"success": True, "news": news})
 
 
-@api.route('/sectors')
+@api.route("/sectors")
 def get_sectors():
     """Get hot sectors"""
-    limit = request.args.get('limit', 10, type=int)
+    limit = request.args.get("limit", 10, type=int)
     sectors = fetch_hot_sectors(limit)
     return jsonify({"success": True, "sectors": sectors})
 
 
-@api.route('/advice')
+@api.route("/advice")
 def get_advice():
     """Get investment advice"""
-    user_id = session.get('user_id')
+    user_id = session.get("user_id")
 
     if user_id:
         holdings = db.get_holdings(user_id)
-        holdings_dict = {h['code']: h for h in holdings}
+        holdings_dict = {h["code"]: h for h in holdings}
     else:
         holdings = []
         holdings_dict = {}
@@ -272,46 +268,46 @@ def get_advice():
     return jsonify({"success": True, "advice": advice})
 
 
-@api.route('/fund-detail/<code>')
+@api.route("/fund-detail/<code>")
 def get_fund_detail_full(code):
     """Get detailed fund info"""
     detail = get_fund_detail_info(code)
     return jsonify({"success": True, "detail": detail})
 
 
-@api.route('/expected-return')
+@api.route("/expected-return")
 def get_expected_return():
     """Calculate expected return"""
-    user_id = session.get('user_id')
+    user_id = session.get("user_id")
 
     if user_id:
         holdings = db.get_holdings(user_id)
-        holdings = [h for h in holdings if h.get('amount', 0) > 0]
+        holdings = [h for h in holdings if h.get("amount", 0) > 0]
     else:
         holdings = []
 
     if not holdings:
         return jsonify({"success": False, "error": "暂无持仓", "expected_return": 0})
 
-    codes = [h.get('code') for h in holdings]
+    codes = [h.get("code") for h in holdings]
     funds_data = []
     for code in codes:
         data = fetch_fund_data(code)
-        if not data.get('error'):
+        if not data.get("error"):
             funds_data.append(data)
 
     result = calculate_expected_return(holdings, funds_data)
     return jsonify({"success": True, "result": result})
 
 
-@api.route('/portfolio-analysis')
+@api.route("/portfolio-analysis")
 def get_portfolio_analysis():
     """Get portfolio analysis"""
-    user_id = session.get('user_id')
+    user_id = session.get("user_id")
 
     if user_id:
         holdings = db.get_holdings(user_id)
-        holdings_dict = {h['code']: h for h in holdings}
+        holdings_dict = {h["code"]: h for h in holdings}
     else:
         holdings = []
         holdings_dict = {}
@@ -320,14 +316,14 @@ def get_portfolio_analysis():
     return jsonify({"success": True, "analysis": analysis})
 
 
-@api.route('/import-screenshot', methods=['POST'])
+@api.route("/import-screenshot", methods=["POST"])
 def import_screenshot():
     """Import holdings from screenshot using OCR"""
-    if 'file' not in request.files:
+    if "file" not in request.files:
         return jsonify({"success": False, "error": "No file provided"}), 400
 
-    file = request.files['file']
-    if file.filename == '':
+    file = request.files["file"]
+    if file.filename == "":
         return jsonify({"success": False, "error": "Empty filename"}), 400
 
     # Save uploaded file temporarily
@@ -339,41 +335,28 @@ def import_screenshot():
     try:
         if EASYOCR_AVAILABLE:
             result = parse_image_easyocr(tmp_path)
-            if result.get('success') and result.get('funds'):
-                return jsonify({
-                    "success": True,
-                    "parsed": result['funds'],
-                    "method": "easyocr"
-                })
+            if result.get("success") and result.get("funds"):
+                return jsonify({"success": True, "parsed": result["funds"], "method": "easyocr"})
 
         # Fall back to rule-based parsing
-        return jsonify({
-            "success": False,
-            "error": "OCR failed",
-            "message": "请手动输入基金代码和金额",
-            "parsed": []
-        })
+        return jsonify({"success": False, "error": "OCR failed", "message": "请手动输入基金代码和金额", "parsed": []})
 
     except Exception as e:
         logger.error(f"OCR error: {e}")
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "parsed": []
-        })
+        return jsonify({"success": False, "error": str(e), "parsed": []})
     finally:
         # Clean up temp file
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
 
 
-@api.route('/import', methods=['POST'])
+@api.route("/import", methods=["POST"])
 def import_holdings():
     """Import holdings from CSV/file or screenshot"""
     # Check if it's a file upload
-    if 'file' in request.files and request.files['file']:
-        file = request.files['file']
-        if file.filename == '':
+    if "file" in request.files and request.files["file"]:
+        file = request.files["file"]
+        if file.filename == "":
             return jsonify({"success": False, "error": "Empty filename"}), 400
 
         # Save uploaded file temporarily
@@ -385,25 +368,13 @@ def import_holdings():
         try:
             if EASYOCR_AVAILABLE:
                 result = parse_image_easyocr(tmp_path)
-                if result.get('success') and result.get('funds'):
-                    return jsonify({
-                        "success": True,
-                        "parsed": result['funds'],
-                        "method": "easyocr"
-                    })
+                if result.get("success") and result.get("funds"):
+                    return jsonify({"success": True, "parsed": result["funds"], "method": "easyocr"})
 
-            return jsonify({
-                "success": False,
-                "error": "OCR failed",
-                "parsed": []
-            })
+            return jsonify({"success": False, "error": "OCR failed", "parsed": []})
         except Exception as e:
             logger.error(f"OCR error: {e}")
-            return jsonify({
-                "success": False,
-                "error": str(e),
-                "parsed": []
-            })
+            return jsonify({"success": False, "error": str(e), "parsed": []})
         finally:
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)
@@ -411,9 +382,9 @@ def import_holdings():
     # Check if it's JSON data with format
     data = request.get_json()
     if data:
-        if 'data' in data and 'format' in data:
-            return jsonify({"success": True, "imported": len(data.get('data', []))})
-        if 'holdings' in data:
-            return jsonify({"success": True, "imported": len(data.get('holdings', []))})
+        if "data" in data and "format" in data:
+            return jsonify({"success": True, "imported": len(data.get("data", []))})
+        if "holdings" in data:
+            return jsonify({"success": True, "imported": len(data.get("holdings", []))})
 
     return jsonify({"success": False, "error": "No data provided"}), 400

@@ -1,6 +1,7 @@
 """
 钉钉通知模块
 """
+
 import os
 import json
 import requests
@@ -25,27 +26,13 @@ def send_dingtalk_message(webhook_url: str, message: str, msg_type: str = "text"
     try:
         if msg_type == "markdown":
             # Markdown格式
-            data = {
-                "msgtype": "markdown",
-                "markdown": {
-                    "title": "基金提醒",
-                    "text": message
-                }
-            }
+            data = {"msgtype": "markdown", "markdown": {"title": "基金提醒", "text": message}}
         else:
             # 文本格式
-            data = {
-                "msgtype": "text",
-                "text": {
-                    "content": f"[基金提醒] {message}"
-                }
-            }
+            data = {"msgtype": "text", "text": {"content": f"[基金提醒] {message}"}}
 
         response = requests.post(
-            webhook_url,
-            data=json.dumps(data),
-            headers={"Content-Type": "application/json"},
-            timeout=10
+            webhook_url, data=json.dumps(data), headers={"Content-Type": "application/json"}, timeout=10
         )
 
         return response.json().get("errcode", 1) == 0
@@ -55,8 +42,7 @@ def send_dingtalk_message(webhook_url: str, message: str, msg_type: str = "text"
         return False
 
 
-def send_fund_alert(webhook_url: str, fund_code: str, fund_name: str,
-                    change_pct: float, current_nav: float) -> bool:
+def send_fund_alert(webhook_url: str, fund_code: str, fund_name: str, change_pct: float, current_nav: float) -> bool:
     """
     发送基金涨跌提醒
 
@@ -157,8 +143,7 @@ def send_market_alert(webhook_url: str, sentiment: int, sectors: list) -> bool:
         emoji = "❄️"
         status = "市场冷淡"
 
-    sectors_text = "\n".join([f"- {s.get('name', '')}: {s.get('change', '')}"
-                              for s in sectors[:5]])
+    sectors_text = "\n".join([f"- {s.get('name', '')}: {s.get('change', '')}" for s in sectors[:5]])
 
     message = f"""### {emoji} 市场情绪播报
 
