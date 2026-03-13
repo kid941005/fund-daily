@@ -81,6 +81,7 @@ class FundOcrParser:
                 continue
         
         return None
+
     def _extract_all_amounts(self, text: str) -> List[float]:
         """Extract all potential amounts from text"""
         amounts = []
