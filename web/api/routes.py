@@ -116,9 +116,9 @@ def get_funds():
         holdings = db.get_holdings(user_id)
         codes = [h["code"] for h in holdings if h.get("amount", 0) > 0]
         if not codes:
-            codes = ["000001", "110022", "161725"]
+            codes = []
     else:
-        codes = ["000001", "110022", "161725"]
+        codes = []
 
     funds = fund_service.get_funds_for_user([], codes)
 
@@ -233,6 +233,33 @@ def manage_holdings():
         db.save_holdings(user_id, holdings)
 
         return jsonify({"success": True, "message": "持仓已删除"})
+
+
+@api.route("/holdings/clear-all", methods=["POST"])
+def clear_all_holdings():
+    """Clear all holdings for current user or anonymous user"""
+    # Get anonymous user identifier from header or body
+    user_id = session.get("user_id")
+    
+    # If not logged in, try to get from header or body
+    if not user_id:
+        user_id = request.headers.get("X-User-ID")
+    
+    if not user_id:
+        data = request.get_json(silent=True) or {}
+        user_id = data.get("user_id")
+    
+    # If still no user_id, return error
+    if not user_id:
+        return jsonify({"success": False, "error": "需要登录或提供用户ID"}), 400
+    
+    # Clear all holdings for this user
+    conn = db.get_db()
+    conn.execute("DELETE FROM holdings WHERE user_id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({"success": True, "message": "所有持仓已清空"})
 
 
 # ============== Other Routes ==============

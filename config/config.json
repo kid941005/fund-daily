@@ -1,9 +1,5 @@
 {
-  "default_funds": [
-    "000001",
-    "110022",
-    "161725"
-  ],
+  "default_funds": [],
   "report_time": "15:00",
   "alert_threshold": 3,
   "alert_cooldown": 3600,

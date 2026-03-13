@@ -67,8 +67,8 @@ class FundOcrParser:
                     # Clean and convert
                     amount = float(match.replace(",", "").replace("￥", "").replace("¥", "").strip())
 
-                    # Must be in valid range
-                    if 100 <= amount <= 10000000:
+                    # Accept any positive amount (no minimum limit)
+                    if amount > 0:
                         # Skip if it looks like a fund code
                         str_amount = str(int(amount))
                         if len(str_amount) == 6 and str_amount in fund_codes_in_text:
@@ -87,7 +87,7 @@ class FundOcrParser:
             for match in matches:
                 try:
                     amount = float(match)
-                    if 100 <= amount <= 10000000:
+                    if amount > 0:  # Accept any positive amount
                         # Exclude if it matches a fund code in the text
                         if match in fund_codes_in_text:
                             continue
@@ -102,7 +102,7 @@ class FundOcrParser:
         """Extract all potential amounts from text"""
         amounts = []
         # Match numbers with comma: 1,234.56 or 1,234
-        # Also match standalone integers >= 50
+        # Accept any amount >= 1
         patterns = [
             r"([1-9]\d{0,2}(?:,\d{3})+(?:\.\d{1,2})?)",  # 1,234.56
             r"([1-9]\d{2,6}(?:\.\d{1,2})?)",  # 1234.56 (no comma)
@@ -113,7 +113,7 @@ class FundOcrParser:
             for match in matches:
                 try:
                     amount = float(match.replace(",", ""))
-                    if amount >= 50:  # Minimum 50 yuan
+                    if amount >= 1:  # Accept any amount >= 1 yuan
                         amounts.append(amount)
                 except (ValueError, AttributeError):
                     continue
@@ -256,6 +256,9 @@ def _get_easyocr_reader():
 def parse_image_easyocr(image_path: str) -> Dict:
     """
     Parse fund screenshot using EasyOCR
+    Supports two formats:
+    - 3 columns: left=code+name, middle=amount, right=profit
+    - 2 columns: left=code+name, right=amount
 
     Args:
         image_path: Path to the image file
@@ -276,41 +279,125 @@ def parse_image_easyocr(image_path: str) -> Dict:
 
     reader = _get_easyocr_reader()
     if reader is None:
-        return {"success": False, "error": "Failed to initialize EasyOCR", "funds": [], "message": "EasyOCR 初始化失败"}
+        return {"success": False, "error": "Failed to initialize OCR", "funds": [], "message": "OCR 初始化失败"}
+
+    # Create parser instance for using its methods
+    parser = FundOcrParser()
 
     try:
         # Load image using PIL
         img = Image.open(image_path)
 
         # Image preprocessing for better OCR
-        # Convert to grayscale
         if img.mode != "L":
             img = img.convert("L")
 
-        # Enhance contrast
         enhancer = ImageEnhance.Contrast(img)
-        img = enhancer.enhance(1.5)  # Increase contrast by 50%
+        img = enhancer.enhance(1.5)
 
-        # Convert to numpy array
         img_array = np.array(img)
 
         # Run OCR on preprocessed image
         results = reader.readtext(img_array)
 
-        # Combine all text
-        ocr_text = ""
+        # Filter low confidence results and organize by position
+        items = []
         for bbox, text, conf in results:
-            if conf > 0.3:  # Filter low confidence
-                ocr_text += text + "\n"
+            if conf > 0.3:
+                # bbox is [[x1,y1],[x2,y1],[x2,y2],[x1,y2]]
+                x_center = (bbox[0][0] + bbox[2][0]) / 2
+                y_center = (bbox[0][1] + bbox[2][1]) / 2
+                items.append(
+                    {
+                        "text": text,
+                        "x": x_center,
+                        "y": y_center,
+                        "conf": conf,
+                    }
+                )
 
-        logger.info(f"EasyOCR extracted {len(results)} text regions")
+        if not items:
+            return {"success": False, "error": "No text detected", "funds": []}
 
-        # Parse using rule-based parser
-        return parse_ocr_result(ocr_text)
+        # Determine number of columns based on x positions
+        x_positions = sorted(set(int(item["x"] / 50) * 50 for item in items))
+        num_cols = len([x for x in x_positions if any(abs(item["x"] - x) < 40 for item in items)])
+
+        # Group items by row (y position)
+        row_threshold = 30  # pixels
+        rows = []
+        sorted_items = sorted(items, key=lambda x: x["y"])
+
+        for item in sorted_items:
+            added = False
+            for row in rows:
+                if abs(item["y"] - row[0]["y"]) < row_threshold:
+                    row.append(item)
+                    added = True
+                    break
+            if not added:
+                rows.append([item])
+
+        # Parse based on number of columns
+        funds = []
+        code_pattern = re.compile(r"^(\d{6})$")
+
+        for row in rows:
+            if len(row) < 2:
+                continue
+
+            # Sort by x position
+            row = sorted(row, key=lambda x: x["x"])
+
+            if num_cols >= 3:
+                # 3 columns: left=code, middle=amount, right=profit
+                # Code is usually in first column, amount in second, profit in third
+                code = None
+                amount = None
+
+                for item in row:
+                    text = item["text"].strip()
+                    if code_pattern.match(text):
+                        code = text
+                    elif parser._extract_amount(text) and amount is None:
+                        amount = parser._extract_amount(text)
+
+                if code and amount:
+                    funds.append({"code": code, "amount": amount, "method": "3col"})
+
+            else:
+                # 2 columns: left=code+name, right=amount
+                code = None
+                amount = None
+
+                for item in row:
+                    text = item["text"].strip()
+                    if code_pattern.match(text):
+                        code = text
+                    elif parser._extract_amount(text):
+                        amount = parser._extract_amount(text)
+
+                if code and amount:
+                    funds.append({"code": code, "amount": amount, "method": "2col"})
+
+        # Fallback: use rule-based parser if no funds found
+        if not funds:
+            ocr_text = "\n".join(item["text"] for item in items)
+            return parse_ocr_result(ocr_text)
+
+        # Deduplicate
+        seen = set()
+        unique_funds = []
+        for f in funds:
+            if f["code"] not in seen:
+                seen.add(f["code"])
+                unique_funds.append(f)
+
+        return {"success": True, "funds": unique_funds, "method": "position_based", "columns": num_cols}
 
     except Exception as e:
-        logger.error(f"EasyOCR error: {e}")
-        return {"success": False, "error": str(e), "funds": [], "message": f"EasyOCR 处理失败: {str(e)}"}
+        logger.error(f"OCR error: {e}")
+        return {"success": False, "error": str(e), "funds": [], "message": f"OCR 处理失败: {str(e)}"}
 
 
 def parse_ocr_result(ocr_text: str) -> Dict:
