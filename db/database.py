@@ -216,6 +216,10 @@ def init_pg_db():
             UNIQUE(user_id, code)
         )
     """)
+    
+    # 添加索引优化查询性能
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_holdings_user_id ON holdings(user_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_holdings_code ON holdings(code)")
 
     ph = get_placeholder()
 
