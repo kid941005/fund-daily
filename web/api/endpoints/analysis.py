@@ -11,6 +11,7 @@ analysis_bp = Blueprint("analysis", __name__)
 
 
 @analysis_bp.route("/portfolio-analysis")
+@analysis_bp.route("/analysis/portfolio")  # 兼容前端调用
 def get_portfolio_analysis():
     """Get portfolio analysis"""
     user_id = session.get("user_id")

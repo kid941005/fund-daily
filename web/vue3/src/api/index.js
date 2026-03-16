@@ -5,7 +5,8 @@ const api = axios.create({
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  withCredentials: true  // 发送 cookies
 })
 
 // 请求拦截器
