@@ -70,7 +70,7 @@ def detect_market_cycle() -> str:
             return "bear"
         else:
             return "震荡"
-    except:
+    except Exception:
         return "震荡"  # 默认震荡市
 
 
