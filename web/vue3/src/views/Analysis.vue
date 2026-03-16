@@ -51,6 +51,10 @@
         <!-- 详细表格 -->
         <div class="detail-table">
           <h3>📋 持仓明细</h3>
+          <div class="table-controls">
+            <button @click="sortByScore('desc')" class="btn-sort">🔽 评分倒序</button>
+            <button @click="sortByScore('asc')" class="btn-sort">🔼 评分正序</button>
+          </div>
           <table>
             <thead>
               <tr>
@@ -63,7 +67,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="fund in analysis?.funds" :key="fund.fund_code">
+              <tr v-for="fund in sortedFunds" :key="fund.fund_code">
                 <td>
                   <div class="fund-name">{{ fund.fund_name }}</div>
                   <div class="fund-code">{{ fund.fund_code }}</div>
@@ -94,6 +98,21 @@ import api from '@/api'
 const pieChart = ref(null)
 const barChart = ref(null)
 const analysis = ref(null)
+const sortOrder = ref('desc')
+
+const sortedFunds = computed(() => {
+  if (!analysis.value?.funds) return []
+  const funds = [...analysis.value.funds]
+  return funds.sort((a, b) => {
+    const scoreA = a.score_100?.total_score || 0
+    const scoreB = b.score_100?.total_score || 0
+    return sortOrder.value === 'desc' ? scoreB - scoreA : scoreA - scoreB
+  })
+})
+
+const sortByScore = (order) => {
+  sortOrder.value = order
+}
 const loading = ref(true)
 
 const fetchAnalysis = async () => {
@@ -306,6 +325,25 @@ onMounted(fetchAnalysis)
 
 .detail-table h3 {
   margin: 0 0 16px;
+}
+
+.table-controls {
+  margin-bottom: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.btn-sort {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-sort:hover {
+  background: #f5f5f5;
 }
 
 table {
