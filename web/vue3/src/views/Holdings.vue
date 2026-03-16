@@ -876,8 +876,6 @@ button {
   }
 }
 
-/* 移动端自适应 */
-@media (max-width: 480px) {
   .holdings {
     padding: 8px;
   }
@@ -978,5 +976,97 @@ button {
   .btn-danger {
     padding: 4px 8px;
     font-size: 10px;
+  }
+}
+
+/* 移动端自适应 */
+@media (max-width: 480px) {
+  .holdings {
+    padding: 8px;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .section-header h2 {
+    font-size: 18px;
+    writing-mode: horizontal-tb;
+    margin: 0;
+  }
+  
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+  }
+  
+  .actions .btn-secondary,
+  .actions .btn-primary,
+  .actions .btn-danger {
+    padding: 4px 8px;
+    font-size: 11px;
+    flex: 1;
+    min-width: 50px;
+    text-align: center;
+  }
+  
+  .summary {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .holding-item {
+    padding: 8px;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .holding-info {
+    width: 100%;
+  }
+  
+  .holding-info .code {
+    font-size: 13px;
+    font-weight: bold;
+  }
+  
+  .holding-info .name {
+    font-size: 11px;
+    color: #666;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+  
+  .holding-info .nav-info,
+  .holding-info .return-info {
+    font-size: 10px;
+    display: block;
+  }
+  
+  .holding-amount {
+    width: 100%;
+  }
+  
+  .holding-amount input {
+    width: 100%;
+    padding: 6px;
+    font-size: 14px;
+  }
+  
+  .sort-controls {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  
+  .sort-controls button {
+    padding: 4px 8px;
+    font-size: 11px;
   }
 }
