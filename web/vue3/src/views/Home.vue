@@ -50,13 +50,13 @@
     
     <!-- 基金列表 -->
     <section class="section funds">
-      <h2>📈 基金行情</h2>
+      <h2>💰 我的持仓</h2>
       <div v-if="loading" class="loading">加载中...</div>
       <div v-else class="fund-list">
-        <div v-for="fund in funds" :key="fund.fund_code" class="fund-item">
+        <div v-for="fund in funds" :key="fund.code" class="fund-item">
           <div class="fund-info">
-            <span class="code">{{ fund.fund_code }}</span>
-            <span class="name">{{ fund.fund_name }}</span>
+            <span class="code">{{ fund.code }}</span>
+            <span class="name">{{ fund.name || '未知' }}</span>
           </div>
           <div class="fund-nav">
             <span class="nav">净值: {{ fund.nav || '--' }}</span>
@@ -74,7 +74,7 @@ import { useFundStore } from '@/stores/fund'
 
 const store = useFundStore()
 
-const funds = computed(() => store.funds)
+const funds = computed(() => store.holdings)
 const sectors = computed(() => store.sectors)
 const advice = computed(() => store.advice)
 const loading = computed(() => store.loading.funds)
