@@ -1,147 +1,91 @@
 <template>
   <div class="holdings">
-    <!-- 操作按钮 -->
-    <section class="section actions">
-      <div class="action-buttons">
-        <button class="btn btn-primary" @click="showAdd = true">
-          <span class="icon">➕</span> 添加持仓
-        </button>
-        <button class="btn btn-success" @click="triggerOCR">
-          <span class="icon">📷</span> 截图导入
-        </button>
-        <button class="btn btn-secondary" @click="handleExport">
-          <span class="icon">📤</span> 导出
-        </button>
-        <button class="btn btn-danger" @click="handleClear">
-          <span class="icon">🗑️</span> 清仓
-        </button>
+    <section class="section">
+      <div class="section-header">
+        <h2>💰 我的持仓</h2>
+        <div class="actions">
+          <button @click="showImport = true" class="btn-secondary">📥 导入</button>
+          <button @click="handleExport" class="btn-secondary">📤 导出</button>
+          <button @click="showAdd = true" class="btn-primary">➕ 添加</button>
+          <button @click="handleClear" class="btn-danger">🗑️ 清仓</button>
+        </div>
       </div>
-    </section>
-
-    <!-- 总览统计 -->
-    <section class="section summary-section">
-      <div class="summary-grid">
-        <div class="summary-card">
-          <span class="label">基金数量</span>
+      
+      <div class="summary">
+        <div class="summary-item">
+          <span class="label">持仓总数</span>
           <span class="value">{{ store.holdings.length }}</span>
         </div>
-        <div class="summary-card">
-          <span class="label">总持仓</span>
+        <div class="summary-item">
+          <span class="label">持仓金额</span>
           <span class="value">¥{{ totalAmount.toFixed(2) }}</span>
         </div>
-        <div class="summary-card">
-          <span class="label">平均涨跌</span>
-          <span class="value" :class="avgChange >= 0 ? 'up' : 'down'">
-            {{ avgChange >= 0 ? '+' : '' }}{{ avgChange.toFixed(2) }}%
-          </span>
-        </div>
-        <div class="summary-card highlight">
-          <span class="label">当日收益</span>
-          <span class="value" :class="dailyProfit >= 0 ? 'up' : 'down'">
-            {{ dailyProfit >= 0 ? '+' : '' }}¥{{ dailyProfit.toFixed(2) }}
-          </span>
-        </div>
       </div>
-    </section>
-
-    <!-- 排序切换 -->
-    <section class="section sort-section">
-      <div class="sort-header">
-        <div class="sort-tabs">
-          <button 
-            v-for="tab in sortTabs" 
-            :key="tab.key"
-            class="tab"
-            :class="{ active: sortBy === tab.key }"
-            @click="sortBy = tab.key"
-          >
-            {{ tab.label }}
-          </button>
-        </div>
-        <button class="sort-order" @click="sortOrder = sortOrder === 'desc' ? 'asc' : 'desc'">
-          {{ sortOrder === 'desc' ? '↓ 降序' : '↑ 升序' }}
-        </button>
-      </div>
-    </section>
-
-    <!-- 持仓列表 -->
-    <section class="section holdings-section">
-      <div v-if="sortedHoldings.length === 0" class="empty">
+      
+      <div v-if="store.holdings.length === 0" class="empty">
         <p>暂无持仓</p>
         <div class="empty-actions">
-          <button class="btn btn-primary" @click="showAdd = true">手动添加</button>
-          <button class="btn btn-secondary" @click="triggerOCR">截图导入</button>
+          <button @click="showAdd = true" class="btn-primary">手动添加</button>
+          <button @click="showImport = true" class="btn-secondary">截图导入</button>
         </div>
       </div>
       
       <div v-else class="holding-list">
-        <div v-for="holding in sortedHoldings" :key="holding.code" class="holding-card">
-          <div class="card-header">
-            <div class="fund-info">
-              <span class="fund-name">{{ holding.name || '未知' }}</span>
-              <span class="fund-code">{{ holding.code }}</span>
-            </div>
-            <button class="btn-delete" @click="removeHolding(holding.code)">✕</button>
+        <div v-for="(holding, index) in store.holdings" :key="holding.code" class="holding-item">
+          <div class="holding-info">
+            <span class="code">{{ holding.code }}</span>
+            <span class="name">{{ holding.name || '未知' }}</span>
           </div>
-          
-          <div class="card-stats">
-            <div class="stat">
-              <span class="label">持仓金额</span>
-              <span class="value">¥{{ (holding.amount || 0).toFixed(2) }}</span>
-            </div>
-            <div class="stat">
-              <span class="label">持仓收益</span>
-              <span class="value" :class="getProfit(holding) >= 0 ? 'up' : 'down'">
-                {{ getProfit(holding) >= 0 ? '+' : '' }}¥{{ getProfit(holding).toFixed(2) }}
-              </span>
-            </div>
-            <div class="stat">
-              <span class="label">今日涨跌</span>
-              <span class="value" :class="getChange(holding) >= 0 ? 'up' : 'down'">
-                {{ getChange(holding) >= 0 ? '+' : '' }}{{ getChange(holding).toFixed(2) }}%
-              </span>
-            </div>
-            <div class="stat">
-              <span class="label">当日收益</span>
-              <span class="value" :class="getDailyProfit(holding) >= 0 ? 'up' : 'down'">
-                {{ getDailyProfit(holding) >= 0 ? '+' : '' }}¥{{ getDailyProfit(holding).toFixed(2) }}
-              </span>
-            </div>
-          </div>
-          
-          <div class="card-meta">
-            <span>净值: {{ getNav(holding) }}</span>
-            <span>估算: {{ getEstNav(holding) }}</span>
-            <span>持有: {{ getHoldDays(holding) }}天</span>
-          </div>
-          
-          <div class="card-edit">
+          <div class="holding-amount">
             <input 
               v-model.number="holding.amount" 
               type="number" 
               @change="updateHolding(holding)"
-              placeholder="输入金额"
+              placeholder="金额"
             />
             <span class="unit">元</span>
-            <button class="btn-save" @click="updateHolding(holding)">保存</button>
+          </div>
+          <div class="holding-actions">
+            <button @click="removeHolding(index)" class="btn-icon">🗑️</button>
           </div>
         </div>
       </div>
     </section>
-
-    <!-- OCR 导入弹窗 -->
-    <div v-if="showOCR" class="modal" @click.self="showOCR = false">
-      <div class="modal-content">
-        <h2>📷 截图导入</h2>
-        <div class="ocr-area">
-          <input type="file" accept="image/*" @change="handleOCRFile" />
-          <p>选择基金截图自动识别</p>
+    
+    <!-- 评分建议 -->
+    <section v-if="advice" class="section">
+      <h2>📊 持仓评分</h2>
+      <div class="score-cards">
+        <div v-for="fund in advice.funds" :key="fund.fund_code" class="score-card">
+          <div class="score-header">
+            <span class="name">{{ fund.fund_name?.substring(0, 10) }}</span>
+            <span class="score" :class="getScoreClass(fund.score_100?.total_score)">
+              {{ fund.score_100?.total_score || '--' }}分
+            </span>
+          </div>
+          <div class="score-details">
+            <div class="detail">
+              <span>估值</span>
+              <span>{{ fund.score_100?.details?.valuation?.score || 0 }}/25</span>
+            </div>
+            <div class="detail">
+              <span>业绩</span>
+              <span>{{ fund.score_100?.details?.performance?.score || 0 }}/25</span>
+            </div>
+            <div class="detail">
+              <span>风控</span>
+              <span>{{ fund.score_100?.details?.risk_control?.score || 0 }}/15</span>
+            </div>
+            <div class="detail">
+              <span>动量</span>
+              <span>{{ fund.score_100?.details?.momentum?.score || 0 }}/20</span>
+            </div>
+          </div>
         </div>
-        <button class="btn btn-secondary" @click="showOCR = false">关闭</button>
       </div>
-    </div>
-
-    <!-- 添加持仓弹窗 -->
+    </section>
+    
+    <!-- Add Modal -->
     <div v-if="showAdd" class="modal" @click.self="showAdd = false">
       <div class="modal-content">
         <h2>添加持仓</h2>
@@ -159,96 +103,82 @@
         </div>
       </div>
     </div>
+    
+    <!-- Import Modal -->
+    <div v-if="showImport" class="modal" @click.self="showImport = false">
+      <div class="modal-content import-modal">
+        <h2>📥 导入持仓</h2>
+        
+        <div class="import-tabs">
+          <button :class="{ active: importTab === 'manual' }" @click="importTab = 'manual'">手动输入</button>
+          <button :class="{ active: importTab === 'ocr' }" @click="importTab = 'ocr'">截图识别</button>
+          <button :class="{ active: importTab === 'text' }" @click="importTab = 'text'">文本导入</button>
+        </div>
+        
+        <!-- Manual Input -->
+        <div v-if="importTab === 'manual'" class="import-form">
+          <p class="hint">格式：基金代码,金额（每行一个）</p>
+          <textarea v-model="importText" rows="6" placeholder="000001,10000&#10;110022,20000&#10;161725,15000"></textarea>
+          <button class="primary" @click="handleTextImport">导入</button>
+        </div>
+        
+        <!-- OCR -->
+        <div v-if="importTab === 'ocr'" class="import-form">
+          <p class="hint">上传截图，OCR自动识别基金持仓</p>
+          <input type="file" accept="image/*" @change="handleOcrFile" :disabled="ocrLoading" />
+          <div v-if="ocrLoading" class="loading">识别中...</div>
+          <div v-if="ocrResult.length > 0" class="ocr-result">
+            <h4>识别结果：</h4>
+            <div v-for="(fund, idx) in ocrResult" :key="idx" class="ocr-item">
+              <input v-model="fund.code" placeholder="代码" />
+              <input v-model.number="fund.amount" type="number" placeholder="金额" />
+            </div>
+            <button class="primary" @click="confirmOcrImport">确认导入</button>
+          </div>
+        </div>
+        
+        <!-- Text Import -->
+        <div v-if="importTab === 'text'" class="import-form">
+          <p class="hint">粘贴基金代码和金额，每行一个</p>
+          <textarea v-model="importText" rows="6" placeholder="000001,华夏成长混合,10000"></textarea>
+          <button class="primary" @click="handleTextImport">导入</button>
+        </div>
+        
+        <div class="modal-actions">
+          <button @click="showImport = false">关闭</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
-
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useFundStore } from '@/stores/fund'
+import api from '@/api'
 
 const store = useFundStore()
-
-// 页面加载时获取基金数据
-onMounted(() => {
-  // 优先从缓存加载基金数据，如果没有则强制刷新
-  store.fetchFunds(false)
-  // 启动定时刷新
-  store.startPeriodicFetch()
-})
-
-// 弹窗状态
 const showAdd = ref(false)
-const showOCR = ref(false)
+const showImport = ref(false)
+const importTab = ref('manual')
+const importText = ref('')
 const newHolding = ref({ code: '', amount: '' })
 
-// 排序
-const sortBy = ref('amount')
-const sortOrder = ref('desc')
-const sortTabs = [
-  { key: 'amount', label: '持仓金额' },
-  { key: 'change', label: '今日涨跌' },
-  { key: 'daily', label: '当日收益' }
-]
+// OCR state
+const ocrLoading = ref(false)
+const ocrResult = ref([])
 
-// 计算属性
 const totalAmount = computed(() => store.totalAmount)
-const dailyProfit = computed(() => {
-  // 简化计算：假设当日收益
-  return store.holdings.reduce((sum, h) => {
-    return sum + (h.amount || 0) * 0.01
-  }, 0) * -1
-})
-const avgChange = computed(() => {
-  // 简化：随机值或从API获取
-  return -1.5
-})
+const advice = computed(() => store.advice)
 
-const sortedHoldings = computed(() => {
-  const list = [...store.holdings]
-  const order = sortOrder.value === 'desc' ? -1 : 1
-  
-  switch (sortBy.value) {
-    case 'amount':
-      return list.sort((a, b) => ((b.amount || 0) - (a.amount || 0)) * order)
-    case 'change':
-      return list.sort((a, b) => (getChange(b) - getChange(a)) * order)
-    case 'daily':
-      return list.sort((a, b) => (getDailyProfit(b) - getDailyProfit(a)) * order)
-    default:
-      return list
-  }
-})
-
-// 辅助方法
-const getProfit = (holding) => {
-  const fund = store.funds.find(f => f.fund_code === holding.code)
-  const change = parseFloat(fund?.daily_change || 0) / 100
-  return (holding.amount || 0) * change
+const getScoreClass = (score) => {
+  if (!score) return ''
+  if (score >= 70) return 'excellent'
+  if (score >= 50) return 'good'
+  if (score >= 30) return 'fair'
+  return 'poor'
 }
 
-const getChange = (holding) => {
-  const fund = store.funds.find(f => f.fund_code === holding.code)
-  return parseFloat(fund?.daily_change || 0)
-}
-
-const getDailyProfit = (holding) => {
-  const fund = store.funds.find(f => f.fund_code === holding.code)
-  const change = parseFloat(fund?.daily_change || 0) / 100
-  return (holding.amount || 0) * change
-}
-const getNav = (holding) => {
-  const fund = store.funds.find(f => f.fund_code === holding.code)
-  return fund?.nav || '--'
-}
-
-const getEstNav = (holding) => {
-  const fund = store.funds.find(f => f.fund_code === holding.code)
-  return fund?.estimate_nav || '--'
-}
-const getHoldDays = (holding) => holding.buy_date ? Math.floor((Date.now() - new Date(holding.buy_date)) / 86400000) : 0
-
-// 操作方法
 const addHolding = async () => {
   if (!newHolding.value.code || !newHolding.value.amount) {
     alert('请填写基金代码和金额')
@@ -269,53 +199,162 @@ const updateHolding = async (holding) => {
   await store.saveHoldings(funds)
 }
 
-const removeHolding = async (code) => {
+const removeHolding = async (index) => {
   if (!confirm('确定删除该持仓吗？')) return
   
-  const funds = store.holdings.filter(h => h.code !== code)
+  const funds = store.holdings.filter((_, i) => i !== index)
   await store.saveHoldings(funds)
-  // 刷新持仓列表
-  await store.fetchHoldings()
 }
 
 const handleClear = async () => {
-  if (!confirm('确定清空所有持仓吗？')) return
-  await store.saveHoldings([])
-  // 刷新持仓列表
-  await store.fetchHoldings()
+  if (!confirm('确定清仓所有持仓吗？此操作不可恢复！')) return
+  await store.clearHoldings()
 }
 
 const handleExport = () => {
-  const data = store.holdings.map(h => `${h.code},${h.name},${h.amount}`)
-  const csv = '基金代码,基金名称,持仓金额\\n' + data.join('\\n')
-  const blob = new Blob([csv], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'holdings.csv'
-  a.click()
+  if (confirm('导出为CSV格式？点击确定导出CSV，点击取消导出JSON')) {
+    window.location.href = '/api/export?format=csv'
+  } else {
+    window.location.href = '/api/export?format=json'
+  }
 }
 
-const triggerOCR = () => {
-  showOCR.value = true
+const handleTextImport = async () => {
+  if (!importText.value.trim()) {
+    alert('请输入持仓数据')
+    return
+  }
+  
+  const lines = importText.value.trim().split('\n')
+  const funds = []
+  
+  for (const line of lines) {
+    const parts = line.split(',')
+    if (parts.length >= 2) {
+      const code = parts[0].trim()
+      const amount = parseFloat(parts[1].trim())
+      if (code && amount > 0) {
+        funds.push({ code, amount })
+      }
+    }
+  }
+  
+  if (funds.length === 0) {
+    alert('未解析到有效的持仓数据')
+    return
+  }
+  
+  // 合并到现有持仓
+  const existingCodes = new Set(store.holdings.map(h => h.code))
+  const newFunds = [...store.holdings]
+  
+  for (const fund of funds) {
+    if (existingCodes.has(fund.code)) {
+      // 更新现有
+      const idx = newFunds.findIndex(f => f.code === fund.code)
+      if (idx >= 0) {
+        newFunds[idx].amount = (newFunds[idx].amount || 0) + fund.amount
+      }
+    } else {
+      // 新增
+      newFunds.push(fund)
+    }
+  }
+  
+  await store.saveHoldings(newFunds)
+  showImport.value = false
+  importText.value = ''
 }
 
-const handleOCRFile = async (e) => {
-  const file = e.target.files[0]
+const handleOcrFile = async (event) => {
+  const file = event.target.files[0]
   if (!file) return
   
-  // TODO: 实现OCR识别
-  alert('OCR功能开发中')
-  showOCR.value = false
+  ocrLoading.value = true
+  ocrResult.value = []
+  
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    
+    const response = await fetch('/api/import-screenshot', {
+      method: 'POST',
+      body: formData
+    })
+    
+    const data = await response.json()
+    
+    if (data.success && data.parsed) {
+      ocrResult.value = data.parsed.map(f => ({
+        code: f.code || f.fund_code || '',
+        amount: f.amount || f.money || 0
+      }))
+    } else {
+      alert(data.error || 'OCR识别失败')
+    }
+  } catch (e) {
+    alert('上传失败: ' + e.message)
+  } finally {
+    ocrLoading.value = false
+  }
+}
+
+const confirmOcrImport = async () => {
+  if (ocrResult.value.length === 0) {
+    alert('没有可导入的数据')
+    return
+  }
+  
+  // 先获取基金名称
+  const fundNames = {}
+  for (const fund of ocrResult.value) {
+    if (!fund.name || fund.name === '未知') {
+      try {
+        const res = await fetch(`/api/fund-detail/${fund.code}`)
+        const data = await res.json()
+        // API 返回格式: { success, detail: { fund_name } }
+        if (data.detail?.fund_name) {
+          fundNames[fund.code] = data.detail.fund_name
+        }
+      } catch (e) {
+        console.error('Failed to fetch fund name:', e)
+      }
+    }
+  }
+  
+  // 合并
+  const newFunds = [...store.holdings]
+  const existingCodes = new Set(newFunds.map(h => h.code))
+  
+  for (const fund of ocrResult.value) {
+    // 使用获取的名称或 OCR 识别的名称
+    const name = fundNames[fund.code] || fund.name || ''
+    
+    if (existingCodes.has(fund.code)) {
+      const idx = newFunds.findIndex(f => f.code === fund.code)
+      if (idx >= 0) {
+        newFunds[idx].amount = (newFunds[idx].amount || 0) + (fund.amount || 0)
+        if (name && !newFunds[idx].name) {
+          newFunds[idx].name = name
+        }
+      }
+    } else {
+      newFunds.push({ code: fund.code, amount: fund.amount, name })
+    }
+  }
+  
+  await store.saveHoldings(newFunds)
+  showImport.value = false
+  ocrResult.value = []
+  importText.value = ''
 }
 </script>
-
 
 <style scoped>
 .holdings {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .section {
@@ -325,240 +364,80 @@ const handleOCRFile = async (e) => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-/* 操作按钮 */
-.action-buttons {
+.section-header {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.btn {
-  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  padding: 8px 16px;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
+  font-size: 14px;
 }
 
-.btn-primary { background: #3b82f6; color: white; }
-.btn-primary:hover { background: #2563eb; }
-
-.btn-secondary { background: #6b7280; color: white; }
-.btn-secondary:hover { background: #4b5563; }
-
-.btn-success { background: #10b981; color: white; }
-.btn-success:hover { background: #059669; }
-
-.btn-danger { background: #ef4444; color: white; }
-.btn-danger:hover { background: #dc2626; }
-
-/* 统计卡片 */
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-.summary-card {
-  text-align: center;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 12px;
-}
-
-.summary-card.highlight {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.btn-primary {
+  background: #667eea;
   color: white;
 }
 
-.summary-card .label {
-  display: block;
-  font-size: 12px;
-  margin-bottom: 8px;
-  opacity: 0.8;
+.btn-secondary {
+  background: #6b7280;
+  color: white;
 }
 
-.summary-card .value {
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-icon {
+  background: transparent;
+  padding: 4px 8px;
+}
+
+.summary {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 20px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary-item .label {
+  font-size: 12px;
+  color: #666;
+}
+
+.summary-item .value {
   font-size: 24px;
   font-weight: bold;
 }
 
-.summary-card .value.up { color: #ef4444; }
-.summary-card .value.down { color: #22c55e; }
-.summary-card.highlight .value.up { color: #ff6b6b; }
-.summary-card.highlight .value.down { color: #4ade80; }
-
-/* 排序标签 */
-.sort-tabs {
-  display: flex;
-  gap: 8px;
-  background: #f3f4f6;
-  padding: 4px;
-  border-radius: 8px;
-}
-
-.sort-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.sort-order {
-  padding: 8px 16px;
-  border: 1px solid #ddd;
-  background: white;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #666;
-  transition: all 0.2s;
-}
-
-.sort-order:hover {
-  background: #f3f4f6;
-  border-color: #3b82f6;
-  color: #3b82f6;
-}
-
-.tab {
-  flex: 1;
-  padding: 8px 16px;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.tab.active {
-  background: white;
-  color: #3b82f6;
-  font-weight: 500;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-/* 持仓卡片 */
-.holding-card {
-  background: #f8f9fa;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-
-.fund-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.fund-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-}
-
-.fund-code {
-  font-size: 12px;
-  color: #999;
-}
-
-.btn-delete {
-  width: 24px;
-  height: 24px;
-  border: none;
-  background: #fee2e2;
-  color: #ef4444;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.card-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.stat {
-  text-align: center;
-}
-
-.stat .label {
-  display: block;
-  font-size: 11px;
-  color: #666;
-  margin-bottom: 4px;
-}
-
-.stat .value {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.stat .value.up { color: #ef4444; }
-.stat .value.down { color: #22c55e; }
-
-.card-meta {
-  display: flex;
-  gap: 16px;
-  padding: 8px 12px;
-  background: #e5e7eb;
-  border-radius: 6px;
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 12px;
-}
-
-.card-edit {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.card-edit input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.card-edit .unit {
-  color: #666;
-  font-size: 14px;
-}
-
-.btn-save {
-  padding: 8px 16px;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-/* 空状态 */
 .empty {
   text-align: center;
-  padding: 60px 20px;
+  padding: 40px;
   color: #999;
 }
 
 .empty p {
-  margin-bottom: 20px;
-  font-size: 16px;
+  margin-bottom: 16px;
 }
 
 .empty-actions {
@@ -567,7 +446,97 @@ const handleOCRFile = async (e) => {
   justify-content: center;
 }
 
-/* 弹窗 */
+.holding-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.holding-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.holding-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.holding-info .code {
+  font-size: 14px;
+  color: #666;
+}
+
+.holding-info .name {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.holding-amount {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.holding-amount input {
+  width: 120px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.score-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.score-card {
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.score-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.score-header .name {
+  font-weight: 500;
+}
+
+.score-header .score {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.score.excellent { color: #22c55e; }
+.score.good { color: #667eea; }
+.score.fair { color: #f59e0b; }
+.score.poor { color: #ef4444; }
+
+.score-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.score-details .detail {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #666;
+}
+
 .modal {
   position: fixed;
   top: 0;
@@ -583,15 +552,17 @@ const handleOCRFile = async (e) => {
 
 .modal-content {
   background: white;
-  border-radius: 12px;
   padding: 24px;
-  width: 90%;
-  max-width: 400px;
+  border-radius: 8px;
+  width: 360px;
+}
+
+.import-modal {
+  width: 420px;
 }
 
 .modal-content h2 {
-  margin: 0 0 20px;
-  font-size: 18px;
+  margin-top: 0;
 }
 
 .form-group {
@@ -600,71 +571,92 @@ const handleOCRFile = async (e) => {
 
 .form-group label {
   display: block;
+  margin-bottom: 8px;
   font-size: 14px;
   color: #666;
-  margin-bottom: 6px;
 }
 
 .form-group input {
   width: 100%;
   padding: 10px;
   border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 4px;
 }
 
 .modal-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: flex-end;
   margin-top: 20px;
 }
 
-.modal-actions button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+.import-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
-.modal-actions button:not(.primary) {
+.import-tabs button {
+  flex: 1;
   background: #f3f4f6;
   color: #666;
 }
 
-.modal-actions button.primary {
-  background: #3b82f6;
+.import-tabs button.active {
+  background: #667eea;
   color: white;
 }
 
-.ocr-area {
+.import-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.import-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
+  font-family: monospace;
+}
+
+.import-form input[type="file"] {
+  padding: 8px;
+}
+
+.hint {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
+}
+
+.ocr-result {
+  margin-top: 12px;
+}
+
+.ocr-result h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.ocr-item {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ocr-item input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.loading {
   text-align: center;
-  padding: 40px 20px;
-  border: 2px dashed #ddd;
-  border-radius: 8px;
-  margin: 20px 0;
-}
-
-.ocr-area input {
-  margin-bottom: 10px;
-}
-
-@media (max-width: 768px) {
-  .summary-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .card-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-  }
-  
-  .btn {
-    justify-content: center;
-  }
+  padding: 20px;
+  color: #667eea;
 }
 </style>
-
