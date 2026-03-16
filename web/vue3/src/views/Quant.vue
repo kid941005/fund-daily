@@ -34,7 +34,7 @@
     <section class="section">
       <h2>📈 组合优化</h2>
       <div v-if="optimizeLoading" class="loading">加载中...</div>
-      <div v-else-if="portfolioOptimize.recommendations" class="optimize-content">
+      <div v-else-if="portfolioOptimize.allocations" class="optimize-content">
         <div class="summary">
           <div class="summary-item">
             <span class="label">当前基金数</span>
@@ -52,7 +52,7 @@
         
         <div class="recommendations">
           <h3>优化建议</h3>
-          <div v-for="rec in portfolioOptimize.recommendations" :key="rec.fund_code" 
+          <div v-for="rec in portfolioOptimize.allocations" :key="rec.fund_code" 
                class="rec-item" :class="rec.action">
             <span class="fund-name">{{ rec.fund_name || rec.fund_code }}</span>
             <span class="action">{{ rec.action }}</span>

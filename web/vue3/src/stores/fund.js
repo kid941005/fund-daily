@@ -201,7 +201,7 @@ export const useFundStore = defineStore('fund', {
         const res = await fetch('/api/quant/portfolio-optimize')
         const data = await res.json()
         if (data.success) {
-          this.portfolioOptimize = data.data || {}
+          this.portfolioOptimize = { allocations: data.data?.allocations || [], fund_count: data.data?.fund_count || 0 }
         }
       } catch (e) {
         console.error('Failed to fetch portfolio optimize:', e)
