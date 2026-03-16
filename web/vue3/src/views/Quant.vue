@@ -95,9 +95,9 @@
               <tr v-for="trade in rebalancing.trades" :key="trade.fund_code">
                 <td>{{ trade.fund_name || trade.fund_code }}</td>
                 <td :class="trade.action">{{ trade.action }}</td>
-                <td>{{ (trade.current_weight * 100).toFixed(1) }}%</td>
-                <td>{{ (trade.target_weight * 100).toFixed(1) }}%</td>
-                <td :class="trade.action">¥{{ Math.abs(trade.amount).toFixed(2) }}</td>
+                <td>{{ (trade.current_pct || 0).toFixed(1) }}%</td>
+                <td>{{ (trade.target_pct || 0).toFixed(1) }}%</td>
+                <td :class="trade.action">¥{{ Math.abs(trade.target_amount || 0).toFixed(2) }}</td>
               </tr>
             </tbody>
           </table>
