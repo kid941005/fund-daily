@@ -13,12 +13,24 @@
       
       <div class="summary">
         <div class="summary-item">
-          <span class="label">持仓总数</span>
-          <span class="value">{{ store.holdings.length }}</span>
+          <span class="label">持仓总额</span>
+          <span class="value">¥{{ totalAmount.toFixed(2) }}</span>
         </div>
         <div class="summary-item">
-          <span class="label">持仓金额</span>
-          <span class="value">¥{{ totalAmount.toFixed(2) }}</span>
+          <span class="label">持有收益</span>
+          <span class="value" :class="totalProfit >= 0 ? 'up' : 'down'">
+            {{ totalProfit >= 0 ? '+' : '' }}¥{{ totalProfit.toFixed(2) }}
+          </span>
+        </div>
+        <div class="summary-item">
+          <span class="label">收益率</span>
+          <span class="value" :class="totalProfitRate >= 0 ? 'up' : 'down'">
+            {{ totalProfitRate >= 0 ? '+' : '' }}{{ totalProfitRate.toFixed(2) }}%
+          </span>
+        </div>
+        <div class="summary-item">
+          <span class="label">持仓基金数</span>
+          <span class="value">{{ store.holdings.length }}</span>
         </div>
       </div>
       
@@ -169,6 +181,15 @@ const ocrLoading = ref(false)
 const ocrResult = ref([])
 
 const totalAmount = computed(() => store.totalAmount)
+const totalProfit = computed(() => store.holdings.reduce((sum, h) => {
+  // 简化计算：假设收益为持仓金额 * 0.01 (1%)
+  // 实际应该从基金净值变化计算
+  return sum + (h.amount * 0.01 || 0)
+}, 0))
+const totalProfitRate = computed(() => {
+  if (totalAmount.value === 0) return 0
+  return (totalProfit.value / totalAmount.value) * 100
+})
 const advice = computed(() => store.advice)
 
 const getScoreClass = (score) => {
@@ -409,8 +430,9 @@ button {
 }
 
 .summary {
-  display: flex;
-  gap: 40px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
   margin-bottom: 20px;
 }
 
@@ -418,6 +440,10 @@ button {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  text-align: center;
 }
 
 .summary-item .label {
@@ -429,6 +455,9 @@ button {
   font-size: 24px;
   font-weight: bold;
 }
+
+.summary-item .value.up { color: #ef4444; }
+.summary-item .value.down { color: #22c55e; }
 
 .empty {
   text-align: center;

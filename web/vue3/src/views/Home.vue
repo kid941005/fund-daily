@@ -23,14 +23,18 @@
       </div>
     </section>
     
-    <!-- 热门板块 -->
+    <!-- 热门板块 - 柱状图 -->
     <section class="section sectors">
       <h2>🔥 热门板块</h2>
-      <div class="sector-list">
-        <div v-for="sector in sectors" :key="sector.name" class="sector-item">
+      <div class="sector-chart">
+        <div v-for="sector in sectors.slice(0, 10)" :key="sector.name" class="sector-bar">
           <span class="name">{{ sector.name }}</span>
+          <div class="bar-container">
+            <div class="bar" :class="sector.change >= 0 ? 'up' : 'down'" 
+                 :style="{ width: Math.min(Math.abs(sector.change) * 5, 100) + '%' }"></div>
+          </div>
           <span class="change" :class="sector.change >= 0 ? 'up' : 'down'">
-            {{ sector.change >= 0 ? '↑' : '↓' }}{{ Math.abs(sector.change).toFixed(2) }}%
+            {{ sector.change >= 0 ? '+' : '' }}{{ sector.change?.toFixed(2) }}%
           </span>
         </div>
       </div>
@@ -41,27 +45,9 @@
       <h2>📰 热点资讯</h2>
       <div v-if="newsLoading" class="loading">加载中...</div>
       <div v-else class="news-list">
-        <div v-for="item in news" :key="item.url" class="news-item">
+        <div v-for="item in news" :key="item.url" class="news-item" @click="openUrl(item.url)">
           <span class="title">{{ item.title }}</span>
           <span class="time">{{ item.time }}</span>
-        </div>
-      </div>
-    </section>
-    
-    <!-- 基金列表 -->
-    <section class="section funds">
-      <h2>💰 我的持仓</h2>
-      <div v-if="loading" class="loading">加载中...</div>
-      <div v-else class="fund-list">
-        <div v-for="fund in funds" :key="fund.code" class="fund-item">
-          <div class="fund-info">
-            <span class="code">{{ fund.code }}</span>
-            <span class="name">{{ fund.name || '未知' }}</span>
-          </div>
-          <div class="fund-nav">
-            <span class="nav">净值: {{ fund.nav || '--' }}</span>
-            <span class="change" :class="fund.trend">{{ fund.daily_change }}%</span>
-          </div>
         </div>
       </div>
     </section>
@@ -69,15 +55,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useFundStore } from '@/stores/fund'
 
 const store = useFundStore()
 
-const funds = computed(() => store.holdings)
-const sectors = computed(() => store.sectors)
 const advice = computed(() => store.advice)
-const loading = computed(() => store.loading.funds)
+const sectors = computed(() => store.sectors)
 const news = computed(() => store.news)
 const newsLoading = computed(() => store.loading.news)
 
@@ -87,6 +71,10 @@ const sentimentClass = computed(() => {
   if (sentiment?.includes('谨慎') || sentiment?.includes('下跌')) return 'down'
   return ''
 })
+
+const openUrl = (url) => {
+  if (url) window.open(url, '_blank')
+}
 
 onMounted(() => {
   if (store.funds.length === 0) {
@@ -144,32 +132,51 @@ onMounted(() => {
 .card .value.down { color: #22c55e; }
 .card .value.action { color: #667eea; }
 
-.sector-list {
+.sector-chart {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 12px;
 }
 
-.sector-item {
+.sector-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: #f8f9fa;
-  border-radius: 20px;
+  gap: 12px;
 }
 
-.sector-item .name {
+.sector-bar .name {
+  width: 100px;
   font-size: 14px;
+  color: #333;
+  text-align: right;
 }
 
-.sector-item .change {
-  font-size: 14px;
+.bar-container {
+  flex: 1;
+  height: 20px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+.bar.up { background: linear-gradient(90deg, #ff6b6b, #ff8e8e); }
+.bar.down { background: linear-gradient(90deg, #22c55e, #4ade80); }
+
+.sector-bar .change {
+  width: 70px;
+  text-align: right;
   font-weight: bold;
+  font-size: 14px;
 }
 
-.sector-item .change.up { color: #ef4444; }
-.sector-item .change.down { color: #22c55e; }
+.sector-bar .change.up { color: #ef4444; }
+.sector-bar .change.down { color: #22c55e; }
 
 .news-list {
   display: flex;
@@ -184,6 +191,12 @@ onMounted(() => {
   padding: 12px;
   background: #f8f9fa;
   border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.news-item:hover {
+  background: #e9ecef;
 }
 
 .news-item .title {
@@ -198,58 +211,15 @@ onMounted(() => {
   margin-left: 12px;
 }
 
-.fund-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.fund-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.fund-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.fund-info .code {
-  font-size: 14px;
-  color: #666;
-}
-
-.fund-info .name {
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.fund-nav {
-  text-align: right;
-}
-
-.fund-nav .nav {
-  display: block;
-  font-size: 12px;
-  color: #999;
-}
-
-.fund-nav .change {
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.fund-nav .change.up { color: #ef4444; }
-.fund-nav .change.down { color: #22c55e; }
-
 .loading {
   text-align: center;
   padding: 40px;
   color: #999;
+}
+
+@media (max-width: 768px) {
+  .overview-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>
