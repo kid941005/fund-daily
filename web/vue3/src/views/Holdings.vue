@@ -780,6 +780,15 @@ button {
   border-radius: 4px;
 }
 
+/* 涨跌颜色 */
+.text-up {
+  color: #f56c6c; /* 红色涨 */
+}
+
+.text-down {
+  color: #67c23a; /* 绿色跌 */
+}
+
 .loading {
   text-align: center;
   padding: 20px;
