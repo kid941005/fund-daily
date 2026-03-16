@@ -1,3 +1,4 @@
+import os
 """
 Constants module for Fund Daily
 统一管理项目中的常量定义
@@ -36,3 +37,7 @@ ALLOCATION_RATIOS = {
 # 别名（保持向后兼容）
 ST = SCORE_THRESHOLDS
 
+
+# 缓存配置
+
+CACHE_DURATION = int(os.environ.get('FUND_DAILY_CACHE_DURATION', 600))
