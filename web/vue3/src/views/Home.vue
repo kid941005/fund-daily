@@ -46,6 +46,19 @@
       </div>
     </section>
     
+    <!-- 雪球热度 -->
+    <section class="section xueqiu">
+      <h2>🌡️ 雪球热度榜</h2>
+      <div v-if="xueqiuLoading" class="loading">加载中...</div>
+      <div v-else class="hot-list">
+        <div v-for="(item, index) in xueqiuHot" :key="item.code" class="hot-item">
+          <span class="rank">{{ index + 1 }}</span>
+          <span class="name">{{ item.name || item.code }}</span>
+          <span class="hot-value">🔥 {{ item.hot || 0 }}</span>
+        </div>
+      </div>
+    </section>
+    
     <!-- 基金列表 -->
     <section class="section funds">
       <h2>📈 基金行情</h2>
@@ -77,6 +90,8 @@ const scoreChart = ref(null)
 
 const funds = computed(() => store.funds)
 const sectors = computed(() => store.sectors)
+const xueqiuHot = ref([])
+const xueqiuLoading = ref(false)
 const advice = computed(() => store.advice)
 const loading = computed(() => store.loading.funds)
 
@@ -130,6 +145,22 @@ const initCharts = () => {
   }
 }
 
+// 获取雪球热度
+const fetchXueqiuHot = async () => {
+  xueqiuLoading.value = true
+  try {
+    const res = await fetch('/api/external/hot-rank?limit=10')
+    const data = await res.json()
+    if (data.success) {
+      xueqiuHot.value = data.data || []
+    }
+  } catch (e) {
+    console.error('Failed to fetch xueqiu hot:', e)
+  } finally {
+    xueqiuLoading.value = false
+  }
+}
+
 watch([sectors, () => advice.value?.funds], () => {
   nextTick(initCharts)
 }, { deep: true })
@@ -139,6 +170,9 @@ onMounted(() => {
     store.loadAll()
   }
   setTimeout(initCharts, 1000)
+  
+  // 获取雪球热度
+  fetchXueqiuHot()
 })
 </script>
 
@@ -281,6 +315,45 @@ onMounted(() => {
 
 .fund-nav .change.up { color: #ef4444; }
 .fund-nav .change.down { color: #22c55e; }
+
+.xueqiu {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+  color: white;
+}
+
+.xueqiu .loading {
+  color: white;
+}
+
+.hot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hot-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 6px;
+}
+
+.hot-item .rank {
+  font-weight: bold;
+  color: #ff6b6b;
+  width: 24px;
+}
+
+.hot-item .name {
+  flex: 1;
+}
+
+.hot-item .hot-value {
+  color: #ffa500;
+  font-weight: bold;
+}
 
 .loading {
   text-align: center;

@@ -27,12 +27,14 @@ from .endpoints.funds import funds_bp
 from .endpoints.quant import quant_bp
 from .endpoints.holdings import holdings_bp
 from .endpoints.analysis import analysis_bp
+from .endpoints.external import external_bp
 
 # 注册蓝图
 api.register_blueprint(funds_bp, url_prefix="/")
 api.register_blueprint(holdings_bp, url_prefix="/")
 api.register_blueprint(analysis_bp, url_prefix="/")
 api.register_blueprint(quant_bp, url_prefix="/")
+api.register_blueprint(external_bp, url_prefix="/")
 
 
 # ============== Error Handlers ==============
