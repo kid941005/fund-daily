@@ -119,60 +119,66 @@ const initCharts = () => {
   }
   
   console.log('Funds count:', analysis.value.funds.length)
-  console.log('pieChart ref:', pieChart.value)
-  console.log('barChart ref:', barChart.value)
   
-  // 饼图：持仓分布
-  if (pieChart.value) {
-    const chart = echarts.init(pieChart.value)
-    const data = analysis.value.funds
-      .filter(f => f.amount > 0)
-      .map(f => ({
-        name: f.fund_name?.substring(0, 8) || f.fund_code,
-        value: f.amount || 0
-      }))
-    
-    chart.setOption({
-      tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
-      series: [{
-        type: 'pie',
-        radius: ['40%', '70%'],
-        data,
-        label: { show: false },
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowOffsetX: 0,
-            shadowColor: 'rgba(0, 0, 0, 0.5)'
-          }
-        }
-      }]
-    })
-  }
+  // 延迟一下确保 DOM 渲染完成
+  setTimeout(() => {
+    initPieChart()
+    initBarChart()
+  }, 100)
+}
+
+const initPieChart = () => {
+  if (!pieChart.value) return
   
-  // 柱状图：评分分布
-  if (barChart.value) {
-    const chart = echarts.init(barChart.value)
-    const data = analysis.value.funds.map(f => ({
-      name: f.fund_name?.substring(0, 6) || f.fund_code,
-      value: f.score_100?.total_score || 0
+  const chart = echarts.init(pieChart.value)
+  const data = analysis.value.funds
+    .filter(f => f.amount > 0)
+    .map(f => ({
+      name: f.fund_name?.substring(0, 8) || f.fund_code,
+      value: f.amount || 0
     }))
-    
-    chart.setOption({
-      tooltip: { trigger: 'axis' },
-      xAxis: { type: 'category', data: data.map(d => d.name) },
-      yAxis: { type: 'value', max: 100 },
-      series: [{
-        type: 'bar',
-        data: data.map(d => ({
-          value: d.value,
-          itemStyle: {
-            color: d.value >= 70 ? '#22c55e' : d.value >= 50 ? '#667eea' : d.value >= 30 ? '#f59e0b' : '#ef4444'
-          }
-        }))
-      }]
-    })
-  }
+  
+  chart.setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+    series: [{
+      type: 'pie',
+      radius: ['40%', '70%'],
+      data,
+      label: { show: false },
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 10,
+          shadowOffsetX: 0,
+          shadowColor: 'rgba(0, 0, 0, 0.5)'
+        }
+      }
+    }]
+  })
+}
+
+const initBarChart = () => {
+  if (!barChart.value) return
+  
+  const chart = echarts.init(barChart.value)
+  const data = analysis.value.funds.map(f => ({
+    name: f.fund_name?.substring(0, 6) || f.fund_code,
+    value: f.score_100?.total_score || 0
+  }))
+  
+  chart.setOption({
+    tooltip: { trigger: 'axis' },
+    xAxis: { type: 'category', data: data.map(d => d.name) },
+    yAxis: { type: 'value', max: 100 },
+    series: [{
+      type: 'bar',
+      data: data.map(d => ({
+        value: d.value,
+        itemStyle: {
+          color: d.value >= 70 ? '#22c55e' : d.value >= 50 ? '#667eea' : d.value >= 30 ? '#f59e0b' : '#ef4444'
+        }
+      }))
+    }]
+  })
 }
 
 const getScoreClass = (score) => {
