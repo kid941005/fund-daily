@@ -48,44 +48,7 @@
           </ul>
         </div>
         
-        <!-- 详细表格 -->
-        <div class="detail-table">
-          <h3>📋 持仓明细</h3>
-          <div class="table-controls">
-            <button @click="sortByScore('desc')" class="btn-sort">🔽 评分倒序</button>
-            <button @click="sortByScore('asc')" class="btn-sort">🔼 评分正序</button>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>基金</th>
-                <th>持仓金额</th>
-                <th>当前占比</th>
-                <th>目标占比</th>
-                <th>评分</th>
-                <th>建议</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="fund in sortedFunds" :key="fund.fund_code">
-                <td>
-                  <div class="fund-name">{{ fund.fund_name }}</div>
-                  <div class="fund-code">{{ fund.fund_code }}</div>
-                </td>
-                <td>¥{{ (fund.amount || 0).toFixed(2) }}</td>
-                <td>{{ fund.current_pct || 0 }}%</td>
-                <td>{{ fund.target_pct || 0 }}%</td>
-                <td>
-                  <span class="score-badge" :class="getScoreClass(fund.score_100?.total_score)">
-                    {{ fund.score_100?.total_score || '--' }}
-                  </span>
-                </td>
-                <td>{{ getSuggestion(fund) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </template>
+        </template>
     </section>
   </div>
 </template>
@@ -100,17 +63,7 @@ const pieChart = ref(null)
 const barChart = ref(null)
 const store = useFundStore()
 const analysis = ref(null)
-const sortOrder = ref('desc')
 
-const sortedFunds = computed(() => {
-  if (!analysis.value?.funds) return []
-  const funds = [...analysis.value.funds]
-  return funds.sort((a, b) => {
-    const scoreA = a.score_100?.total_score || 0
-    const scoreB = b.score_100?.total_score || 0
-    return sortOrder.value === 'desc' ? scoreB - scoreA : scoreA - scoreB
-  })
-})
 
 const sortByScore = (order) => {
   sortOrder.value = order
@@ -380,8 +333,8 @@ th {
   font-weight: bold;
 }
 
-.score-badge.excellent { background: #dcfce7; color: #22c55e; }
-.score-badge.good { background: #e0e7ff; color: #667eea; }
-.score-badge.fair { background: #fef3c7; color: #f59e0b; }
-.score-badge.poor { background: #fee2e2; color: #ef4444; }
+
+
+
+
 </style>
