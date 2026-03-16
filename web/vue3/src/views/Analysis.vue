@@ -94,9 +94,11 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import api from '@/api'
+import { useFundStore } from '@/stores/fund'
 
 const pieChart = ref(null)
 const barChart = ref(null)
+const store = useFundStore()
 const analysis = ref(null)
 const sortOrder = ref('desc')
 
@@ -220,7 +222,11 @@ const getSuggestion = (fund) => {
   return '持有'
 }
 
-onMounted(fetchAnalysis)
+onMounted(async () => {
+  // 确保已登录
+  await store.checkLogin()
+  fetchAnalysis()
+})
 </script>
 
 <style scoped>
