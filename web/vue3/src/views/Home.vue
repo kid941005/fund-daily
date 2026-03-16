@@ -23,16 +23,6 @@
       </div>
     </section>
     
-    <!-- ECharts 图表 -->
-    <section class="section charts">
-      <div class="chart-container">
-        <div ref="sectorChart" class="chart"></div>
-      </div>
-      <div class="chart-container">
-        <div ref="scoreChart" class="chart"></div>
-      </div>
-    </section>
-    
     <!-- 热门板块 -->
     <section class="section sectors">
       <h2>🔥 热门板块</h2>
@@ -46,15 +36,14 @@
       </div>
     </section>
     
-    <!-- 雪球热度 -->
-    <section class="section xueqiu">
-      <h2>🌡️ 雪球热度榜</h2>
-      <div v-if="xueqiuLoading" class="loading">加载中...</div>
-      <div v-else class="hot-list">
-        <div v-for="(item, index) in xueqiuHot" :key="item.code" class="hot-item">
-          <span class="rank">{{ index + 1 }}</span>
-          <span class="name">{{ item.name || item.code }}</span>
-          <span class="hot-value">🔥 {{ item.hot || 0 }}</span>
+    <!-- 热点资讯 -->
+    <section class="section news">
+      <h2>📰 热点资讯</h2>
+      <div v-if="newsLoading" class="loading">加载中...</div>
+      <div v-else class="news-list">
+        <div v-for="item in news" :key="item.url" class="news-item">
+          <span class="title">{{ item.title }}</span>
+          <span class="time">{{ item.time }}</span>
         </div>
       </div>
     </section>
@@ -80,20 +69,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import * as echarts from 'echarts'
+import { ref, computed, onMounted } from 'vue'
 import { useFundStore } from '@/stores/fund'
 
 const store = useFundStore()
-const sectorChart = ref(null)
-const scoreChart = ref(null)
 
 const funds = computed(() => store.funds)
 const sectors = computed(() => store.sectors)
-const xueqiuHot = ref([])
-const xueqiuLoading = ref(false)
 const advice = computed(() => store.advice)
 const loading = computed(() => store.loading.funds)
+const news = computed(() => store.news)
+const newsLoading = computed(() => store.loading.news)
 
 const sentimentClass = computed(() => {
   const sentiment = advice.value?.market_sentiment
@@ -102,77 +88,10 @@ const sentimentClass = computed(() => {
   return ''
 })
 
-const initCharts = () => {
-  // 板块图表
-  if (sectorChart.value && sectors.value.length > 0) {
-    const chart = echarts.init(sectorChart.value)
-    const data = sectors.value.slice(0, 10).map(s => ({
-      name: s.name,
-      value: Math.abs(s.change)
-    }))
-    chart.setOption({
-      title: { text: '板块涨跌幅', left: 'center' },
-      tooltip: { trigger: 'axis' },
-      xAxis: { type: 'category', data: data.map(d => d.name) },
-      yAxis: { type: 'value' },
-      series: [{
-        type: 'bar',
-        data: data.map((d, i) => ({
-          value: d.value,
-          itemStyle: { color: sectors.value[i]?.change >= 0 ? '#ef4444' : '#22c55e' }
-        }))
-      }]
-    })
-  }
-  
-  // 评分图表
-  if (scoreChart.value && advice.value?.funds) {
-    const chart = echarts.init(scoreChart.value)
-    const fundScores = advice.value.funds.slice(0, 5).map(f => ({
-      name: f.fund_name?.substring(0, 6) || f.fund_code,
-      value: f.score_100?.total_score || 0
-    }))
-    chart.setOption({
-      title: { text: '基金评分', left: 'center' },
-      tooltip: { trigger: 'item' },
-      series: [{
-        type: 'pie',
-        radius: '50%',
-        data: fundScores,
-        label: { formatter: '{b}: {c}分' }
-      }]
-    })
-  }
-}
-
-// 获取雪球热度
-const fetchXueqiuHot = async () => {
-  xueqiuLoading.value = true
-  try {
-    const res = await fetch('/api/external/hot-rank?limit=10')
-    const data = await res.json()
-    if (data.success) {
-      xueqiuHot.value = data.data || []
-    }
-  } catch (e) {
-    console.error('Failed to fetch xueqiu hot:', e)
-  } finally {
-    xueqiuLoading.value = false
-  }
-}
-
-watch([sectors, () => advice.value?.funds], () => {
-  nextTick(initCharts)
-}, { deep: true })
-
 onMounted(() => {
   if (store.funds.length === 0) {
     store.loadAll()
   }
-  setTimeout(initCharts, 1000)
-  
-  // 获取雪球热度
-  fetchXueqiuHot()
 })
 </script>
 
@@ -225,21 +144,6 @@ onMounted(() => {
 .card .value.down { color: #22c55e; }
 .card .value.action { color: #667eea; }
 
-.charts {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-
-.chart-container {
-  height: 300px;
-}
-
-.chart {
-  width: 100%;
-  height: 100%;
-}
-
 .sector-list {
   display: flex;
   flex-wrap: wrap;
@@ -266,6 +170,33 @@ onMounted(() => {
 
 .sector-item .change.up { color: #ef4444; }
 .sector-item .change.down { color: #22c55e; }
+
+.news-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.news-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.news-item .title {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+.news-item .time {
+  font-size: 12px;
+  color: #999;
+  margin-left: 12px;
+}
 
 .fund-list {
   display: flex;
@@ -315,45 +246,6 @@ onMounted(() => {
 
 .fund-nav .change.up { color: #ef4444; }
 .fund-nav .change.down { color: #22c55e; }
-
-.xueqiu {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
-  color: white;
-}
-
-.xueqiu .loading {
-  color: white;
-}
-
-.hot-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.hot-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  background: rgba(255,255,255,0.9);
-  border-radius: 6px;
-}
-
-.hot-item .rank {
-  font-weight: bold;
-  color: #ff6b6b;
-  width: 24px;
-}
-
-.hot-item .name {
-  flex: 1;
-}
-
-.hot-item .hot-value {
-  color: #ffa500;
-  font-weight: bold;
-}
 
 .loading {
   text-align: center;
