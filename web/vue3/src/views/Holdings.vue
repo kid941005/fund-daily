@@ -980,6 +980,21 @@ button {
 }
 
 /* 移动端自适应 */
+  
+  .sort-controls {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  
+  .sort-controls button {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}
+
+<style>
+/* 移动端自适应 */
 @media (max-width: 480px) {
   .holdings {
     padding: 8px;
@@ -992,7 +1007,6 @@ button {
   
   .section-header h2 {
     font-size: 18px;
-    writing-mode: horizontal-tb;
     margin: 0;
   }
   
@@ -1003,14 +1017,11 @@ button {
     width: 100%;
   }
   
-  .actions .btn-secondary,
-  .actions .btn-primary,
-  .actions .btn-danger {
+  .actions button {
     padding: 4px 8px;
     font-size: 11px;
     flex: 1;
     min-width: 50px;
-    text-align: center;
   }
   
   .summary {
@@ -1036,17 +1047,9 @@ button {
   .holding-info .name {
     font-size: 11px;
     color: #666;
-    display: block;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 100%;
-  }
-  
-  .holding-info .nav-info,
-  .holding-info .return-info {
-    font-size: 10px;
-    display: block;
   }
   
   .holding-amount {
@@ -1070,3 +1073,4 @@ button {
     font-size: 11px;
   }
 }
+</style>
