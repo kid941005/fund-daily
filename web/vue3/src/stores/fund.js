@@ -1,6 +1,36 @@
 import { defineStore } from 'pinia'
 import api from '@/api'
 
+// 缓存配置
+const CACHE_KEY = 'fund_daily_funds'
+const CACHE_EXPIRY = 10 * 60 * 1000 // 10分钟
+
+function getCachedFunds() {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY)
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached)
+      if (Date.now() - timestamp < CACHE_EXPIRY) {
+        return data
+      }
+    }
+  } catch (e) {
+    console.error('Cache read error:', e)
+  }
+  return null
+}
+
+function setCachedFunds(data) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }))
+  } catch (e) {
+    console.error('Cache write error:', e)
+  }
+}
+
 export const useFundStore = defineStore('fund', {
   state: () => ({
     funds: [],
@@ -35,18 +65,35 @@ export const useFundStore = defineStore('fund', {
   },
   
   actions: {
-    async fetchFunds() {
+    async fetchFunds(force = false) {
+      // 优先从本地缓存读取
+      if (!force) {
+        const cached = getCachedFunds()
+        if (cached) {
+          this.funds = cached
+          return
+        }
+      }
+      
+      // 缓存过期或强制刷新，从API获取
       this.loading.funds = true
-      this.error = null
       try {
         const data = await api.getFunds()
         this.funds = data.funds || []
+        setCachedFunds(this.funds)
       } catch (e) {
         this.error = e.message
         console.error('Failed to fetch funds:', e)
       } finally {
         this.loading.funds = false
       }
+    },
+    
+    // 定时刷新（后台每10分钟）
+    startPeriodicFetch() {
+      setInterval(() => {
+        this.fetchFunds(true)
+      }, 10 * 60 * 1000)
     },
     
     async fetchHoldings() {
