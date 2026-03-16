@@ -305,18 +305,40 @@ const confirmOcrImport = async () => {
     return
   }
   
+  // 先获取基金名称
+  const fundNames = {}
+  for (const fund of ocrResult.value) {
+    if (!fund.name || fund.name === '未知') {
+      try {
+        const res = await fetch(`/api/fund-detail/${fund.code}`)
+        const data = await res.json()
+        if (data.fund) {
+          fundNames[fund.code] = data.fund.name
+        }
+      } catch (e) {
+        console.error('Failed to fetch fund name:', e)
+      }
+    }
+  }
+  
   // 合并
   const newFunds = [...store.holdings]
   const existingCodes = new Set(newFunds.map(h => h.code))
   
   for (const fund of ocrResult.value) {
+    // 使用获取的名称或 OCR 识别的名称
+    const name = fundNames[fund.code] || fund.name || ''
+    
     if (existingCodes.has(fund.code)) {
       const idx = newFunds.findIndex(f => f.code === fund.code)
       if (idx >= 0) {
         newFunds[idx].amount = (newFunds[idx].amount || 0) + (fund.amount || 0)
+        if (name && !newFunds[idx].name) {
+          newFunds[idx].name = name
+        }
       }
     } else {
-      newFunds.push(fund)
+      newFunds.push({ code: fund.code, amount: fund.amount, name })
     }
   }
   
