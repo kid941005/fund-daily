@@ -100,7 +100,9 @@ const fetchAnalysis = async () => {
   loading.value = true
   try {
     const data = await api.getAnalysis()
-    analysis.value = data
+    console.log('API返回:', data)
+    analysis.value = data.analysis || data
+    console.log('分析数据:', analysis.value)
     nextTick(initCharts)
   } catch (e) {
     console.error('Failed to fetch analysis:', e)
