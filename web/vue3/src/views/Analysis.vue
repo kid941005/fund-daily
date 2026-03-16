@@ -112,7 +112,15 @@ const fetchAnalysis = async () => {
 }
 
 const initCharts = () => {
-  if (!analysis.value?.funds) return
+  console.log('initCharts called', analysis.value)
+  if (!analysis.value?.funds) {
+    console.log('No funds data')
+    return
+  }
+  
+  console.log('Funds count:', analysis.value.funds.length)
+  console.log('pieChart ref:', pieChart.value)
+  console.log('barChart ref:', barChart.value)
   
   // 饼图：持仓分布
   if (pieChart.value) {
