@@ -215,13 +215,13 @@ const sortedHoldings = computed(() => {
     } else if (key === 'today_return') {
       const fundA = store.funds.find(f => f.fund_code === a.code)
       const fundB = store.funds.find(f => f.fund_code === b.code)
-      aVal = fundA?.dz || 0
-      bVal = fundB?.dz || 0
+      aVal = fundA?.daily_change || 0
+      bVal = fundB?.daily_change || 0
     } else if (key === 'today_change') {
       const fundA = store.funds.find(f => f.fund_code === a.code)
       const fundB = store.funds.find(f => f.fund_code === b.code)
-      aVal = fundA?.dz_percent || 0
-      bVal = fundB?.dz_percent || 0
+      aVal = fundA?.daily_change || 0
+      bVal = fundB?.daily_change || 0
     } else {
       aVal = a.amount || 0
       bVal = b.amount || 0
