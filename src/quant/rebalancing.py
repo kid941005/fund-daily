@@ -9,20 +9,20 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-# 评分阈值配置
+# 评分阈值配置 - 去弱留强
 SCORE_THRESHOLDS = {
-    "VERY_LOW": 20,   # 极低分，直接清仓
-    "LOW": 35,        # 低分，减仓至10%
-    "ACTIVE": 35,     # 活跃基金，参与权重计算
-    "HIGH": 70,       # 高分，超配
+    "VERY_LOW": 40,   # 低于40分，清仓
+    "LOW": 45,       # 低于45分，卖出
+    "ACTIVE": 50,     # 低于50分，持有
+    "HIGH": 50,       # 高于50分，买入
 }
 
-# 持仓比例配置
+# 持仓比例配置 - 去弱留强
 ALLOCATION_RATIOS = {
     "VERY_LOW": 0.0,    # 清仓
-    "LOW": 0.1,        # 10%
-    "NORMAL": 1.0,     # 正常
-    "HIGH": 1.5,       # 超配50%
+    "LOW": 0.0,        # 卖出
+    "NORMAL": 1.0,      # 正常持有
+    "HIGH": 1.5,        # 超配50%
 }
 
 
@@ -48,19 +48,19 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
         amount = item["amount"]
         pct = item["pct"]
         
-        # 根据分数决定操作
-        if score >= 40:
+        # 根据分数决定操作 - 去弱留强
+        if score >= SCORE_THRESHOLDS["HIGH"]:
             action = "买入"
             target_pct = min(pct * 1.5, 50)
-        elif score >= 35:
+        elif score >= SCORE_THRESHOLDS["ACTIVE"]:
             action = "持有"
             target_pct = pct
-        elif score >= 30:
+        elif score >= SCORE_THRESHOLDS["LOW"]:
             action = "卖出"
-            target_pct = pct * 0.5
+            target_pct = 0  # 卖出
         else:
             action = "清仓"
-            target_pct = 0
+            target_pct = 0  # 完全清仓
         
         target_amount = total_amount * target_pct / 100
         
