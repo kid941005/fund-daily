@@ -20,7 +20,7 @@ except ImportError:
     logger.warning("Fetcher not available, scoring cache disabled")
 
 # ============== 评分缓存配置 ==============
-SCORE_CACHE_TTL = 3600  # 缓存1小时
+SCORE_CACHE_TTL = 600  # 10分钟  
 SCORE_CACHE_PREFIX = "fund_score:"
 
 # ============== 评分权重配置 ==============

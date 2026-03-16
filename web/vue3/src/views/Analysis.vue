@@ -121,9 +121,7 @@ const fetchAnalysis = async () => {
   loading.value = true
   try {
     const data = await api.getAnalysis()
-    console.log('API返回:', data)
     analysis.value = data.analysis || data
-    console.log('分析数据:', analysis.value)
     nextTick(initCharts)
   } catch (e) {
     console.error('Failed to fetch analysis:', e)
@@ -133,13 +131,10 @@ const fetchAnalysis = async () => {
 }
 
 const initCharts = () => {
-  console.log('initCharts called', analysis.value)
   if (!analysis.value?.funds) {
-    console.log('No funds data')
     return
   }
   
-  console.log('Funds count:', analysis.value.funds.length)
   
   // 延迟一下确保 DOM 渲染完成
   setTimeout(() => {
