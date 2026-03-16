@@ -186,7 +186,7 @@ export const useFundStore = defineStore('fund', {
         const res = await fetch('/api/quant/timing-signals')
         const data = await res.json()
         if (data.success) {
-          this.timingSignals = data.data || {}
+          this.timingSignals = data.data?.market_timing || {}
         }
       } catch (e) {
         console.error('Failed to fetch timing signals:', e)

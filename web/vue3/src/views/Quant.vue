@@ -9,22 +9,22 @@
       <div v-else class="timing-grid">
         <div class="timing-card">
           <span class="label">市场趋势</span>
-          <span class="value" :class="timingSignals.trend === '上涨' ? 'up' : 'down'">
-            {{ timingSignals.trend || '--' }}
+          <span class="value" :class="timingSignals.overall_signal === '上涨' ? 'up' : 'down'">
+            {{ timingSignals.overall_signal || '--' }}
           </span>
         </div>
         <div class="timing-card">
           <span class="label">建议</span>
-          <span class="value">{{ timingSignals.action || '--' }}</span>
+          <span class="value">{{ timingSignals.overall_signal || '--' }}</span>
         </div>
         <div class="timing-card">
           <span class="label">信心指数</span>
-          <span class="value">{{ timingSignals.confidence || 0 }}%</span>
+          <span class="value">{{ timingSignals.score || "--" }}%</span>
         </div>
         <div class="timing-card">
           <span class="label">风险等级</span>
-          <span class="value" :class="getRiskClass(timingSignals.risk)">
-            {{ timingSignals.risk || '--' }}
+          <span class="value" :class="getRiskClass(timingSignals.score)">
+            {{ timingSignals.score || '--' }}
           </span>
         </div>
       </div>
