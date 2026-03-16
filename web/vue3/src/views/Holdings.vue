@@ -35,6 +35,7 @@
           <div class="holding-info">
             <span class="code">{{ holding.code }}</span>
             <span class="name">{{ holding.name || '未知' }}</span>
+            <span class="nav-info">净值: {{ getNav(holding.code) }} | 估值: {{ getEstNav(holding.code) }}</span>
           </div>
           <div class="holding-amount">
             <input 
@@ -153,7 +154,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useFundStore } from '@/stores/fund'
 import api from '@/api'
 
@@ -169,6 +170,23 @@ const ocrLoading = ref(false)
 const ocrResult = ref([])
 
 const totalAmount = computed(() => store.totalAmount)
+// 页面加载时获取基金数据
+onMounted(() => {
+  if (store.funds.length === 0) {
+    store.fetchFunds()
+  }
+})
+
+// 获取净值和估算
+const getNav = (code) => {
+  const fund = store.funds.find(f => f.fund_code === code)
+  return fund?.nav || '--'
+}
+
+const getEstNav = (code) => {
+  const fund = store.funds.find(f => f.fund_code === code)
+  return fund?.estimate_nav || '--'
+}
 const advice = computed(() => store.advice)
 
 const getScoreClass = (score) => {
