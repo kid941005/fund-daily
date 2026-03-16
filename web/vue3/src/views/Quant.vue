@@ -2,30 +2,45 @@
   <div class="quant">
     <h1>📊 量化分析</h1>
     
-    <!-- 择时信号 -->
+    <!-- 动态权重 -->
+    <section class="section" v-if="dynamicWeights">
+      <h2>⚙️ 动态权重 (当前: {{ dynamicWeights.market_cycle }})</h2>
+      <div class="weights-grid">
+        <div v-for="(label, key) in weightLabels" :key="key" class="weight-item">
+          <span class="weight-label">{{ label }}</span>
+          <span class="weight-value">{{ dynamicWeights.weights[key] }}分</span>
+        </div>
+      </div>
+    </section>
+    
+    <!-- 市场择时 -->
     <section class="section">
       <h2>🎯 市场择时</h2>
       <div v-if="loading" class="loading">加载中...</div>
-      <div v-else class="timing-grid">
-        <div class="timing-card">
-          <span class="label">市场趋势</span>
-          <span class="value" :class="timingSignals.overall_signal === '上涨' ? 'up' : 'down'">
-            {{ timingSignals.overall_signal || '--' }}
-          </span>
+      <div v-else>
+        <div class="timing-summary">
+          <div class="timing-main">
+            <span class="label">综合信号</span>
+            <span class="value" :class="getSignalClass(timingSignals.overall_signal)">
+              {{ timingSignals.overall_signal || '--' }}
+            </span>
+          </div>
+          <div class="timing-main">
+            <span class="label">信心指数</span>
+            <span class="value">{{ timingSignals.score || 0 }}</span>
+          </div>
         </div>
-        <div class="timing-card">
-          <span class="label">建议</span>
-          <span class="value">{{ timingSignals.overall_signal || '--' }}</span>
-        </div>
-        <div class="timing-card">
-          <span class="label">信心指数</span>
-          <span class="value">{{ timingSignals.score || "--" }}%</span>
-        </div>
-        <div class="timing-card">
-          <span class="label">风险等级</span>
-          <span class="value" :class="getRiskClass(timingSignals.score)">
-            {{ timingSignals.score || '--' }}
-          </span>
+        
+        <div class="timing-signals" v-if="timingSignals.signals?.length">
+          <h3>细分信号</h3>
+          <div class="signal-list">
+            <div v-for="(sig, idx) in timingSignals.signals" :key="idx" class="signal-item">
+              <div class="signal-type">{{ sig.type }}</div>
+              <div class="signal-value" :class="getSignalClass(sig.signal)">{{ sig.signal }}</div>
+              <div class="signal-reason">{{ sig.reason }}</div>
+              <div class="signal-weight">权重: {{ (sig.weight * 100).toFixed(0) }}%</div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -34,29 +49,30 @@
     <section class="section">
       <h2>📈 组合优化</h2>
       <div v-if="optimizeLoading" class="loading">加载中...</div>
-      <div v-else-if="portfolioOptimize.allocations" class="optimize-content">
-        <div class="summary">
-          <div class="summary-item">
-            <span class="label">当前基金数</span>
-            <span class="value">{{ portfolioOptimize.current_count || 0 }}</span>
+      <div v-else-if="portfolioOptimize.allocations?.length">
+        <div class="optimize-summary">
+          <div class="opt-stat">
+            <span class="label">基金数量</span>
+            <span class="value">{{ portfolioOptimize.allocations.length }}</span>
           </div>
-          <div class="summary-item">
-            <span class="label">建议基金数</span>
-            <span class="value">{{ portfolioOptimize.recommended_count || 0 }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="label">预期收益</span>
-            <span class="value up">{{ portfolioOptimize.expected_return || 0 }}%</span>
+          <div class="opt-stat">
+            <span class="label">平均权重</span>
+            <span class="value">{{ (100 / portfolioOptimize.allocations.length).toFixed(1) }}%</span>
           </div>
         </div>
         
-        <div class="recommendations">
-          <h3>优化建议</h3>
-          <div v-for="rec in portfolioOptimize.allocations" :key="rec.fund_code" 
-               class="rec-item" :class="rec.action">
-            <span class="fund-name">{{ rec.fund_name || rec.fund_code }}</span>
-            <span class="action">{{ rec.action }}</span>
-            <span class="reason">{{ rec.reason }}</span>
+        <h3>持仓建议</h3>
+        <div class="allocation-list">
+          <div v-for="item in portfolioOptimize.allocations" :key="item.fund_code" 
+               class="allocation-item">
+            <div class="fund-info">
+              <span class="fund-code">{{ item.fund_code }}</span>
+              <span class="fund-name">{{ item.fund_name }}</span>
+            </div>
+            <div class="fund-stats">
+              <span class="score" :class="getScoreClass(item.score)">{{ item.score }}分</span>
+              <span class="weight">{{ item.weight?.toFixed(1) }}%</span>
+            </div>
           </div>
         </div>
       </div>
@@ -67,40 +83,36 @@
     <section class="section">
       <h2>⚖️ 调仓建议</h2>
       <div v-if="rebalancingLoading" class="loading">加载中...</div>
-      <div v-else-if="rebalancing.trades" class="rebalancing-content">
-        <div class="summary">
-          <div class="summary-item">
-            <span class="label">需调整基金数</span>
-            <span class="value">{{ rebalancing.trades?.length || 0 }}</span>
+      <div v-else-if="rebalancing.trades?.length">
+        <div class="rebalance-summary">
+          <div class="rb-stat">
+            <span class="label">持有</span>
+            <span class="value keep">{{ rebalancing.summary?.hold_count || 0 }}</span>
           </div>
-          <div class="summary-item">
-            <span class="label">总交易金额</span>
-            <span class="value">¥{{ (rebalancing.total_amount || 0).toFixed(2) }}</span>
+          <div class="rb-stat">
+            <span class="label">卖出</span>
+            <span class="value sell">{{ rebalancing.summary?.sell_count || 0 }}</span>
+          </div>
+          <div class="rb-stat">
+            <span class="label">买入</span>
+            <span class="value buy">{{ rebalancing.summary?.buy_count || 0 }}</span>
           </div>
         </div>
         
-        <div class="trades">
-          <h3>交易清单</h3>
-          <table class="trade-table">
-            <thead>
-              <tr>
-                <th>基金</th>
-                <th>操作</th>
-                <th>当前仓位</th>
-                <th>目标仓位</th>
-                <th>调整金额</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="trade in rebalancing.trades" :key="trade.fund_code">
-                <td>{{ trade.fund_name || trade.fund_code }}</td>
-                <td :class="trade.action">{{ trade.action }}</td>
-                <td>{{ (trade.current_pct || 0).toFixed(1) }}%</td>
-                <td>{{ (trade.target_pct || 0).toFixed(1) }}%</td>
-                <td :class="trade.action">¥{{ Math.abs(trade.target_amount || 0).toFixed(2) }}</td>
-              </tr>
-            </tbody>
-          </table>
+        <h3>调整明细</h3>
+        <div class="trade-list">
+          <div v-for="trade in rebalancing.trades" :key="trade.fund_code" 
+               class="trade-item" :class="trade.action">
+            <div class="trade-info">
+              <span class="fund-code">{{ trade.fund_code }}</span>
+              <span class="fund-name">{{ trade.fund_name }}</span>
+            </div>
+            <div class="trade-action" :class="trade.action">{{ trade.action }}</div>
+            <div class="trade-detail">
+              当前 {{ trade.current_pct?.toFixed(1) }}% → 目标 {{ trade.target_pct?.toFixed(1) }}%
+            </div>
+            <div class="trade-reason">{{ trade.reason }}</div>
+          </div>
         </div>
       </div>
       <div v-else class="empty">暂无调仓建议</div>
@@ -109,32 +121,69 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useFundStore } from '@/stores/fund'
+import axios from 'axios'
 
 const store = useFundStore()
-
 const timingSignals = computed(() => store.timingSignals)
 const portfolioOptimize = computed(() => store.portfolioOptimize)
 const rebalancing = computed(() => store.rebalancing)
-
 const loading = computed(() => store.loading.timing)
 const optimizeLoading = computed(() => store.loading.optimize)
 const rebalancingLoading = computed(() => store.loading.rebalancing)
 
-const getRiskClass = (risk) => {
-  if (!risk) return ''
-  if (risk.includes('低')) return 'low'
-  if (risk.includes('中')) return 'medium'
-  if (risk.includes('高')) return 'high'
-  return ''
+// 动态权重数据
+const dynamicWeights = ref(null)
+const weightsLoading = ref(false)
+
+store.fetchTimingSignals()
+store.fetchPortfolioOptimize()
+store.fetchRebalancing()
+
+// 获取动态权重
+async function fetchDynamicWeights() {
+  weightsLoading.value = true
+  try {
+    const res = await axios.get('/api/quant/dynamic-weights')
+    if (res.data.success) {
+      dynamicWeights.value = res.data.data
+    }
+  } catch (e) {
+    console.error('Failed to fetch dynamic weights:', e)
+  } finally {
+    weightsLoading.value = false
+  }
 }
 
 onMounted(() => {
-  store.fetchTimingSignals()
-  store.fetchPortfolioOptimize()
-  store.fetchRebalancing()
+  fetchDynamicWeights()
 })
+
+function getSignalClass(signal) {
+  if (signal === '买入') return 'buy'
+  if (signal === '卖出') return 'sell'
+  if (signal === '持有') return 'keep'
+  return ''
+}
+
+function getScoreClass(score) {
+  if (score >= 70) return 'high'
+  if (score >= 50) return 'medium'
+  return 'low'
+}
+
+// 权重项名称映射
+const weightLabels = {
+  valuation: '估值面',
+  performance: '业绩表现',
+  risk_control: '风险控制',
+  momentum: '动量趋势',
+  sentiment: '市场情绪',
+  sector: '板块景气',
+  manager: '基金经理',
+  liquidity: '流动性'
+}
 </script>
 
 <style scoped>
@@ -142,6 +191,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  padding: 16px;
 }
 
 h1 {
@@ -149,24 +199,200 @@ h1 {
   margin-bottom: 8px;
 }
 
+h2 {
+  font-size: 18px;
+  color: #333;
+  margin: 0 0 16px;
+}
+
+h3 {
+  font-size: 14px;
+  color: #666;
+  margin: 16px 0 12px;
+}
+
 .section {
-  background: white;
+  background: #fff;
   border-radius: 12px;
-  padding: 20px;
+  padding: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-.section h2 {
-  margin: 0 0 16px;
-  font-size: 18px;
+.timing-summary {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.timing-main {
+  flex: 1;
+  text-align: center;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.timing-main .label {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.timing-main .value {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.timing-main .value.buy { color: #ef4444; }
+.timing-main .value.sell { color: #22c55e; }
+.timing-main .value.keep { color: #f59e0b; }
+
+.weights-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.weight-item {
+  text-align: center;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.weight-label {
+  display: block;
+  font-size: 11px;
+  color: #666;
+}
+
+.weight-value {
+  display: block;
+  font-size: 14px;
+  font-weight: bold;
   color: #333;
 }
 
-.section h3 {
-  margin: 16px 0 12px;
-  font-size: 16px;
-  color: #666;
+.signal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
+
+.signal-item {
+  display: grid;
+  grid-template-columns: 80px 60px 1fr 50px;
+  align-items: center;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.signal-type { font-weight: bold; color: #333; }
+.signal-value { font-weight: bold; }
+.signal-value.buy { color: #ef4444; }
+.signal-value.sell { color: #22c55e; }
+.signal-value.keep { color: #f59e0b; }
+.signal-reason { color: #666; }
+.signal-weight { color: #999; text-align: right; }
+
+.optimize-summary, .rebalance-summary {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.opt-stat, .rb-stat {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.opt-stat .label, .rb-stat .label {
+  display: block;
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.opt-stat .value, .rb-stat .value {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.rb-stat .value.keep { color: #f59e0b; }
+.rb-stat .value.sell { color: #22c55e; }
+.rb-stat .value.buy { color: #ef4444; }
+
+.allocation-list, .trade-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.allocation-item, .trade-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.fund-info, .trade-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.fund-code, .trade-info .fund-code {
+  font-weight: bold;
+  color: #333;
+}
+
+.fund-name {
+  display: block;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fund-stats {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.score {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.score.high { background: #dcfce7; color: #16a34a; }
+.score.medium { background: #fef3c7; color: #d97706; }
+.score.low { background: #fee2e2; color: #dc2626; }
+
+.weight { color: #666; }
+
+.trade-action {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+.trade-action.持有 { background: #fef3c7; color: #d97706; }
+.trade-action.卖出 { background: #dcfce7; color: #16a34a; }
+.trade-action.买入 { background: #fee2e2; color: #dc2626; }
+
+.trade-detail { color: #666; }
+.trade-reason { color: #999; font-size: 11px; }
 
 .loading, .empty {
   text-align: center;
@@ -174,148 +400,11 @@ h1 {
   color: #999;
 }
 
-/* 择时卡片 */
-.timing-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-.timing-card {
-  text-align: center;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.timing-card .label {
-  display: block;
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 8px;
-}
-
-.timing-card .value {
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.timing-card .value.up { color: #ef4444; }
-.timing-card .value.down { color: #22c55e; }
-.timing-card .value.low { color: #22c55e; }
-.timing-card .value.medium { color: #f59e0b; }
-.timing-card .value.high { color: #ef4444; }
-
-/* 摘要 */
-.summary {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.summary-item {
-  text-align: center;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.summary-item .label {
-  display: block;
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 8px;
-}
-
-.summary-item .value {
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.summary-item .value.up { color: #ef4444; }
-.summary-item .value.down { color: #22c55e; }
-
-/* 建议 */
-.recommendations, .trades {
-  margin-top: 20px;
-}
-
-.rec-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px;
-  margin-bottom: 8px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 4px solid #ccc;
-}
-
-.rec-item.buy { border-left-color: #ef4444; }
-.rec-item.sell { border-left-color: #22c55e; }
-.rec-item.keep { border-left-color: #f59e0b; }
-
-.rec-item .fund-name {
-  flex: 1;
-  font-weight: 500;
-}
-
-.rec-item .action {
-  font-weight: bold;
-}
-
-.rec-item .action.buy { color: #ef4444; }
-.rec-item .action.sell { color: #22c55e; }
-.rec-item .action.keep { color: #f59e0b; }
-
-.rec-item .reason {
-  color: #666;
-  font-size: 14px;
-}
-
-/* 交易表格 */
-.trade-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.trade-table th,
-.trade-table td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-}
-
-.trade-table th {
-  background: #f8f9fa;
-  font-weight: 600;
-}
-
-.trade-table td.buy { color: #ef4444; }
-.trade-table td.sell { color: #22c55e; }
-
-@media (max-width: 768px) {
-  .timing-grid,
-  .summary {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-<style>
-/* 移动端适配 */
-@media (max-width: 768px) {
-  .timing-grid,
-  .summary {
-    grid-template-columns: 1fr;
-  }
-  
-  .timing-card,
-  .summary-item {
-    padding: 12px;
-  }
-  
-  .rec-item {
-    flex-direction: column;
-  }
+@media (max-width: 480px) {
+  .quant { padding: 8px; }
+  .section { padding: 12px; }
+  .timing-summary { flex-direction: column; }
+  .signal-item { grid-template-columns: 1fr 60px; }
+  .signal-reason, .signal-weight { display: none; }
 }
 </style>

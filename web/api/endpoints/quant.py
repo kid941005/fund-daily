@@ -87,3 +87,31 @@ def get_rebalancing():
     result = calculate_rebalancing(funds, total_amount)
     
     return jsonify({"success": True, "data": result})
+
+@quant_bp.route("/dynamic-weights", methods=["GET"])
+def get_dynamic_weights_api():
+    """获取动态权重信息"""
+    try:
+        from src.quant import get_dynamic_weights, detect_market_cycle
+        
+        cycle = detect_market_cycle()
+        weights = get_dynamic_weights()
+        
+        return jsonify({
+            "success": True,
+            "data": {
+                "market_cycle": weights.get("cycle", "未知"),
+                "weights": {
+                    "valuation": weights.get("valuation"),
+                    "performance": weights.get("performance"),
+                    "risk_control": weights.get("risk_control"),
+                    "momentum": weights.get("momentum"),
+                    "sentiment": weights.get("sentiment"),
+                    "sector": weights.get("sector"),
+                    "manager": weights.get("manager"),
+                    "liquidity": weights.get("liquidity")
+                }
+            }
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
