@@ -6,6 +6,7 @@
         <div class="actions">
           <button @click="showImport = true" class="btn-secondary">📥 导入</button>
           <button @click="handleExport" class="btn-secondary">📤 导出</button>
+          <button @click="refreshFunds" class="btn-secondary">🔄 刷新数据</button>
           <button @click="showAdd = true" class="btn-primary">➕ 添加</button>
           <button @click="handleClear" class="btn-danger">🗑️ 清仓</button>
         </div>
@@ -227,6 +228,19 @@ const removeHolding = async (index) => {
 const handleClear = async () => {
   if (!confirm('确定清仓所有持仓吗？此操作不可恢复！')) return
   await store.clearHoldings()
+}
+
+// 刷新基金数据（强制从API获取）
+const refreshFunds = async () => {
+  store.loading.funds = true
+  try {
+    await store.fetchFunds(true)  // force = true
+    alert('数据已刷新')
+  } catch (e) {
+    alert('刷新失败: ' + e.message)
+  } finally {
+    store.loading.funds = false
+  }
 }
 
 const handleExport = () => {
