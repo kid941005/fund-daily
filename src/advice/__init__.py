@@ -188,10 +188,11 @@ def generate_100_score(fund_code: str, daily_change: float = 0.0) -> Dict:
         fund_scale = fetch_fund_scale(fund_code)
         
         fund_data_dict = {
-            "return_1m": detail_data.get("syl_1y"),
-            "return_3m": detail_data.get("syl_3y"),
-            "return_1y": detail_data.get("syl_1n"),
-            "daily_change": daily_change,
+            "return_1m": float(detail_data.get("syl_1m", 0) or 0),
+            "return_3m": float(detail_data.get("syl_3y", 0) or 0),
+            "return_6m": float(detail_data.get("syl_6y", 0) or 0),
+            "return_1y": float(detail_data.get("syl_1n", 0) or 0),
+            "daily_change": float(daily_change) if daily_change else 0,
         }
         
         scoring = calculate_total_score(

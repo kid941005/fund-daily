@@ -66,85 +66,66 @@ def _set_cached_score(fund_code: str, score: Dict) -> None:
 def calculate_valuation_score(fund_detail: Dict, fund_data: Dict = None) -> Dict:
     """
     估值面评分 (满分25分)
-    基于基金类型、业绩排名、规模调整
+    基于基金收益率、规模调整
     """
     details = {}
     scores = []
     
-    # 1.1 业绩排名评分 (10分)
-    perf = fund_detail.get("performance_evaluation", {})
-    if perf and perf.get("data"):
-        rank = perf["data"][0] if perf["data"] else 50
-        if rank >= 90:
-            s = 10
-            r = f"同类排名前10%"
-        elif rank >= 70:
-            s = 8
-            r = f"同类排名前30%"
-        elif rank >= 50:
-            s = 6
-            r = f"同类排名前50%"
-        elif rank >= 30:
-            s = 4
-            r = f"同类排名后50%"
-        else:
-            s = 2
-            r = f"同类排名后30%"
-        scores.append(s)
-        details["rank_score"] = s
-        details["rank_reason"] = r
-    
-    # 1.2 近1年收益评分 (10分)
-    if fund_data:
+    # 1.1 近1年收益评分 (15分) - 基于实际收益率
+    return_1y = 0
+    if fund_data and fund_data.get("return_1y"):
         return_1y = float(fund_data.get("return_1y", 0) or 0)
-        if return_1y > 50:
-            s = 10
-            r = f"近1年收益{return_1y:.1f}%，顶尖"
-        elif return_1y > 30:
-            s = 8
-            r = f"近1年收益{return_1y:.1f}%，优秀"
-        elif return_1y > 15:
-            s = 6
-            r = f"近1年收益{return_1y:.1f}%，良好"
-        elif return_1y > 0:
-            s = 4
-            r = f"近1年收益{return_1y:.1f}%，一般"
-        elif return_1y > -10:
-            s = 2
-            r = f"近1年收益{return_1y:.1f}%，较差"
-        else:
-            s = 0
-            r = f"近1年收益{return_1y:.1f}%，很差"
-        scores.append(s)
-        details["return_1y_score"] = s
-        details["return_1y_reason"] = r
     
-    # 1.3 规模适中性 (5分)
-    if fund_data and fund_data.get("fund_scale"):
-        scale = float(fund_data.get("fund_scale", 0))
-        if 10 <= scale <= 100:
-            s = 5
-            r = f"规模{scale:.1f}亿，适中"
-        elif scale > 200:
-            s = 2
-            r = f"规模{scale:.1f}亿，偏大"
-        elif scale > 100:
-            s = 3
-            r = f"规模{scale:.1f}亿，较大"
-        elif scale >= 1:
-            s = 4
-            r = f"规模{scale:.1f}亿，正常"
-        else:
-            s = 1
-            r = f"规模较小"
-        scores.append(s)
-        details["scale_score"] = s
-        details["scale_reason"] = r
+    if return_1y > 50:
+        s = 15
+        r = f"近1年收益{return_1y:.1f}%，顶尖"
+    elif return_1y > 30:
+        s = 12
+        r = f"近1年收益{return_1y:.1f}%，优秀"
+    elif return_1y > 15:
+        s = 10
+        r = f"近1年收益{return_1y:.1f}%，良好"
+    elif return_1y > 5:
+        s = 7
+        r = f"近1年收益{return_1y:.1f}%，一般"
+    elif return_1y > 0:
+        s = 4
+        r = f"近1年收益{return_1y:.1f}%，较小"
+    else:
+        s = 1
+        r = f"近1年收益{return_1y:.1f}%"
+    scores.append(s)
+    details["return_1y_score"] = s
+    details["return_1y_reason"] = r
     
-    total = min(25, sum(scores)) if scores else 8
+    # 1.2 近3月收益评分 (10分)
+    return_3m = 0
+    if fund_data and fund_data.get("return_3m"):
+        return_3m = float(fund_data.get("return_3m", 0) or 0)
+    
+    if return_3m > 20:
+        s = 10
+        r = f"近3月{return_3m:.1f}%"
+    elif return_3m > 10:
+        s = 8
+        r = f"近3月{return_3m:.1f}%"
+    elif return_3m > 5:
+        s = 5
+        r = f"近3月{return_3m:.1f}%"
+    elif return_3m > 0:
+        s = 3
+        r = f"近3月{return_3m:.1f}%"
+    else:
+        s = 1
+        r = f"近3月{return_3m:.1f}%"
+    scores.append(s)
+    details["return_3m_score"] = s
+    details["return_3m_reason"] = r
+    
+    total = min(25, sum(scores))
     return {
         "score": total,
-        "reason": "基于业绩排名、收益表现和规模",
+        "reason": "基于收益率表现",
         "details": details
     }
 
