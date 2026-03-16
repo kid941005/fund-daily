@@ -79,7 +79,7 @@ def get_pg_connection():
             # 连接无效，关闭并重建
             try:
                 _pg_local.conn.close()
-            except:
+            except Exception:
                 pass
             _pg_local.conn = None
     

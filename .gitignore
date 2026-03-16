@@ -5,3 +5,6 @@ cookies.txt
 data/
 data2/
 *.db
+node_modules/
+dpm-lock.yaml
+dist/
