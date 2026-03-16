@@ -8,7 +8,7 @@ from typing import List, Dict, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
-from src.fetcher import fetch_fund_data, fetch_fund_manager, fetch_fund_scale
+from src.fetcher import fetch_fund_data, fetch_fund_detail, fetch_fund_manager, fetch_fund_scale
 from src.advice import (
     analyze_fund,
     generate_daily_report,
