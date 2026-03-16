@@ -274,11 +274,15 @@ const removeHolding = async (code) => {
   
   const funds = store.holdings.filter(h => h.code !== code)
   await store.saveHoldings(funds)
+  // 刷新持仓列表
+  await store.fetchHoldings()
 }
 
 const handleClear = async () => {
   if (!confirm('确定清空所有持仓吗？')) return
   await store.saveHoldings([])
+  // 刷新持仓列表
+  await store.fetchHoldings()
 }
 
 const handleExport = () => {
