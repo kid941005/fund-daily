@@ -59,7 +59,15 @@
           <div class="holding-info">
             <span class="code">{{ holding.code }}</span>
             <span class="name">{{ holding.name || '未知' }}</span>
-            <span class="nav-info">净值: {{ getNav(holding.code) }} | 估值: {{ getEstNav(holding.code) }}</span>
+            <span class="nav-info">
+              净值: {{ getNav(holding.code) }} | 估值: {{ getEstNav(holding.code) }} |
+              <span :class="getChangeClass(holding.code)">
+                涨跌: {{ getChange(holding.code) }}%
+              </span>
+            </span>
+            <span class="return-info">
+              当日收益: {{ getTodayReturn(holding) }}
+            </span>
           </div>
           <div class="holding-amount">
             <input 
@@ -253,6 +261,26 @@ const getNav = (code) => {
 const getEstNav = (code) => {
   const fund = store.funds.find(f => f.fund_code === code)
   return fund?.estimate_nav || '--'
+}
+
+const getChange = (code) => {
+  const fund = store.funds.find(f => f.fund_code === code)
+  return fund?.daily_change?.toFixed(2) || '0.00'
+}
+
+const getChangeClass = (code) => {
+  const change = parseFloat(getChange(code))
+  if (change > 0) return 'text-up'
+  if (change < 0) return 'text-down'
+  return ''
+}
+
+const getTodayReturn = (holding) => {
+  const change = parseFloat(getChange(holding.code))
+  const amount = holding.amount || 0
+  const returnVal = amount * (change / 100)
+  const sign = returnVal >= 0 ? '+' : ''
+  return sign + returnVal.toFixed(2)
 }
 const advice = computed(() => store.advice)
 
