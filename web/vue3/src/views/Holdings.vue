@@ -797,8 +797,6 @@ button {
 }
 </style>
 
-/* 移动端自适应 */
-@media (max-width: 480px) {
   .holdings {
     padding: 12px;
   }
@@ -875,5 +873,110 @@ button {
   
   .total-label {
     font-size: 14px;
+  }
+}
+
+/* 移动端自适应 */
+@media (max-width: 480px) {
+  .holdings {
+    padding: 8px;
+  }
+  
+  /* 顶部操作按钮横向排列 */
+  .header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  
+  .holding-item {
+    padding: 10px;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .holding-info {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+  }
+  
+  .holding-info .code {
+    font-size: 13px;
+    font-weight: bold;
+  }
+  
+  .holding-info .name {
+    font-size: 11px;
+    color: #666;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .holding-info .nav-info {
+    font-size: 11px;
+    color: #999;
+    width: 100%;
+  }
+  
+  .holding-info .return-info {
+    font-size: 12px;
+    font-weight: bold;
+    width: 100%;
+  }
+  
+  .holding-amount {
+    width: 100%;
+  }
+  
+  .holding-amount input {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 14px;
+    text-align: right;
+  }
+  
+  .holding-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  /* 排序按钮横向 */
+  .sort-controls {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  
+  .sort-controls button {
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+  
+  /* 总览区域 */
+  .overview {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .total-amount {
+    font-size: 22px;
+  }
+  
+  /* 按钮优化 */
+  .btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  
+  .btn-danger {
+    padding: 4px 8px;
+    font-size: 10px;
   }
 }
