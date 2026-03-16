@@ -1,16 +1,14 @@
 import { defineStore } from 'pinia'
 import api from '@/api'
 
-// 缓存配置
-const CACHE_KEY = 'fund_daily_funds'
-const CACHE_EXPIRY = 10 * 60 * 1000 // 10分钟
+import { CACHE_CONFIG, API_CONFIG } from '@/constants'
 
 function getCachedFunds() {
   try {
-    const cached = localStorage.getItem(CACHE_KEY)
+    const cached = localStorage.getItem(CACHE_CONFIG.FUNDS_KEY)
     if (cached) {
       const { data, timestamp } = JSON.parse(cached)
-      if (Date.now() - timestamp < CACHE_EXPIRY) {
+      if (Date.now() - timestamp < CACHE_CONFIG.FUNDS_EXPIRY) {
         return data
       }
     }
@@ -22,7 +20,7 @@ function getCachedFunds() {
 
 function setCachedFunds(data) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({
+    localStorage.setItem(CACHE_CONFIG.FUNDS_KEY, JSON.stringify({
       data,
       timestamp: Date.now()
     }))
