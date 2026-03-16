@@ -167,22 +167,30 @@ def fetch_fund_data(fund_code: str) -> Dict:
     if content:
         import re
         data = {}
+        
+        # 基金名称
         name_match = re.search(r'"name":"([^"]*)"', content)
         if name_match:
             data["name"] = name_match.group(1)
-        nav_match = re.search(r'"dwjz":"?([^",}]*)"', content)
-        if nav_match:
-            data["dwjz"] = nav_match.group(1)
-        gsz_match = re.search(r'"gsz":"?([^",}]*)"', content)
-        if gsz_match:
-            data["gsz"] = gsz_match.group(1)
-        gszzl_match = re.search(r'"gszzl":"?(-?[\d.]+)', content)
-        if gszzl_match:
-            data["gszzl"] = gszzl_match.group(1)
-        jzrq_match = re.search(r'"jzrq":"?(\d{4}-\d{2}-\d{2})?', content)
-        if jzrq_match:
-            data["jzrq"] = jzrq_match.group(1)
-        if data:
+        
+        # 从历史净值数组获取最新净值和日期
+        # 格式: Data_netWorthTrend = [{"x":timestamp,"y":nav,"equityReturn":pct},...]
+        trend_match = re.search(r'Data_netWorthTrend\s*=\s*(\[.*?\]);', content)
+        if trend_match:
+            try:
+                trend_data = json.loads(trend_match.group(1))
+                if trend_data:
+                    latest = trend_data[-1]
+                    import datetime
+                    timestamp = latest.get("x", 0) / 1000
+                    date_str = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d')
+                    data["jzrq"] = date_str
+                    data["dwjz"] = str(latest.get("y", ""))
+                    data["gszzl"] = str(latest.get("equityReturn", ""))
+            except (ValueError, KeyError, IndexError) as e:
+                logger.error(f"Parse net worth trend error: {e}")
+        
+        if data.get("dwjz") or data.get("name"):
             data["fundcode"] = fund_code
             set_cache(cache_key, data)
             return data
