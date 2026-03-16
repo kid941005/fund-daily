@@ -51,11 +51,13 @@ export const useFundStore = defineStore('fund', {
         
         // 自动获取缺失的基金名称
         for (const h of this.holdings) {
-          if (!h.name || h.name === '未知') {
+          if (!h.name || h.name === '') {
             try {
               const res = await api.getFundDetail(h.code)
-              if (res.fund?.name) {
-                h.name = res.fund.name
+              // API 返回格式: { success, detail: { fund_name } }
+              const fundName = res.detail?.fund_name || res.fund?.name
+              if (fundName) {
+                h.name = fundName
               }
             } catch (e) {
               console.error('Failed to fetch fund name:', e)

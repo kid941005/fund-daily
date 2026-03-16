@@ -312,8 +312,9 @@ const confirmOcrImport = async () => {
       try {
         const res = await fetch(`/api/fund-detail/${fund.code}`)
         const data = await res.json()
-        if (data.fund) {
-          fundNames[fund.code] = data.fund.name
+        // API 返回格式: { success, detail: { fund_name } }
+        if (data.detail?.fund_name) {
+          fundNames[fund.code] = data.detail.fund_name
         }
       } catch (e) {
         console.error('Failed to fetch fund name:', e)
