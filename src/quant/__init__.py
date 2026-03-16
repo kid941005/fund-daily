@@ -15,3 +15,6 @@ __all__ = [
     "calculate_rebalancing",
     "generate_trade_orders",
 ]
+
+# 动态权重
+from .dynamic_weights import get_dynamic_weights, detect_market_cycle, adjust_score_by_cycle
