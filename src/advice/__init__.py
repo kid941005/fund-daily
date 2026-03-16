@@ -53,7 +53,7 @@ def analyze_fund(fund_data: Dict) -> Dict:
         from . import generate_100_score
         score_100 = generate_100_score(fund_code, gszzl) or {}
     except Exception as e:
-        print(f"Error generating score for {fund_code}: {e}")
+        logger.error(f"Error generating score for {fund_code}: {e}")
     
     return {
         "fund_code": fund_code,
