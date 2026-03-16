@@ -3,17 +3,16 @@ version: '3.8'
 services:
   # PostgreSQL 数据库
   postgres:
-    image: postgres:16-alpine
-    container_name: fund-daily-db
+    image: postgres:15-alpine
+    container_name: fund-daily-postgres
     environment:
-      - POSTGRES_USER=kid
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-941005}
-      - POSTGRES_DB=fund_daily
+      POSTGRES_USER: kid
+      POSTGRES_PASSWORD: 941005
+      POSTGRES_DB: fund_daily
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U kid"]
       interval: 10s
@@ -28,78 +27,32 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    restart: unless-stopped
-    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Fund Daily Web 应用
-  fund-daily-web:
-    image: kid941005/fund-daily:latest
-    container_name: fund-daily-web
+  # Flask 应用
+  app:
+    build: .
+    container_name: fund-daily-app
     ports:
       - "5000:5000"
     environment:
-      # 时区
-      - TZ=Asia/Shanghai
-      # Flask配置
-      - FLASK_ENV=production
-      - FUND_DAILY_SECRET_KEY=${FUND_DAILY_SECRET_KEY:-db9bde58bbf336f7c33ada3870a3811b16d3c5222bcb20c2e949cada81864b33}
-      - FUND_DAILY_SSL_VERIFY=${FUND_DAILY_SSL_VERIFY:-1}
-      # 数据库配置 (使用 PostgreSQL)
       - FUND_DAILY_DB_TYPE=postgres
       - FUND_DAILY_DB_HOST=postgres
-      - FUND_DAILY_DB_PORT=5432
-      - FUND_DAILY_DB_NAME=fund_daily
       - FUND_DAILY_DB_USER=kid
-      - FUND_DAILY_DB_PASSWORD=${DB_PASSWORD:-941005}
-      # Redis 配置
+      - FUND_DAILY_DB_PASSWORD=941005
+      - FUND_DAILY_DB_NAME=fund_daily
       - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_TTL=1800
-      # 缓存配置
-      - FUND_DAILY_CACHE_DURATION=1800
-      # 基金配置 (无默认值，用户需配置)
-      - FUND_CODES=${FUND_CODES:-}
-      # 报告配置
-      - REPORT_TIME=${REPORT_TIME:-15:00}
-      # 涨跌幅提醒
-      - ALERT_THRESHOLD=${ALERT_THRESHOLD:-3.0}
-      - ALERT_COOLDOWN=${ALERT_COOLDOWN:-3600}
-      - CHECK_INTERVAL=${CHECK_INTERVAL:-300}
-      # 钉钉通知 (可选)
-      - DINGTALK_WEBHOOK=${DINGTALK_WEBHOOK:-}
-      # Telegram通知 (可选)
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
-      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
-      # 邮件通知 (可选)
-      - SMTP_SERVER=${SMTP_SERVER:-}
-      - SMTP_PORT=${SMTP_PORT:-587}
-      - SMTP_USERNAME=${SMTP_USERNAME:-}
-      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
-      - MAIL_TO=${MAIL_TO:-}
-    volumes:
-      - ./data:/app/data
-      - ./config:/app/config
+      - FUND_DAILY_CACHE_DURATION=600
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
 volumes:
   postgres_data:
