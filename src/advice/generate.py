@@ -13,13 +13,13 @@ from ..analyzer import calculate_risk_metrics, get_market_sentiment, get_commodi
 logger = logging.getLogger(__name__)
 
 # ============== 配置常量 ==============
-SCORE_THRESHOLDS = {"BUY": 60, "HOLD": 40, "SELL": 20}
-ALLOCATION_RATIOS = {
+ADVICE_SCORE_THRESHOLDS = {"BUY": 60, "HOLD": 40, "SELL": 20}
+ADVICE_ALLOCATION_RATIOS = {
     "HIGH": 0.375, "MEDIUM_HIGH": 0.275, "MEDIUM": 0.225,
     "LOW": 0.175, "LOWER": 0.125, "MINIMAL": 0.075, "NONE": 0
 }
 # 评分权重配置 - 增加区分度
-WEIGHT_CONFIG = {
+ADVICE_WEIGHT_CONFIG = {
     # 涨跌类 - 扩大差距
     "DAILY_CHANGE": 15, "M1_CHANGE": 10, "M3_CHANGE": 8,
     # 动量趋势
@@ -108,7 +108,7 @@ def generate_advice(funds: List[Dict]) -> Dict:
     down_funds = [f for f in funds if f.get("trend") == "down"]
 
     if len(up_funds) > len(down_funds):
-        technical_score += WEIGHT_CONFIG["MOMENTUM"]
+        technical_score += ADVICE_WEIGHT_CONFIG["MOMENTUM"]
     elif len(down_funds) > len(up_funds):
         technical_score -= 10
 
@@ -151,27 +151,27 @@ def generate_advice(funds: List[Dict]) -> Dict:
 
     # 3. 涨跌分布
     if up_count > down_count:
-        score += WEIGHT_CONFIG["MOMENTUM"]
+        score += ADVICE_WEIGHT_CONFIG["MOMENTUM"]
     elif down_count > up_count:
-        score -= WEIGHT_CONFIG["MOMENTUM"]
+        score -= ADVICE_WEIGHT_CONFIG["MOMENTUM"]
 
     # 4. 行业热点
     if hot_sectors:
-        score += WEIGHT_CONFIG["HOT_SECTOR"]
+        score += ADVICE_WEIGHT_CONFIG["HOT_SECTOR"]
 
     # 5. 仓位
     position_ratio = 50  # 简化
 
     # 6. 夏普比率
     if avg_sharpe > 1:
-        score += WEIGHT_CONFIG["SHARPE_HIGH"]
+        score += ADVICE_WEIGHT_CONFIG["SHARPE_HIGH"]
     elif avg_sharpe > 0:
         score += 10
     else:
-        score += WEIGHT_CONFIG["SHARPE_LOW"]
+        score += ADVICE_WEIGHT_CONFIG["SHARPE_LOW"]
 
     # 7. 风险评分
-    score += avg_risk * WEIGHT_CONFIG["DRAWDOWN"] / 2
+    score += avg_risk * ADVICE_WEIGHT_CONFIG["DRAWDOWN"] / 2
 
     # 8. 基金类型权重
     if fund_types.get("股票", 0) > fund_types.get("债券", 0):
@@ -270,7 +270,7 @@ def _build_advice_text(action: str, score: int, sentiment: str, avg_change: floa
         return f"建议{action}"
 
 
-__all__ = ["generate_advice", "SCORE_THRESHOLDS", "ALLOCATION_RATIOS", "WEIGHT_CONFIG"]
+__all__ = ["generate_advice", "ADVICE_SCORE_THRESHOLDS", "ADVICE_ALLOCATION_RATIOS", "ADVICE_WEIGHT_CONFIG"]
 
 
 # ============== 额外函数 ==============

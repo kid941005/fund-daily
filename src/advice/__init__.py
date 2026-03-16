@@ -7,9 +7,9 @@ from .generate import (
     generate_advice, 
     generate_daily_report,
     format_report_for_share,
-    SCORE_THRESHOLDS, 
-    ALLOCATION_RATIOS, 
-    WEIGHT_CONFIG
+    ADVICE_SCORE_THRESHOLDS as SCORE_THRESHOLDS, 
+    ADVICE_ALLOCATION_RATIOS as ALLOCATION_RATIOS, 
+    ADVICE_WEIGHT_CONFIG as WEIGHT_CONFIG
 )
 from ..fetcher import fetch_fund_data, fetch_fund_detail, fetch_fund_manager, fetch_fund_scale
 from ..analyzer import calculate_risk_metrics, get_market_sentiment, get_commodity_sentiment
