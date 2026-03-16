@@ -52,10 +52,11 @@ if not secret_key:
     secret_key = "fund-daily-dev-key-please-change-in-production"
 app.secret_key = secret_key.encode() if isinstance(secret_key, str) else secret_key
 
-# Session config
+# Session config - 宽松配置以确保登录状态持久
 app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FUND_DAILY_SECURE_COOKIES", "").lower() == "true"
+app.config["SESSION_COOKIE_SAMESITE"] = None  # 允许跨站 cookie
+app.config["SESSION_COOKIE_SECURE"] = False  # 开发环境关闭 HTTPS 要求
+app.config["PERMANENT_SESSION_LIFETIME"] = 60 * 60 * 24 * 7  # 7 天有效
 
 # Initialize database
 from db import database as db
