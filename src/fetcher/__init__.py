@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 # ============== Cache Configuration ==============
 # 缓存时间：默认30分钟
-CACHE_DURATION = int(os.environ.get("FUND_DAILY_CACHE_DURATION", 1800))
+CACHE_DURATION = int(os.environ.get("FUND_DAILY_CACHE_DURATION", 600))
 REQUEST_INTERVAL = float(os.environ.get("FUND_DAILY_REQUEST_INTERVAL", 0.5))
 
 # 内存缓存（备用）
