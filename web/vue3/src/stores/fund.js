@@ -48,6 +48,20 @@ export const useFundStore = defineStore('fund', {
       try {
         const data = await api.getHoldings()
         this.holdings = data.holdings || []
+        
+        // 自动获取缺失的基金名称
+        for (const h of this.holdings) {
+          if (!h.name || h.name === '未知') {
+            try {
+              const res = await api.getFundDetail(h.code)
+              if (res.fund?.name) {
+                h.name = res.fund.name
+              }
+            } catch (e) {
+              console.error('Failed to fetch fund name:', e)
+            }
+          }
+        }
       } catch (e) {
         console.error('Failed to fetch holdings:', e)
       } finally {

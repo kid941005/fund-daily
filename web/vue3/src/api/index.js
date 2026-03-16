@@ -83,6 +83,10 @@ export default {
   },
   
   // 持仓分析
+  getFundDetail(code) {
+    return api.get(`/fund-detail/${code}`)
+  },
+  
   getAnalysis() {
     return api.get('/analysis/portfolio')
   }
