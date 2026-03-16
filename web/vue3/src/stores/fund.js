@@ -1,0 +1,139 @@
+import { defineStore } from 'pinia'
+import api from '@/api'
+
+export const useFundStore = defineStore('fund', {
+  state: () => ({
+    funds: [],
+    holdings: [],
+    advice: null,
+    sectors: [],
+    news: [],
+    loading: {
+      funds: false,
+      holdings: false,
+      advice: false,
+      sectors: false,
+      news: false
+    },
+    error: null,
+    user: null
+  }),
+  
+  getters: {
+    totalAmount: (state) => {
+      return state.holdings.reduce((sum, h) => sum + (h.amount || 0), 0)
+    },
+    hasHoldings: (state) => {
+      return state.holdings.length > 0 && state.holdings.some(h => h.amount > 0)
+    }
+  },
+  
+  actions: {
+    async fetchFunds() {
+      this.loading.funds = true
+      this.error = null
+      try {
+        const data = await api.getFunds()
+        this.funds = data.funds || []
+      } catch (e) {
+        this.error = e.message
+        console.error('Failed to fetch funds:', e)
+      } finally {
+        this.loading.funds = false
+      }
+    },
+    
+    async fetchHoldings() {
+      this.loading.holdings = true
+      try {
+        const data = await api.getHoldings()
+        this.holdings = data.holdings || []
+      } catch (e) {
+        console.error('Failed to fetch holdings:', e)
+      } finally {
+        this.loading.holdings = false
+      }
+    },
+    
+    async fetchAdvice() {
+      this.loading.advice = true
+      try {
+        const data = await api.getAdvice()
+        this.advice = data.advice || null
+      } catch (e) {
+        console.error('Failed to fetch advice:', e)
+      } finally {
+        this.loading.advice = false
+      }
+    },
+    
+    async fetchSectors() {
+      this.loading.sectors = true
+      try {
+        const data = await api.getSectors()
+        this.sectors = data.sectors || []
+      } catch (e) {
+        console.error('Failed to fetch sectors:', e)
+      } finally {
+        this.loading.sectors = false
+      }
+    },
+    
+    async fetchNews() {
+      this.loading.news = true
+      try {
+        const data = await api.getNews()
+        this.news = data.news || []
+      } catch (e) {
+        console.error('Failed to fetch news:', e)
+      } finally {
+        this.loading.news = false
+      }
+    },
+    
+    async checkLogin() {
+      try {
+        const data = await api.checkLogin()
+        this.user = data.user || null
+      } catch (e) {
+        this.user = null
+      }
+    },
+    
+    async login(username, password) {
+      const data = await api.login(username, password)
+      if (data.success) {
+        this.user = { username: data.username }
+        await this.fetchHoldings()
+      }
+      return data
+    },
+    
+    async logout() {
+      await api.logout()
+      this.user = null
+      this.holdings = []
+    },
+    
+    async saveHoldings(funds) {
+      await api.saveHoldings({ funds })
+      await this.fetchHoldings()
+    },
+    
+    async clearHoldings() {
+      await api.clearHoldings()
+      this.holdings = []
+    },
+    
+    async loadAll() {
+      await Promise.all([
+        this.fetchFunds(),
+        this.fetchHoldings(),
+        this.fetchAdvice(),
+        this.fetchSectors(),
+        this.fetchNews(),
+        this.checkLogin()
+      ])
+    }
+  }
+})

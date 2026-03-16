@@ -26,8 +26,25 @@ def get_version():
 
 VERSION = get_version()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../dist/assets', template_folder='../dist')
 CORS(app, supports_credentials=True)
+
+# Serve Vue build
+import os
+DIST_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'dist')
+
+@app.route('/')
+def vue_app():
+    return render_template('index.html')
+
+@app.route('/<path:path>')
+def serve_vue(path):
+    if path.startswith('api/'):
+        return jsonify({'error': 'Not found'}), 404
+    static_path = os.path.join(DIST_DIR, path)
+    if os.path.exists(static_path):
+        return app.send_static_file(path)
+    return render_template('index.html')
 
 # Secret key
 secret_key = os.environ.get("FUND_DAILY_SECRET_KEY")
