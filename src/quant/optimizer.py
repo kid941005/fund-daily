@@ -65,14 +65,19 @@ def optimize_portfolio(funds: List[Dict], target_return: float = None) -> Dict:
     n = len(funds)
     returns, volatilities = calculate_returns_volatility(funds)
     
-    if returns.sum() == 0:
-        # 如果没有收益数据，使用等权重
+    # 按评分分配权重
+    scores = np.array([f.get("score_100", {}).get("total_score", 0) for f in funds])
+    
+    if scores.sum() == 0:
+        # 如果没有评分数据，使用等权重
         weights = np.array([1.0 / n] * n)
     else:
-        # 简化优化：基于收益/波动率比率分配权重
-        risk_adjusted = returns / (volatilities + 0.01)  # 避免除零
-        risk_adjusted = np.maximum(risk_adjusted, 0)  # 排除负值
-        weights = risk_adjusted / risk_adjusted.sum()
+        # 基于评分的权重分配
+        scores_shifted = np.maximum(scores - 30, 0)  # 低于30分权重为0
+        if scores_shifted.sum() > 0:
+            weights = scores_shifted / scores_shifted.sum()
+        else:
+            weights = np.array([1.0 / n] * n)
     
     # 构建结果
     allocations = []
@@ -109,18 +114,19 @@ def calculate_efficient_frontier(funds: List[Dict], num_points: int = 10) -> Lis
     """
     returns, volatilities = calculate_returns_volatility(funds)
     
-    if returns.sum() == 0:
-        return []
+    # 按评分分配权重
+    scores = np.array([f.get("score_100", {}).get("total_score", 0) for f in funds])
     
-    points = []
-    # 从低风险到高风险生成多个点
-    for i in range(num_points):
-        target_ret = returns.min() + (returns.max() - returns.min()) * i / (num_points - 1)
-        
-        # 简化的有效前沿计算
-        risk_adjusted = returns / (volatilities + 0.01)
-        risk_adjusted = np.maximum(risk_adjusted, 0)
-        weights = risk_adjusted / risk_adjusted.sum()
+    if scores.sum() == 0:
+        # 如果没有评分数据，使用等权重
+        weights = np.array([1.0 / n] * n)
+    else:
+        # 基于评分的权重分配
+        scores_shifted = np.maximum(scores - 30, 0)  # 低于30分权重为0
+        if scores_shifted.sum() > 0:
+            weights = scores_shifted / scores_shifted.sum()
+        else:
+            weights = np.array([1.0 / n] * n)
         
         port_return = np.dot(weights, returns)
         port_vol = np.sqrt(np.dot(weights, np.dot(np.diag(volatilities**2), weights)))
