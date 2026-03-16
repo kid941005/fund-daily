@@ -8,12 +8,18 @@ export const useFundStore = defineStore('fund', {
     advice: null,
     sectors: [],
     news: [],
+    timingSignals: {},
+    portfolioOptimize: {},
+    rebalancing: {},
     loading: {
       funds: false,
       holdings: false,
       advice: false,
       sectors: false,
-      news: false
+      news: false,
+      timing: false,
+      optimize: false,
+      rebalancing: false
     },
     error: null,
     user: null
@@ -104,6 +110,52 @@ export const useFundStore = defineStore('fund', {
         console.error('Failed to fetch news:', e)
       } finally {
         this.loading.news = false
+      }
+    },
+    
+    // 量化模块
+    async fetchTimingSignals() {
+      this.loading.timing = true
+      try {
+        const res = await fetch('/api/quant/timing-signals')
+        const data = await res.json()
+        if (data.success) {
+          this.timingSignals = data.data || {}
+        }
+      } catch (e) {
+        console.error('Failed to fetch timing signals:', e)
+      } finally {
+        this.loading.timing = false
+      }
+    },
+    
+    async fetchPortfolioOptimize() {
+      this.loading.optimize = true
+      try {
+        const res = await fetch('/api/quant/portfolio-optimize')
+        const data = await res.json()
+        if (data.success) {
+          this.portfolioOptimize = data.data || {}
+        }
+      } catch (e) {
+        console.error('Failed to fetch portfolio optimize:', e)
+      } finally {
+        this.loading.optimize = false
+      }
+    },
+    
+    async fetchRebalancing() {
+      this.loading.rebalancing = true
+      try {
+        const res = await fetch('/api/quant/rebalancing')
+        const data = await res.json()
+        if (data.success) {
+          this.rebalancing = data.data || {}
+        }
+      } catch (e) {
+        console.error('Failed to fetch rebalancing:', e)
+      } finally {
+        this.loading.rebalancing = false
       }
     },
     

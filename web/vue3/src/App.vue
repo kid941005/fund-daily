@@ -18,6 +18,7 @@
     <nav class="nav">
       <router-link to="/">首页</router-link>
       <router-link to="/holdings">持仓</router-link>
+      <router-link to="/quant">量化</router-link>
       <router-link to="/analysis">分析</router-link>
     </nav>
     
