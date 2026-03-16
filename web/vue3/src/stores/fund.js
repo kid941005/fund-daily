@@ -110,7 +110,12 @@ export const useFundStore = defineStore('fund', {
     async checkLogin() {
       try {
         const data = await api.checkLogin()
-        this.user = data.user || null
+        // API 返回: { logged_in, username }
+        if (data.logged_in) {
+          this.user = { username: data.username }
+        } else {
+          this.user = null
+        }
       } catch (e) {
         this.user = null
       }

@@ -247,7 +247,9 @@ const changePassword = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // 检查登录状态
+  await store.checkLogin()
   if (store.user) {
     loadSettings()
   }
