@@ -36,7 +36,7 @@ export default {
     return api.get('/funds')
   },
   getFundDetail(code) {
-    return api.get(`/funds/${code}`)
+    return api.get(`/fund-detail/${code}`)
   },
   
   // 持仓相关
@@ -80,11 +80,6 @@ export default {
   // 评分
   getScore(code) {
     return api.get(`/score/${code}`)
-  },
-  
-  // 持仓分析
-  getFundDetail(code) {
-    return api.get(`/fund-detail/${code}`)
   },
   
   getAnalysis() {
