@@ -33,7 +33,7 @@ from .endpoints.external import external_bp
 api.register_blueprint(funds_bp, url_prefix="/")
 api.register_blueprint(holdings_bp, url_prefix="/")
 api.register_blueprint(analysis_bp, url_prefix="/")
-api.register_blueprint(quant_bp, url_prefix="/")
+api.register_blueprint(quant_bp, url_prefix="/quant")
 api.register_blueprint(external_bp, url_prefix="/")
 
 
