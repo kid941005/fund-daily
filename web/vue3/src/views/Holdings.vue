@@ -164,10 +164,17 @@
 
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useFundStore } from '@/stores/fund'
 
 const store = useFundStore()
+
+// 页面加载时获取基金数据
+onMounted(() => {
+  if (store.funds.length === 0) {
+    store.fetchFunds()
+  }
+})
 
 // 弹窗状态
 const showAdd = ref(false)
@@ -213,11 +220,31 @@ const sortedHoldings = computed(() => {
 })
 
 // 辅助方法
-const getProfit = (holding) => (holding.amount || 0) * 0.02  // 简化
-const getChange = (holding) => -2.5 + Math.random() * 5  // 简化
-const getDailyProfit = (holding) => (holding.amount || 0) * -0.01  // 简化
-const getNav = () => '--'
-const getEstNav = () => '--'
+const getProfit = (holding) => {
+  const fund = store.funds.find(f => f.fund_code === holding.code)
+  const change = parseFloat(fund?.daily_change || 0) / 100
+  return (holding.amount || 0) * change
+}
+
+const getChange = (holding) => {
+  const fund = store.funds.find(f => f.fund_code === holding.code)
+  return parseFloat(fund?.daily_change || 0)
+}
+
+const getDailyProfit = (holding) => {
+  const fund = store.funds.find(f => f.fund_code === holding.code)
+  const change = parseFloat(fund?.daily_change || 0) / 100
+  return (holding.amount || 0) * change
+}
+const getNav = (holding) => {
+  const fund = store.funds.find(f => f.fund_code === holding.code)
+  return fund?.nav || '--'
+}
+
+const getEstNav = (holding) => {
+  const fund = store.funds.find(f => f.fund_code === holding.code)
+  return fund?.estimate_nav || '--'
+}
 const getHoldDays = (holding) => holding.buy_date ? Math.floor((Date.now() - new Date(holding.buy_date)) / 86400000) : 0
 
 // 操作方法
