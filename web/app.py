@@ -218,4 +218,12 @@ from flask import jsonify, session, request
 import json
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=os.environ.get("FLASK_DEBUG", "true").lower() == "true")
+
+
+# ============== Health Check ==============
+@app.route("/health")
+def health_check():
+    """Health check endpoint"""
+    import psycopg2
+    import redis

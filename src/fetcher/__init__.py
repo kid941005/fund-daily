@@ -16,20 +16,41 @@ from typing import Optional, List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
-# ============== Cache ==============
-CACHE_DURATION = int(os.environ.get("FUND_DAILY_CACHE_DURATION", 300))
-REQUEST_INTERVAL = float(os.environ.get("FUND_DAILY_REQUEST_INTERVAL", 0.5))  # 请求间隔（秒）
+# ============== Cache Configuration ==============
+# 缓存时间：默认30分钟
+CACHE_DURATION = int(os.environ.get("FUND_DAILY_CACHE_DURATION", 1800))
+REQUEST_INTERVAL = float(os.environ.get("FUND_DAILY_REQUEST_INTERVAL", 0.5))
 
+# 内存缓存（备用）
 _cache = {}
-_last_request_time = 0.0  # 上次请求时间
+_last_request_time = 0.0
+
+# Redis 缓存优先，内存作为备用
+try:
+    from src.cache.redis_cache import redis_get, redis_set, redis_clear as redis_clear
+    HAS_REDIS = True
+    logger.info("✅ 使用 Redis 缓存")
+except ImportError:
+    HAS_REDIS = False
+    logger.info("⚠️ 使用内存缓存")
 
 
 def get_cache(key: str) -> Optional[Any]:
-    """Get value from cache if not expired"""
+    """Get value from cache (Redis 优先，内存备用)"""
+    # 先尝试 Redis
+    if HAS_REDIS:
+        value = redis_get(key)
+        if value is not None:
+            logger.debug(f"Redis cache hit: {key}")
+            # 回填内存缓存
+            _cache[key] = (value, time.time())
+            return value
+    
+    # Redis 未命中，尝试内存缓存
     if key in _cache:
         value, timestamp = _cache[key]
         if time.time() - timestamp < CACHE_DURATION:
-            logger.debug(f"Cache hit: {key}")
+            logger.debug(f"Memory cache hit: {key}")
             return value
         else:
             del _cache[key]
@@ -38,8 +59,14 @@ def get_cache(key: str) -> Optional[Any]:
 
 
 def set_cache(key: str, value: Any) -> None:
-    """Set value in cache"""
+    """Set value in cache (同时写入 Redis 和内存)"""
+    # 写入内存
     _cache[key] = (value, time.time())
+    
+    # 尝试写入 Redis
+    if HAS_REDIS:
+        redis_set(key, value, CACHE_DURATION)
+    
     logger.debug(f"Cache set: {key}")
 
 
@@ -47,6 +74,10 @@ def clear_cache() -> None:
     """Clear all cache"""
     global _cache
     _cache = {}
+    
+    if HAS_REDIS:
+        redis_clear()
+    
     logger.info("Cache cleared")
 
 
@@ -432,3 +463,92 @@ def calculate_technical_from_history(closes: List[float]) -> Dict:
     rsi = calculate_rsi(closes, 14)
 
     return {"ma5": ma5, "ma10": ma10, "ma20": ma20, "macd": macd, "rsi": rsi}
+
+
+# ============== Fund Manager Data ==============
+def fetch_fund_manager(fund_code: str) -> Optional[Dict]:
+    """
+    Fetch fund manager information
+
+    Args:
+        fund_code: 6-digit fund code
+
+    Returns:
+        dict: Fund manager data or None
+    """
+    cache_key = f"fund_manager:{fund_code}"
+    cached = get_cache(cache_key)
+    if cached is not None:
+        return cached
+
+    logger.info(f"Fetching fund manager: {fund_code}")
+
+    url = f"https://fund.eastmoney.com/pingzhongdata/{fund_code}.js"
+    content = _make_request(url)
+
+    if not content:
+        return None
+
+    try:
+        # 提取基金经理信息
+        pattern = r"var Data_currentFundManager\s*=\s*\[([^\]]+)\]"
+        match = re.search(pattern, content)
+
+        if match:
+            manager_str = match.group(1)
+            # 解析第一个基金经理
+            name_match = re.search(r'"name":"([^"]+)"', manager_str)
+            star_match = re.search(r'"star":(\d+)', manager_str)
+            time_match = re.search(r'"workTime":"([^"]+)"', manager_str)
+
+            manager = {}
+            if name_match:
+                manager["name"] = name_match.group(1)
+            if star_match:
+                manager["star"] = int(star_match.group(1))
+            if time_match:
+                manager["workTime"] = time_match.group(1)
+
+            if manager.get("name"):
+                set_cache(cache_key, manager)
+                return manager
+    except Exception as e:
+        logger.warning(f"Parse manager error: {e}")
+
+    return None
+
+
+def fetch_fund_scale(fund_code: str) -> float:
+    """
+    Fetch fund scale (in 100 million yuan)
+
+    Args:
+        fund_code: 6-digit fund code
+
+    Returns:
+        float: Fund scale in 100 million yuan
+    """
+    cache_key = f"fund_scale:{fund_code}"
+    cached = get_cache(cache_key)
+    if cached is not None:
+        return cached
+
+    url = f"https://fund.eastmoney.com/pingzhongdata/{fund_code}.js"
+    content = _make_request(url)
+
+    if not content:
+        return 0.0
+
+    try:
+        # 提取规模数据 (单位：亿元)
+        pattern = r"var Data_fluctuationScale\s*=\s*\{[^}]*\"series\":\s*\[\{[^}]*\"y\":\s*([\d.]+)"
+        match = re.search(pattern, content)
+
+        if match:
+            scale = float(match.group(1))
+            set_cache(cache_key, scale)
+            return scale
+    except Exception as e:
+        logger.warning(f"Parse scale error: {e}")
+
+    return 0.0

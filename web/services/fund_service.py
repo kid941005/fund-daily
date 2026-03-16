@@ -4,18 +4,184 @@ Separates business logic from HTTP handling
 """
 
 import logging
-from typing import List, Dict
+from typing import List, Dict, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
 
-from src.fetcher import fetch_fund_data
+from src.fetcher import fetch_fund_data, fetch_fund_manager, fetch_fund_scale
 from src.advice import (
     analyze_fund,
     generate_daily_report,
     generate_advice,
     get_fund_detail_info,
 )
+from src.analyzer import get_market_sentiment, get_commodity_sentiment
+from src.fetcher import fetch_hot_sectors, fetch_market_news
+from src.scoring import calculate_total_score
+from src.cache.redis_cache import redis_get, redis_set, get_redis_client
 
 logger = logging.getLogger(__name__)
+
+# 缓存 key 前缀
+CACHE_PREFIX = "fund_daily:"
+MARKET_CACHE_KEY = f"{CACHE_PREFIX}market_data"
+MARKET_CACHE_TTL = 300  # 5分钟
+
+
+def get_cached_market_data() -> Dict:
+    """获取缓存的市场数据（先从 Redis 获取，缓存未命中则重新获取）"""
+    # 尝试从 Redis 获取
+    cached = redis_get(MARKET_CACHE_KEY)
+    if cached:
+        logger.info("Using cached market data from Redis")
+        return cached
+    
+    # 缓存未命中，获取最新市场数据
+    logger.info("Fetching fresh market data...")
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        market_future = executor.submit(get_market_sentiment)
+        commodity_future = executor.submit(get_commodity_sentiment)
+        sectors_future = executor.submit(fetch_hot_sectors, 5)
+        news_future = executor.submit(fetch_market_news, 10)
+        
+        market = market_future.result()
+        commodity = commodity_future.result()
+        sectors = sectors_future.result()
+        news = news_future.result()
+    
+    market_data = {
+        "market": market,
+        "commodity": commodity,
+        "hot_sectors": sectors,
+        "news": news
+    }
+    
+    # 写入 Redis 缓存
+    redis_set(MARKET_CACHE_KEY, market_data, MARKET_CACHE_TTL)
+    
+    return market_data
+
+
+def calculate_fund_score(fund: Dict, fund_code: str) -> Optional[Dict]:
+    """
+    计算单只基金的100分制评分
+    
+    Args:
+        fund: 基金数据（包含 analyze_fund 结果）
+        fund_code: 基金代码
+    
+    Returns:
+        dict: 评分结果
+    """
+    # 获取市场数据
+    market_data = get_cached_market_data()
+    market = market_data["market"]
+    commodity = market_data["commodity"]
+    hot_sectors = market_data["hot_sectors"]
+    news = market_data["news"]
+    
+    # 获取 manager 和 scale（使用缓存）
+    fund_manager = fetch_fund_manager(fund_code)
+    fund_scale = fetch_fund_scale(fund_code)
+    
+    # 计算评分
+    scoring = calculate_total_score(
+        fund_detail=fund,
+        risk_metrics=fund.get("risk_metrics", {}),
+        market_sentiment=market.get("sentiment", "平稳"),
+        market_score=market.get("score", 0),
+        news=news,
+        hot_sectors=hot_sectors,
+        commodity_sentiment=commodity.get("sentiment", "平稳"),
+        fund_manager=fund_manager,
+        fund_type=fund.get("fund_name", ""),
+        fund_scale=fund_scale,
+        daily_change=float(fund.get("daily_change", 0) or 0),
+        fund_data={
+            "return_1m": fund.get("syl_6y", fund.get("return_1m")),
+            "return_3m": fund.get("syl_3y", fund.get("return_3m")),
+            "return_1y": fund.get("syl_1y", fund.get("return_1y")),
+        },
+        fund_code=fund_code,
+    )
+    
+    return scoring
+
+
+def calculate_fund_scores_batch(funds: List[Dict]) -> List[Dict]:
+    """
+    批量计算多只基金的评分（并行获取 + 复用市场数据）
+    
+    Args:
+        funds: 基金列表（包含 analyze_fund 结果）
+    
+    Returns:
+        list: 带评分的基金列表
+    """
+    if not funds:
+        return []
+    
+    # 获取市场数据（只获取一次）
+    market_data = get_cached_market_data()
+    market = market_data["market"]
+    commodity = market_data["commodity"]
+    hot_sectors = market_data["hot_sectors"]
+    news = market_data["news"]
+    
+    # 收集所有基金代码
+    codes = [f.get("fund_code", "") for f in funds if f.get("fund_code")]
+    
+    # 并行获取所有基金的 manager 和 scale
+    manager_cache = {}
+    scale_cache = {}
+    
+    def fetch_info(code):
+        try:
+            return {
+                "code": code,
+                "manager": fetch_fund_manager(code),
+                "scale": fetch_fund_scale(code),
+            }
+        except Exception as e:
+            logger.error(f"Error: {e}")
+            return {"code": code, "manager": None, "scale": 0}
+    
+    with ThreadPoolExecutor(max_workers=min(5, len(codes))) as executor:
+        futures = {executor.submit(fetch_info, code): code for code in codes}
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                manager_cache[result["code"]] = result["manager"]
+                scale_cache[result["code"]] = result["scale"]
+    
+    # 计算每只基金的评分
+    for fund in funds:
+        code = fund.get("fund_code", "")
+        fund_manager = manager_cache.get(code)
+        fund_scale = scale_cache.get(code, 0)
+        
+        scoring = calculate_total_score(
+            fund_detail=fund,
+            risk_metrics=fund.get("risk_metrics", {}),
+            market_sentiment=market.get("sentiment", "平稳"),
+            market_score=market.get("score", 0),
+            news=news,
+            hot_sectors=hot_sectors,
+            commodity_sentiment=commodity.get("sentiment", "平稳"),
+            fund_manager=fund_manager,
+            fund_type=fund.get("fund_name", ""),
+            fund_scale=fund_scale,
+            daily_change=float(fund.get("daily_change", 0) or 0),
+            fund_data={
+                "return_1m": fund.get("syl_6y", fund.get("return_1m")),
+                "return_3m": fund.get("syl_3y", fund.get("return_3m")),
+                "return_1y": fund.get("syl_1y", fund.get("return_1y")),
+            },
+            fund_code=code,
+        )
+        fund["score_100"] = scoring
+    
+    return funds
 
 
 # ============== Fund Services ==============
@@ -40,12 +206,15 @@ def get_funds_for_user(holdings: List[Dict], default_codes: List[str] = None) ->
     else:
         codes = default_codes
 
+    # 并行获取基金数据
     funds = []
-    for code in codes:
-        data = fetch_fund_data(code)
-        analysis = analyze_fund(data)
-        if "error" not in analysis:
-            funds.append(analysis)
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {executor.submit(fetch_fund_data, code): code for code in codes}
+        for future in as_completed(futures):
+            data = future.result()
+            analysis = analyze_fund(data)
+            if "error" not in analysis:
+                funds.append(analysis)
 
     return funds
 
@@ -175,6 +344,143 @@ def get_portfolio_analysis(holdings: List[Dict], holdings_dict: Dict = None, def
     # Analyze portfolio risk
     portfolio_analysis = analyze_portfolio_risk(funds_detail, total_amount)
 
+    # 使用缓存的市场数据（只获取一次）
+    market_data = get_cached_market_data()
+    market = market_data["market"]
+    commodity = market_data["commodity"]
+    hot_sectors = market_data["hot_sectors"]
+    news = market_data["news"]
+    
+    market_sentiment = market.get("sentiment", "平稳")
+    market_score = market.get("score", 0)
+    commodity_sentiment = commodity.get("sentiment", "平稳")
+    
+    # 并行获取所有基金的manager和scale
+    # 创建代码到基金的映射
+    funds_detail_dict = {f.get("fund_code"): f for f in funds_detail if f.get("fund_code")}
+    codes = [f.get("fund_code") for f in funds_detail if f.get("fund_code")]
+    
+    def fetch_fund_info(code):
+        """并行获取单个基金信息"""
+        try:
+            # 获取基金详细信息
+            detail = fetch_fund_detail(code)
+            # 合并到 fund 中
+            fund = funds_detail_dict.get(code, {})
+            for k, v in detail.items():
+                if k not in fund:
+                    fund[k] = v
+            return {
+                "code": code,
+                "manager": fetch_fund_manager(code),
+                "scale": fetch_fund_scale(code),
+                "detail": detail,
+            }
+        except Exception as e:
+            logger.error(f"Error: {e}")
+            return {"code": code, "manager": None, "scale": 0, "detail": {}}
+    
+    # 使用线程池并行获取
+    manager_cache = {}
+    scale_cache = {}
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {executor.submit(fetch_fund_info, code): code for code in codes}
+        for future in as_completed(futures):
+            result = future.result()
+            manager_cache[result["code"]] = result["manager"]
+            scale_cache[result["code"]] = result["scale"]
+    
+    for fund in funds_detail:
+        try:
+            code = fund.get("fund_code", "")
+            
+            # 使用缓存的manager和scale
+            fund_manager = manager_cache.get(code)
+            fund_scale = scale_cache.get(code, 0)
+            daily_change = float(fund.get("daily_change", 0) or 0)
+            
+            # Get risk_metrics from fund
+            risk_metrics = fund.get("risk_metrics", {})
+            
+            # 构建基金数据用于差异化评分
+            fund_data = {
+                "return_1m": fund.get("syl_6y", fund.get("return_1m")),
+                "return_3m": fund.get("syl_3y", fund.get("return_3m")),
+                "return_1y": fund.get("syl_1y", fund.get("return_1y")),
+                "daily_change": fund.get("daily_change"),
+            }
+            
+            scoring = calculate_total_score(
+                fund_detail=detail if detail else fund,
+                risk_metrics=risk_metrics,
+                market_sentiment=market_sentiment,
+                market_score=market_score,
+                news=news,
+                hot_sectors=hot_sectors,
+                commodity_sentiment=commodity_sentiment,
+                fund_manager=fund_manager,
+                fund_type=fund.get("fund_name", ""),
+                fund_scale=fund_scale,
+                daily_change=daily_change,
+                fund_data=fund_data,
+                fund_code=code,  # 传入fund_code用于缓存
+            )
+            fund["score_100"] = scoring
+        except Exception as e:
+            logger.error(f"Error: {e}")
+            fund["score_100"] = {"error": str(e)}
+
+    # 计算总金额和持仓比例
+    total_amount = sum(f.get("amount", 0) for f in funds_detail)
+    
+    # 先计算当前持仓比例
+    for fund in funds_detail:
+        amount = fund.get("amount", 0)
+        fund["current_pct"] = round(amount / total_amount * 100, 1) if total_amount > 0 else 0
+    
+    # 计算每只基金的评分并排序（去弱留强）
+    scored_funds = []
+    for fund in funds_detail:
+        score = fund.get("score_100", {}).get("total_score", 0)
+        amount = fund.get("amount", 0)
+        scored_funds.append({
+            "fund": fund,
+            "score": score,
+            "amount": amount
+        })
+    
+    # 根据评分计算目标持仓比例
+    if scored_funds:
+        total_score = sum(max(f["score"], 0) for f in scored_funds)
+        
+        if total_score > 0 and total_amount > 0:
+            for item in scored_funds:
+                fund = item["fund"]
+                score = max(item["score"], 0)
+                base_ratio = score / total_score
+                # 高分基金获得更高权重
+                if score >= 60:
+                    target_ratio = base_ratio * 1.5
+                elif score >= 50:
+                    target_ratio = base_ratio * 1.2
+                else:
+                    target_ratio = base_ratio * 0.8
+                # 计算目标金额
+                fund["target_amount"] = round(total_amount * target_ratio, 2)
+                fund["target_pct"] = round(target_ratio * 100, 1)
+        else:
+            for item in scored_funds:
+                item["fund"]["target_pct"] = round(100 / len(scored_funds), 1)
+                item["fund"]["target_amount"] = 0
+
+    # 计算 target_amount
+    for item in scored_funds:
+        fund = item.get("fund", {})
+        if "target_amount" not in fund:
+            fund["target_amount"] = 0
+        if "target_pct" in fund and total_amount > 0:
+            fund["target_amount"] = round(total_amount * fund["target_pct"] / 100, 2)
+
     # Suggest allocation
     allocation = suggest_allocation(funds_detail)
 
@@ -255,6 +561,20 @@ def suggest_allocation(funds: List[Dict]) -> Dict:
         suggestions.append("💡 建议增加低风险基金配置，提高组合稳定性")
     if len(funds) < 3:
         suggestions.append("📊 建议持有3-5只基金分散风险")
+    
+    # 基于评分的转换建议
+    funds_with_scores = [f for f in funds if f.get("score_100") and f.get("score_100", {}).get("total_score")]
+    if len(funds_with_scores) >= 2:
+        # 按评分排序
+        sorted_funds = sorted(funds_with_scores, key=lambda x: x["score_100"]["total_score"], reverse=True)
+        best = sorted_funds[0]
+        worst = sorted_funds[-1]
+        
+        if best["score_100"]["total_score"] - worst["score_100"]["total_score"] >= 15:
+            suggestions.append(
+                f"🔄 建议将{worst.get('fund_name', worst.get('fund_code'))}({worst['score_100']['total_score']}分)"
+                f"转换为{best.get('fund_name', best.get('fund_code'))}({best['score_100']['total_score']}分)"
+            )
 
     if not suggestions:
         suggestions.append("✅ 当前配置较为合理")

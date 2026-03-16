@@ -6,3 +6,4 @@ numpy>=1.24.0  # For accurate risk calculations
 
 # Optional: OCR functionality
 # pip install easyocr  # ~2GB, includes PyTorch
+psycopg2-binary

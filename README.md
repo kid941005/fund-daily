@@ -3,7 +3,7 @@
 > 每日基金分析工具 - 智能持仓管理与风险分析
 
 [![GitHub Stars](https://img.shields.io/github/stars/kid941005/fund-daily?style=flat)](https://github.com/kid941005/fund-daily)
-[![Version](https://img.shields.io/badge/version-2.4.2-blue)](https://github.com/kid941005/fund-daily)
+[![Version](https://img.shields.io/badge/version-2.5.0-blue)](https://github.com/kid941005/fund-daily)
 [![Python](https://img.shields.io/badge/python-3.11+-green)](https://www.python.org/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue)](https://www.docker.com/)
 [![Tests](https://img.shields.io/badge/tests-63+-green)](https://github.com/kid941005/fund-daily)
@@ -149,3 +149,31 @@ MIT License
 ---
 
 <p align="center">Made with 🦞 by 挞挞</p>
+
+## 环境变量配置
+
+| 变量名 | 默认值 | 说明 |
+|--------|--------|------|
+| FUND_DAILY_DB_TYPE | sqlite | 数据库类型 (sqlite/postgres) |
+| FUND_DAILY_DB_PATH | /app/data/fund-daily.db | SQLite 数据库路径 |
+| FUND_DAILY_DB_HOST | localhost | PostgreSQL 主机 |
+| FUND_DAILY_DB_PORT | 5432 | PostgreSQL 端口 |
+| FUND_DAILY_DB_NAME | fund_daily | PostgreSQL 数据库名 |
+| FUND_DAILY_DB_USER | kid | PostgreSQL 用户名 |
+| FUND_DAILY_DB_PASSWORD | - | PostgreSQL 密码 |
+| REDIS_TTL | 1800 | Redis 缓存时间(秒) |
+| FUND_DAILY_SECRET_KEY | - | Flask Session 密钥 |
+
+## 快速启动
+
+```bash
+# SQLite 模式
+cd web && python3 app.py
+
+# PostgreSQL + Redis 模式
+export FUND_DAILY_DB_TYPE=postgres
+export FUND_DAILY_DB_NAME=fund_daily
+export FUND_DAILY_DB_USER=kid
+export FUND_DAILY_DB_PASSWORD=your_password
+cd web && python3 app.py
+```

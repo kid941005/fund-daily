@@ -60,7 +60,15 @@ RUN mkdir -p /app/data
 # Environment variables
 ENV PYTHONUNBUFFERED=1 \
     FLASK_APP=web/app.py \
-    FUND_DAILY_DB_PATH=/app/data/fund-daily.db
+    FUND_DAILY_DB_TYPE=postgres \
+    FUND_DAILY_DB_HOST=postgres \
+    FUND_DAILY_DB_PORT=5432 \
+    FUND_DAILY_DB_NAME=fund_daily \
+    FUND_DAILY_DB_USER=kid \
+    REDIS_HOST=redis \
+    REDIS_PORT=6379 \
+    REDIS_TTL=1800 \
+    FUND_DAILY_CACHE_DURATION=1800
 
 EXPOSE 5000
 

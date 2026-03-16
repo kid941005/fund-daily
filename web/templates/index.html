@@ -462,6 +462,63 @@
             color: #667eea;
         }
         
+        /* 100分评分卡片样式 */
+        .score-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .score-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 15px;
+            color: white;
+        }
+        
+        .score-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .score-name {
+            font-weight: bold;
+            font-size: 14px;
+            max-width: 60%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .score-value {
+            font-size: 20px;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .score-value.grade-a { background: #4caf50; }
+        .score-value.grade-b { background: #8bc34a; }
+        .score-value.grade-c { background: #ff9800; }
+        .score-value.grade-d { background: #f44336; }
+        
+        .score-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .score-details span {
+            background: rgba(255,255,255,0.15);
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        
         .allocation-bars {
             margin-bottom: 15px;
         }
@@ -647,6 +704,41 @@
             opacity: 0.7;
             cursor: not-allowed;
         }
+        
+        /* 量化分析样式 */
+        .timing-card {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            background: #f5f5f5;
+        }
+        .timing-card.up { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border-left: 4px solid #4caf50; }
+        .timing-card.down { background: linear-gradient(135deg, #ffebee, #ffcdd2); border-left: 4px solid #f44336; }
+        .timing-card.neutral { background: linear-gradient(135deg, #fff3e0, #ffe0b2); border-left: 4px solid #ff9800; }
+        .timing-signal { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+        .timing-score { font-size: 14px; color: #666; margin-bottom: 10px; }
+        .timing-details { display: flex; flex-wrap: wrap; gap: 8px; }
+        .signal-tag { padding: 4px 10px; border-radius: 15px; font-size: 12px; background: #fff; }
+        .signal-tag.up { background: #e8f5e9; color: #2e7d32; }
+        .signal-tag.down { background: #ffebee; color: #c62828; }
+        .signal-tag.neutral { background: #fff3e0; color: #e65100; }
+        
+        .rebalance-summary { display: flex; gap: 15px; margin: 10px 0; }
+        .rebalance-stat { flex: 1; text-align: center; padding: 10px; background: #f5f5f5; border-radius: 8px; }
+        .rebalance-stat .stat-num { display: block; font-size: 16px; font-weight: bold; }
+        .rebalance-stat .stat-label { font-size: 12px; color: #666; }
+        .rebalance-stat.up .stat-num { color: #4caf50; }
+        .rebalance-stat.down .stat-num { color: #f44336; }
+        
+        .trades-list { margin-top: 15px; }
+        .trade-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; gap: 10px; }
+        .trade-action { padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .trade-action.up { background: #e8f5e9; color: #2e7d32; }
+        .trade-action.down { background: #ffebee; color: #c62828; }
+        .trade-name { flex: 1; font-size: 13px; }
+        .trade-score { font-size: 12px; color: #666; }
+        .trade-amount { font-size: 12px; color: #999; }
+        .trade-pct { font-size: 12px; color: #1976d2; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -674,6 +766,7 @@
         <div class="tab" data-tab="holdings" onclick="console.log('Tab clicked');switchTab('holdings')">💼 持仓</div>
         <div class="tab" data-tab="advice" onclick="switchTab('advice')">💡 建议</div>
         <div class="tab" data-tab="analysis" onclick="switchTab('analysis')">📊 分析</div>
+        <div class="tab" data-tab="quant" onclick="switchTab('quant')">⚡ 量化</div>
     </div>
     
     <div class="container">
@@ -742,6 +835,31 @@
             <div class="card">
                 <div class="section-title-main">📈 组合分析</div>
                 <div id="analysisContent"><div class="loading">加载中...</div></div>
+            </div>
+        </div>
+        
+        <!-- Tab 5: 量化分析 -->
+        <div class="tab-content" id="tab-quant">
+            <div class="card">
+                <div class="section-title-main">⚡ 量化投资助手</div>
+                
+                <!-- 择时信号 -->
+                <div style="margin:15px 0;">
+                    <div class="section-title" style="font-size:14px;">🎯 市场择时信号</div>
+                    <div id="timingSignals"><div class="loading">加载中...</div></div>
+                </div>
+                
+                <!-- 组合优化 -->
+                <div style="margin:15px 0;">
+                    <div class="section-title" style="font-size:14px;">📊 组合优化建议</div>
+                    <div id="portfolioOptimize"><div class="loading">加载中...</div></div>
+                </div>
+                
+                <!-- 调仓建议 -->
+                <div style="margin:15px 0;">
+                    <div class="section-title" style="font-size:14px;">🔄 自动调仓建议</div>
+                    <div id="rebalancing"><div class="loading">加载中...</div></div>
+                </div>
             </div>
         </div>
     </div>
@@ -1309,13 +1427,89 @@
             hot: { data: null, time: 0 },
             holdings: { data: null, time: 0 },
             advice: { data: null, time: 0 },
-            analysis: { data: null, time: 0 }
+            analysis: { data: null, time: 0 },
+            quant: { data: null, time: 0 }
         };
-        const CACHE_DURATION = 30000; // 30秒缓存
+        const CACHE_DURATION = 300000; // 5分钟缓存
+        const LOCAL_CACHE_PREFIX = 'fund_daily_';
         
-        // 预加载所有数据
+        // localStorage 缓存辅助函数
+        function getLocalCache(key) {
+            try {
+                const data = localStorage.getItem(LOCAL_CACHE_PREFIX + key);
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    if (Date.now() - parsed.timestamp < CACHE_DURATION) {
+                        return parsed.data;
+                    }
+                }
+            } catch(e) {}
+            return null;
+        }
+        
+        function setLocalCache(key, data) {
+            try {
+                localStorage.setItem(LOCAL_CACHE_PREFIX + key, JSON.stringify({
+                    timestamp: Date.now(),
+                    data: data
+                }));
+            } catch(e) {}
+        }
+        
+        // 预加载所有数据（优先从 localStorage 读取，秒开）
         async function preloadAllData() {
             console.log('预加载数据...');
+            
+            // 第1步：立即用 localStorage 缓存渲染页面（不等待 API）
+            const cachedFunds = getLocalCache('funds');
+            const cachedHoldings = getLocalCache('holdings');
+            const cachedAdvice = getLocalCache('advice');
+            
+            let hasCachedData = false;
+            
+            if (cachedFunds) {
+                dataCache.hot.data = cachedFunds;
+                dataCache.hot.time = Date.now();
+                fundsCache = cachedFunds.funds || [];
+                // 立即渲染持仓列表
+                if (typeof renderHoldings === 'function') {
+                    renderHoldings(fundsCache, currentSort);
+                }
+                console.log('用本地缓存渲染 funds');
+                hasCachedData = true;
+            }
+            if (cachedHoldings) {
+                dataCache.holdings.data = cachedHoldings;
+                dataCache.holdings.time = Date.now();
+                console.log('用本地缓存渲染 holdings');
+                hasCachedData = true;
+            }
+            if (cachedAdvice) {
+                dataCache.advice.data = cachedAdvice;
+                dataCache.advice.time = Date.now();
+                window.fundRecommendations = cachedAdvice.advice?.funds || [];
+                // 渲染建议模块
+                if (typeof renderAdvice === 'function') {
+                    renderAdvice(fundsCache);
+                }
+                console.log('用本地缓存渲染 advice');
+                hasCachedData = true;
+            }
+            
+            // 如果有缓存，页面已经渲染完成，可以返回了
+            if (hasCachedData) {
+                console.log('✅ 页面已用缓存秒开');
+                // 静默后台更新，不阻塞渲染
+                setTimeout(updateDataBackground, 100);
+                return;
+            }
+            
+            // 第2步：没有缓存，正常加载
+            await loadDataNormally();
+        }
+        
+        // 后台静默更新数据
+        async function updateDataBackground() {
             try {
                 const [fundsRes, holdingsRes, adviceRes] = await Promise.all([
                     fetch('/api/funds'),
@@ -1331,15 +1525,60 @@
                     dataCache.hot.data = fundsData;
                     dataCache.hot.time = Date.now();
                     fundsCache = fundsData.funds || [];
+                    setLocalCache('funds', fundsData);
                 }
                 if (holdingsData.success) {
                     dataCache.holdings.data = holdingsData;
                     dataCache.holdings.time = Date.now();
+                    setLocalCache('holdings', holdingsData);
                 }
                 if (adviceData.success) {
                     dataCache.advice.data = adviceData;
                     dataCache.advice.time = Date.now();
-                    window.fundRecommendations = adviceData.advice?.fund_recommendations || [];
+                    window.fundRecommendations = adviceData.advice?.funds || [];
+                    setLocalCache('advice', adviceData);
+                }
+                console.log('后台数据更新完成');
+            } catch (e) {
+                console.error('后台更新失败:', e);
+            }
+        }
+        
+        // 正常加载（无缓存时）
+        async function loadDataNormally() {
+            try {
+                const [fundsRes, holdingsRes, adviceRes] = await Promise.all([
+                    fetch('/api/funds'),
+                    fetch('/api/holdings'),
+                    fetch('/api/advice')
+                ]);
+                
+                const fundsData = await fundsRes.json();
+                const holdingsData = await holdingsRes.json();
+                const adviceData = await adviceRes.json();
+                
+                if (fundsData.success) {
+                    dataCache.hot.data = fundsData;
+                    dataCache.hot.time = Date.now();
+                    fundsCache = fundsData.funds || [];
+                    setLocalCache('funds', fundsData);
+                    if (typeof renderHoldings === 'function') {
+                        renderHoldings(fundsCache, currentSort);
+                    }
+                }
+                if (holdingsData.success) {
+                    dataCache.holdings.data = holdingsData;
+                    dataCache.holdings.time = Date.now();
+                    setLocalCache('holdings', holdingsData);
+                }
+                if (adviceData.success) {
+                    dataCache.advice.data = adviceData;
+                    dataCache.advice.time = Date.now();
+                    window.fundRecommendations = adviceData.advice?.funds || [];
+                    setLocalCache('advice', adviceData);
+                    if (typeof renderAdvice === 'function') {
+                        renderAdvice(fundsCache);
+                    }
                 }
                 console.log('预加载完成');
             } catch (e) {
@@ -1362,17 +1601,24 @@
             
             if (tabName === 'hot') {
                 if (!dataCache.hot.data || now - dataCache.hot.time > CACHE_DURATION) {
-                    loadHotNews();
-                    loadSectors();
+                    // 并行加载资讯和板块
+                    Promise.all([loadHotNews(), loadSectors()]).then(() => {
+                        console.log('热门页数据加载完成');
+                    });
                 } else {
                     console.log('使用缓存的热门数据');
                 }
+                // 预加载相邻Tab（持仓）
+                prefetchTab('holdings');
             } else if (tabName === 'holdings') {
                 if (!dataCache.holdings.data || now - dataCache.holdings.time > CACHE_DURATION) {
                     loadFundsAndHoldings();
                 } else {
                     console.log('使用缓存的持仓数据');
                 }
+                // 预加载相邻Tab（热门和建议）
+                prefetchTab('hot');
+                prefetchTab('advice');
             } else if (tabName === 'advice') {
                 if (!dataCache.advice.data || now - dataCache.advice.time > CACHE_DURATION) {
                     loadAdviceData();
@@ -1380,11 +1626,66 @@
                     console.log('使用缓存的建议数据');
                     renderAdvice(fundsCache);
                 }
+                // 预加载相邻Tab（持仓和分析）
+                prefetchTab('holdings');
+                prefetchTab('analysis');
             } else if (tabName === 'analysis') {
                 if (!dataCache.analysis.data || now - dataCache.analysis.time > CACHE_DURATION) {
                     loadAnalysisData();
                 } else {
                     console.log('使用缓存的分析数据');
+                }
+                // 预加载相邻Tab（建议和量化）
+                prefetchTab('advice');
+                prefetchTab('quant');
+            } else if (tabName === 'quant') {
+                if (!dataCache.quant.data || now - dataCache.quant.time > CACHE_DURATION) {
+                    loadQuantData();
+                } else {
+                    console.log('使用缓存的量化数据');
+                }
+                // 预加载相邻Tab（分析）
+                prefetchTab('analysis');
+            }
+        }
+        
+        // 预加载指定Tab（不阻塞，不渲染）
+        function prefetchTab(tabName) {
+            const now = Date.now();
+            if (tabName === 'hot') {
+                if ((!dataCache.hot.data || now - dataCache.hot.time > CACHE_DURATION) && 
+                    document.getElementById('tab-hot').dataset.loaded !== 'true') {
+                    console.log('预加载: hot');
+                    loadHotNews().then(loadSectors);
+                    document.getElementById('tab-hot').dataset.loaded = 'true';
+                }
+            } else if (tabName === 'holdings') {
+                if ((!dataCache.holdings.data || now - dataCache.holdings.time > CACHE_DURATION) &&
+                    document.getElementById('tab-holdings').dataset.loaded !== 'true') {
+                    console.log('预加载: holdings');
+                    loadFundsAndHoldings();
+                    document.getElementById('tab-holdings').dataset.loaded = 'true';
+                }
+            } else if (tabName === 'advice') {
+                if ((!dataCache.advice.data || now - dataCache.advice.time > CACHE_DURATION) &&
+                    document.getElementById('tab-advice').dataset.loaded !== 'true') {
+                    console.log('预加载: advice');
+                    loadAdviceData();
+                    document.getElementById('tab-advice').dataset.loaded = 'true';
+                }
+            } else if (tabName === 'analysis') {
+                if ((!dataCache.analysis.data || now - dataCache.analysis.time > CACHE_DURATION) &&
+                    document.getElementById('tab-analysis').dataset.loaded !== 'true') {
+                    console.log('预加载: analysis');
+                    loadAnalysisData();
+                    document.getElementById('tab-analysis').dataset.loaded = 'true';
+                }
+            } else if (tabName === 'quant') {
+                if ((!dataCache.quant.data || now - dataCache.quant.time > CACHE_DURATION) &&
+                    document.getElementById('tab-quant').dataset.loaded !== 'true') {
+                    console.log('预加载: quant');
+                    loadQuantData();
+                    document.getElementById('tab-quant').dataset.loaded = 'true';
                 }
             }
         }
@@ -1529,16 +1830,12 @@
         }
 
         function renderHoldings(funds, sortType) {
-            // 如果没有持仓数据，默认使用全部基金，金额为0
+            // 只有当 holdingsData 完全为空时才填充默认基金
+            // 用户清仓后不应再自动填充
             if (holdingsData.length === 0) {
-                holdingsData = funds.map(f => ({
-                    code: f.fund_code,
-                    name: f.fund_name,
-                    amount: 0,
-                    buyDate: null,
-                    buyNav: null
-                }));
-                localStorage.setItem('fundHoldings', JSON.stringify(holdingsData));
+                // 显示空状态，不自动填充
+                document.getElementById('holdingsList').innerHTML = '<div class="empty">暂无持仓，请添加基金</div>';
+                return;
             }
             
             // 根据 sortType 排序 holdingsData
@@ -1693,8 +1990,11 @@
             if (confirm('确定删除该持仓吗？')) {
                 const code = holdingsData[index].code;
                 holdingsData.splice(index, 1);
+                localStorage.setItem('fundHoldings', JSON.stringify(holdingsData));
                 removeHoldingsFromServer(code);
-                loadFundsAndHoldings();
+                
+                // 直接重新渲染，不重新加载数据
+                renderHoldings(fundsCache || [], currentSort);
             }
         }
         
@@ -1709,18 +2009,22 @@
                 holdingsData = [];
                 localStorage.setItem('fundHoldings', JSON.stringify(holdingsData));
                 
-                // 尝试清空服务器数据（不管是否登录）
+                // 尝试清空服务器数据（登录用户）
                 try {
-                    await fetch('/api/holdings/clear-all', {
+                    const response = await fetch('/api/holdings/clear', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'}
                     });
+                    const result = await response.json();
+                    if (!result.success && result.need_login) {
+                        console.log('User not logged in, local cleared only');
+                    }
                 } catch(e) {
                     console.log('Server clear failed:', e);
                 }
                 
-                // 重新加载
-                await loadFundsAndHoldings();
+                // 清空显示
+                document.getElementById('holdingsList').innerHTML = '<div class="empty">已清空所有持仓</div>';
             }
         }
         
@@ -2022,10 +2326,11 @@
         async function loadAdviceData() {
             try {
                 console.log('Loading advice data...');
+                const t = Date.now();
                 // 并行获取基金数据和建议数据
                 const [fundsRes, adviceRes] = await Promise.all([
                     fetch('/api/funds'),
-                    fetch('/api/advice')
+                    fetch('/api/advice?_=' + t)
                 ]);
                 
                 console.log('Response received');
@@ -2048,7 +2353,7 @@
                 fundsCache = fundsData.funds;
                 
                 // 保存建议数据供renderAdvice使用
-                window.fundRecommendations = adviceData.advice?.fund_recommendations || [];
+                window.fundRecommendations = adviceData.advice?.funds || [];
                 console.log('fundRecommendations:', window.fundRecommendations);
                 
                 try {
@@ -2069,29 +2374,40 @@
                 const response = await fetch('/api/portfolio-analysis');
                 const data = await response.json();
                 
-                if (data.success) {
-                    renderAnalysis(data.analysis);
-                } else {
-                    document.getElementById('analysisContent').innerHTML = '<div class="error">加载失败</div>';
+                // 调试：直接显示在页面上
+                if (!data.success) {
+                    document.getElementById('analysisContent').innerHTML = '<div class="error">API错误: ' + (data.error || '未知') + '</div>';
+                    return;
                 }
+                if (!data.analysis) {
+                    document.getElementById('analysisContent').innerHTML = '<div class="error">无分析数据</div>';
+                    return;
+                }
+                if (!data.analysis.funds) {
+                    document.getElementById('analysisContent').innerHTML = '<div class="error">无基金数据</div>';
+                    return;
+                }
+                
+                renderAnalysis(data.analysis);
             } catch (e) {
-                console.error('Analysis load error:', e);
-                document.getElementById('analysisContent').innerHTML = '<div class="error">加载失败</div>';
+                document.getElementById('analysisContent').innerHTML = '<div class="error">加载失败: ' + e.message + '</div>';
             }
         }
         
         // 渲染分析内容
         function renderAnalysis(analysis) {
-            if (!analysis || !analysis.funds || analysis.funds.length === 0) {
-                document.getElementById('analysisContent').innerHTML = `
-                    <div class="advice-card">
-                        <div class="advice-emoji">📊</div>
-                        <div class="advice-title">暂无持仓分析</div>
-                        <div class="advice-desc">请先在"持仓"页面添加持仓金额，以便获取组合分析</div>
-                    </div>
-                `;
-                return;
-            }
+            console.log('renderAnalysis called with:', analysis);
+            try {
+                if (!analysis || !analysis.funds || analysis.funds.length === 0) {
+                    document.getElementById('analysisContent').innerHTML = `
+                        <div class="advice-card">
+                            <div class="advice-emoji">📊</div>
+                            <div class="advice-title">暂无持仓分析</div>
+                            <div class="advice-desc">请先在"持仓"页面添加持仓金额，以便获取组合分析</div>
+                        </div>
+                    `;
+                    return;
+                }
             
             const { funds, total_amount, risk_metrics, allocation } = analysis;
             
@@ -2119,6 +2435,44 @@
                     </div>
                 </div>
             `;
+            
+            // 100分评分卡片（从API返回中获取）
+            let scoreHtml = '';
+            const fundsWithScore = funds.filter(f => f.score_100 && f.score_100.total_score);
+            if (fundsWithScore.length > 0) {
+                scoreHtml = `
+                    <div class="analysis-section">
+                        <h3>📊 100分综合评分</h3>
+                        <div class="score-cards">
+                            ${fundsWithScore.map(f => {
+                                const s = f.score_100;
+                                const d = s.details || {};
+                                const gradeClass = s.total_score >= 80 ? 'grade-a' : s.total_score >= 60 ? 'grade-b' : s.total_score >= 40 ? 'grade-c' : 'grade-d';
+                                // 安全读取各维度评分
+                                const getScore = (dim) => (d[dim]?.score ?? '-');
+                                return `
+                                    <div class="score-card">
+                                        <div class="score-header">
+                                            <span class="score-name">${f.fund_name || f.fund_code}</span>
+                                            <span class="score-value ${gradeClass}">${s.total_score}分 (${s.grade}级)</span>
+                                        </div>
+                                        <div class="score-details">
+                                            <span>估值: ${getScore('valuation')}/25</span>
+                                            <span>业绩: ${getScore('performance')}/20</span>
+                                            <span>风控: ${getScore('risk_control')}/15</span>
+                                            <span>动量: ${getScore('momentum')}/15</span>
+                                            <span>情绪: ${getScore('sentiment')}/10</span>
+                                            <span>板块: ${getScore('sector')}/8</span>
+                                            <span>经理: ${getScore('manager')}/4</span>
+                                            <span>流动性: ${getScore('liquidity')}/3</span>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
             
             // 资产配置建议
             const allocationHtml = `
@@ -2156,7 +2510,7 @@
                             <div class="fund-detail-item">
                                 <div class="fund-detail-header">
                                     <div class="fund-name">${f.fund_name}</div>
-                                    <div class="fund-weight">占比: ${f.weight}%</div>
+                                    <div class="fund-weight">占比: ${f.weight || 0}%</div>
                                 </div>
                                 <div class="fund-metrics">
                                     <div class="metric">
@@ -2182,7 +2536,171 @@
                 </div>
             `;
             
-            document.getElementById('analysisContent').innerHTML = riskHtml + allocationHtml + fundsHtml;
+            // 渲染页面
+            document.getElementById('analysisContent').innerHTML = riskHtml + scoreHtml + allocationHtml + fundsHtml;
+            } catch (err) {
+                console.error('Render analysis error:', err);
+                document.getElementById('analysisContent').innerHTML = '<div class="error">渲染失败: ' + err.message + '</div>';
+            }
+        }
+        
+        // 加载量化数据
+        async function loadQuantData() {
+            try {
+                const t = Date.now();
+                // 获取择时信号
+                const timingRes = await fetch('/api/timing-signals?_=' + t);
+                const timingData = await timingRes.json();
+                
+                // 获取组合优化
+                const optRes = await fetch('/api/portfolio-optimize?_=' + t);
+                const optData = await optRes.json();
+                
+                // 获取调仓建议
+                const rebalRes = await fetch('/api/rebalancing?_=' + t);
+                const rebalData = await rebalRes.json();
+                
+                dataCache.quant.data = { timing: timingData, optimize: optData, rebalancing: rebalData };
+                dataCache.quant.time = Date.now();
+                
+                // 渲染择时信号
+                if (timingData.success) {
+                    renderTimingSignals(timingData.data.market_timing);
+                } else {
+                    document.getElementById('timingSignals').innerHTML = '<div class="error">获取失败: ' + (timingData.error || "") + '</div>';
+                }
+                
+                // 渲染组合优化
+                if (optData.success) {
+                    renderPortfolioOptimize(optData.data);
+                } else {
+                    document.getElementById('portfolioOptimize').innerHTML = '<div class="error">请先登录</div>';
+                }
+                
+                // 渲染调仓建议
+                if (rebalData.success) {
+                    renderRebalancing(rebalData.data);
+                } else {
+                    document.getElementById('rebalancing').innerHTML = '<div class="error">请先登录</div>';
+                }
+            } catch (err) {
+                console.error('Load quant error:', err);
+                document.getElementById('timingSignals').innerHTML = '<div class="error">加载失败: ' + err.message + '</div>';
+                document.getElementById('rebalancing').innerHTML = '<div class="error">加载失败: ' + err.message + '</div>';
+            }
+        }
+        
+        // 渲染择时信号
+        function renderTimingSignals(timing) {
+            const signal = timing.overall_signal;
+            const score = timing.score;
+            let signalClass = 'neutral';
+            if (signal.includes('买入')) signalClass = 'up';
+            if (signal.includes('卖出')) signalClass = 'down';
+            
+            const signalsHtml = timing.signals.map(s => {
+                let sClass = s.signal === '买入' ? 'up' : (s.signal === '卖出' ? 'down' : 'neutral');
+                return `<span class="signal-tag ${sClass}">${s.type}: ${s.signal} (${s.reason})</span>`;
+            }).join('');
+            
+            document.getElementById('timingSignals').innerHTML = `
+                <div class="timing-card ${signalClass}">
+                    <div class="timing-signal">${signal}</div>
+                    <div class="timing-score">信号评分: ${score}</div>
+                    <div class="timing-details">${signalsHtml}</div>
+                </div>
+            `;
+        }
+        
+        // 渲染组合优化
+        function renderPortfolioOptimize(data) {
+            if (!data || !data.allocations || data.allocations.length === 0) {
+                document.getElementById('portfolioOptimize').innerHTML = '<div class="empty-hint">暂无优化数据</div>';
+                return;
+            }
+            
+            const allocations = data.allocations;
+            const totalFunds = allocations.length;
+            
+            // 计算建议持仓数量（基于评分筛选）
+            const highScore = allocations.filter(a => a.score >= 60).length;
+            const midScore = allocations.filter(a => a.score >= 40 && a.score < 60).length;
+            
+            let html = '<div class="timing-card neutral">';
+            html += '<div class="timing-signal">📊 组合优化建议</div>';
+            html += '<div class="timing-details">';
+            
+            // 显示统计信息
+            html += `<div style="margin:5px 0;">当前持仓: <strong>${totalFunds}</strong> 只基金</div>`;
+            html += `<div style="margin:5px 0;">高分基金(≥60分): <strong>${highScore}</strong> 只</div>`;
+            html += `<div style="margin:5px 0;">中等基金(40-60分): <strong>${midScore}</strong> 只</div>`;
+            
+            // 建议
+            if (totalFunds > 10) {
+                html += `<div style="margin:5px 0;color:#e74c3c;">⚠️ 持仓过于分散，建议精简到5-8只</div>`;
+            }
+            if (highScore > 0) {
+                html += `<div style="margin:5px 0;color:#27ae60;">✅ 建议关注高分基金</div>`;
+            }
+            
+            html += '</div></div>';
+            
+            // 显示前5只推荐基金
+            const topFunds = allocations.slice(0, 5);
+            html += '<div style="margin-top:10px;">';
+            html += '<div class="section-title" style="font-size:12px;">🏆 TOP5 推荐:</div>';
+            topFunds.forEach(f => {
+                const scoreClass = f.score >= 60 ? 'color:#27ae60;' : (f.score >= 40 ? 'color:#f39c12;' : 'color:#e74c3c;');
+                html += `<div style="padding:5px;margin:3px 0;background:#f5f5f5;border-radius:4px;">
+                    <span style="${scoreClass}font-weight:bold;">${f.score}分</span> 
+                    ${f.fund_name} (${f.fund_code})
+                </div>`;
+            });
+            html += '</div>';
+            
+            document.getElementById('portfolioOptimize').innerHTML = html;
+        }
+        
+        // 渲染调仓建议
+        function renderRebalancing(data) {
+            const s = data.summary;
+            const trades = (data.data && data.data.trades) || data.trades || [];
+            
+            let tradesHtml = trades.map(t => {
+                let actionClass = t.action === '买入' ? 'up' : (t.action === '卖出' || t.action === '清仓' ? 'down' : 'neutral');
+                // 清仓用特殊样式
+                const isLiquidation = t.action === '清仓';
+                const actionStyle = isLiquidation ? 'font-weight:bold;' : '';
+                return `
+                    <div class="trade-item" style="${isLiquidation ? 'border-left:3px solid #e74c3c;background:#fff5f5;' : ''}">
+                        <span class="trade-action ${actionClass}" style="${actionStyle}">${t.action}</span>
+                        <span class="trade-name">${t.fund_name}</span>
+                        <span class="trade-score">${t.score}分</span>
+                        <span class="trade-pct">${t.current_pct}% → ${t.target_pct || 0}%</span>
+                        <span class="trade-amount">${t.current_amount}元 → ${t.target_amount || 0}元</span>
+                        <div class="trade-reason" style="font-size:11px;color:#888;margin-top:2px;">${t.reason || ''}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('rebalancing').innerHTML = `
+                <div class="rebalance-summary">
+                    <div class="rebalance-stat">
+                        <span class="stat-num">${data.total_amount}元</span>
+                        <span class="stat-label">总金额</span>
+                    </div>
+                    <div class="rebalance-stat up">
+                        <span class="stat-num">${s.buy_count}只</span>
+                        <span class="stat-label">买入</span>
+                    </div>
+                    <div class="rebalance-stat down">
+                        <span class="stat-num">${s.sell_count}只</span>
+                        <span class="stat-label">卖出/清仓</span>
+                    </div>
+                </div>
+                <div style="font-size:12px;color:#666;margin-bottom:8px;">📊 去弱留强：高分基金增持，低分基金减仓/清仓</div>
+                <div class="trades-list">${tradesHtml}</div>
+            `;
         }
         
         // 板块分类函数 - 细分版本
@@ -2316,7 +2834,8 @@
                     adviceClass: adviceClass,
                     adviceEmoji: adviceEmoji,
                     current_pct: currentPct,
-                    target_pct: targetPct
+                    target_pct: targetPct,
+                    target_amount: (rec && rec.target_amount) || 0
                 };
             });
             
@@ -2379,9 +2898,9 @@
                                         <div class="advice-fund-name">${f.name}</div>
                                         <div class="advice-fund-change">${f.change > 0 ? '+' : ''}${f.change.toFixed(2)}% · ${f.amount.toLocaleString()}元</div>
                                         <div class="advice-fund-ratio">
-                                            <span class="ratio-item">当前: ${f.current_pct || 0}%</span>
+                                            <span class="ratio-item">当前: ${f.current_pct || 0}% (${f.amount?.toLocaleString() || 0}元)</span>
                                             <span class="ratio-arrow">→</span>
-                                            <span class="ratio-item target">建议: ${f.target_pct || 0}%</span>
+                                            <span class="ratio-item target">建议: ${f.target_pct || 0}% (${(f.target_amount || 0).toLocaleString()}元)</span>
                                         </div>
                                     </div>
                                     <div class="advice-tag ${f.adviceClass}">${f.adviceEmoji} ${f.advice}</div>
