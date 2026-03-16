@@ -171,9 +171,10 @@ const store = useFundStore()
 
 // 页面加载时获取基金数据
 onMounted(() => {
-  if (store.funds.length === 0) {
-    store.fetchFunds()
-  }
+  // 优先从缓存加载基金数据，如果没有则强制刷新
+  store.fetchFunds(false)
+  // 启动定时刷新
+  store.startPeriodicFetch()
 })
 
 // 弹窗状态
