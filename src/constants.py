@@ -1,8 +1,9 @@
-import os
 """
 Constants module for Fund Daily
 统一管理项目中的常量定义
 """
+
+import os
 
 # 评分阈值
 SCORE_THRESHOLDS = {
@@ -12,7 +13,9 @@ SCORE_THRESHOLDS = {
     "HIGH": 70,
     "MEDIUM": 50,
     "LOW": 30,
-    "ACTIVE": 55
+    "ACTIVE": 55,
+    "VERY_LOW": 40,
+    "LOWER": 45
 }
 
 # 评分权重配置
@@ -29,15 +32,13 @@ WEIGHT_CONFIG = {
 
 # 持仓分配比例
 ALLOCATION_RATIOS = {
-    "HIGH": 0.30,    # 高评分上限30%
-    "MEDIUM": 0.20,  # 中评分上限20%
-    "LOW": 0.10      # 低评分上限10%
+    "HIGH": 0.30,
+    "MEDIUM": 0.20,
+    "LOW": 0.10
 }
+
+# 缓存配置
+CACHE_DURATION = int(os.environ.get('FUND_DAILY_CACHE_DURATION', 600))
 
 # 别名（保持向后兼容）
 ST = SCORE_THRESHOLDS
-
-
-# 缓存配置
-
-CACHE_DURATION = int(os.environ.get('FUND_DAILY_CACHE_DURATION', 600))
