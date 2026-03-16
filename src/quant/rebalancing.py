@@ -2,22 +2,10 @@
 自动调仓模块
 基于评分和组合优化生成调仓建议
 """
-
 import logging
 from typing import Dict, List
-from datetime import datetime
-
+from src.constants import ST
 logger = logging.getLogger(__name__)
-
-# 评分阈值配置 - 去弱留强
-SCORE_THRESHOLDS = {
-    "VERY_LOW": 40,   # 低于40分，清仓
-    "LOW": 45,       # 低于45分，卖出
-    "ACTIVE": 50,     # 低于50分，持有
-    "HIGH": 50,       # 高于50分，买入
-}
-
-
 def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
     """计算调仓建议 - 去弱留强，总金额不变"""
     if not funds or total_amount <= 0:
@@ -46,13 +34,13 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
         score = item["score"]
         amount = item["amount"]
         
-        if score < SCORE_THRESHOLDS["LOW"]:
+        if score < ST["LOW"]:
             # 低分 - 卖出
             item["action"] = "卖出"
             item["target_amount"] = 0
             item["target_pct"] = 0
             sell_amount += amount
-        elif score < SCORE_THRESHOLDS["ACTIVE"]:
+        elif score < ST["ACTIVE"]:
             # 中低分 - 持有
             item["action"] = "持有"
             item["target_amount"] = amount
@@ -66,7 +54,7 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
     # 第二步：将卖出金额分配给高分基金（保持总金额不变）
     if sell_amount > 0:
         # 高分基金列表
-        high_score_funds = [item for item in scored if item["score"] >= SCORE_THRESHOLDS["HIGH"]]
+        high_score_funds = [item for item in scored if item["score"] >= ST["HIGH"]]
         
         if high_score_funds:
             # 按评分排序，优先分配给高分基金
@@ -148,8 +136,6 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
         "summary": summary,
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
-
-
 def generate_trade_orders(rebalancing: Dict) -> List[Dict]:
     """生成具体的交易订单"""
     trades = rebalancing.get("trades", [])
