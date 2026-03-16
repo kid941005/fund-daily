@@ -45,8 +45,18 @@ def analyze_fund(fund_data: Dict) -> Dict:
     else:
         summary = f"🔻 {name} 大跌 {gszzl}%，净值 {nav}"
     
+    fund_code = fund_data.get("fundcode")
+    
+    # 生成100分制评分
+    score_100 = {}
+    try:
+        from . import generate_100_score
+        score_100 = generate_100_score(fund_code, gszzl) or {}
+    except Exception as e:
+        print(f"Error generating score for {fund_code}: {e}")
+    
     return {
-        "fund_code": fund_data.get("fundcode"),
+        "fund_code": fund_code,
         "fund_name": name,
         "nav": nav,
         "estimate_nav": fund_data.get("gsz"),
@@ -54,6 +64,7 @@ def analyze_fund(fund_data: Dict) -> Dict:
         "date": fund_data.get("jzrq"),
         "trend": trend,
         "summary": summary,
+        "score_100": score_100,
     }
 
 
@@ -188,7 +199,7 @@ def generate_100_score(fund_code: str, daily_change: float = 0.0) -> Dict:
         fund_scale = fetch_fund_scale(fund_code)
         
         fund_data_dict = {
-            "return_1m": float(detail_data.get("syl_1m", 0) or 0),
+            "return_1m": float(detail_data.get("syl_1y", 0) or 0),
             "return_3m": float(detail_data.get("syl_3y", 0) or 0),
             "return_6m": float(detail_data.get("syl_6y", 0) or 0),
             "return_1y": float(detail_data.get("syl_1n", 0) or 0),
