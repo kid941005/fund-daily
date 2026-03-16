@@ -1,32 +1,55 @@
 import axios from 'axios'
 
+// 请求配置
+const CONFIG = {
+  timeout: 30000,
+  retry: 3,
+  retryDelay: 1000
+}
+
 const api = axios.create({
   baseURL: '/api',
-  timeout: 30000,
+  timeout: CONFIG.timeout,
   headers: {
     'Content-Type': 'application/json'
   },
-  withCredentials: true  // 发送 cookies
+  withCredentials: true
 })
 
 // 请求拦截器
 api.interceptors.request.use(
-  config => {
-    return config
-  },
-  error => {
-    return Promise.reject(error)
-  }
+  config => config,
+  error => Promise.reject(error)
 )
 
-// 响应拦截器
+// 响应拦截器 - 统一错误处理
 api.interceptors.response.use(
-  response => {
-    return response.data
-  },
+  response => response.data,
   error => {
-    console.error('API Error:', error)
-    return Promise.reject(error)
+    const { config, response } = error
+    
+    // 如果没有配置或不允许重试，则直接拒绝
+    if (!config || !config.retry) {
+      return Promise.reject(error)
+    }
+    
+    // 设置重试次数
+    config.retryCount = config.retryCount || 0
+    
+    // 如果重试次数超过限制
+    if (config.retryCount >= CONFIG.retry) {
+      return Promise.reject(error)
+    }
+    
+    // 重试次数 +1
+    config.retryCount += 1
+    
+    // 延迟后重新请求
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(api(config))
+      }, CONFIG.retryDelay)
+    })
   }
 )
 
