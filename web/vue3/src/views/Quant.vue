@@ -56,8 +56,12 @@
             <span class="value">{{ portfolioOptimize.allocations.length }}</span>
           </div>
           <div class="opt-stat">
-            <span class="label">平均权重</span>
-            <span class="value">{{ (100 / portfolioOptimize.allocations.length).toFixed(1) }}%</span>
+            <span class="label">策略</span>
+            <span class="value">评分加权</span>
+          </div>
+          <div class="opt-stat">
+            <span class="label">最高权重</span>
+            <span class="value">{{ maxWeight }}%</span>
           </div>
         </div>
         
@@ -184,6 +188,13 @@ const weightLabels = {
   manager: '基金经理',
   liquidity: '流动性'
 }
+
+// 计算最高权重
+const maxWeight = computed(() => {
+  if (!portfolioOptimize.value?.allocations?.length) return 0
+  const weights = portfolioOptimize.value.allocations.map(a => a.weight || 0)
+  return Math.max(...weights).toFixed(1)
+})
 </script>
 
 <style scoped>
