@@ -35,7 +35,7 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
         score = item["score"]
         amount = item["amount"]
         
-        if score < ST["LOW"]:
+        if score < ST["VERY_LOW"]:
             # 低分 - 卖出
             item["action"] = "卖出"
             item["target_amount"] = 0
