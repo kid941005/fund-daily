@@ -148,15 +148,11 @@ def fetch_fund_data(fund_code: str) -> Dict:
 
     logger.info(f"Fetching fund data: {fund_code}")
 
-    # East Money web API
+    # East Money web API (主要)
     url = f"https://fundgz.1234567.com.cn/js/{fund_code}.js?rt=1463558676006"
     content = _make_request(url)
 
-    if not content:
-        return {"error": "Failed to fetch data"}
-
-    # Parse JSONP format: jsonpgz({...})
-    if content.startswith("jsonpgz("):
+    if content and content.startswith("jsonpgz("):
         try:
             json_str = content[8:-2]
             result = json.loads(json_str)
@@ -164,10 +160,49 @@ def fetch_fund_data(fund_code: str) -> Dict:
             return result
         except json.JSONDecodeError as e:
             logger.error(f"JSON parse error: {e}")
-            return {"error": "Invalid response format"}
-
-    logger.warning(f"Invalid response format for fund {fund_code}")
-    return {"error": "Invalid response format"}
+    
+    # 备用：东方财富场外基金API
+    logger.info(f"Trying backup API for fund {fund_code}")
+    url = f"https://fund.eastmoney.com/pingzhongdata/{fund_code}.js"
+    content = _make_request(url)
+    
+    if content:
+        try:
+            # 解析pingzhongdata格式
+            data = {}
+            import re
+            # 提取关键字段
+            name_match = re.search(r'"name":"([^"]*)"', content)
+            if name_match:
+                data["name"] = name_match.group(1)
+            
+            # 提取净值相关数据
+            nav_match = re.search(r'"dwjz":"?([^",}]*)"?', content)
+            if nav_match:
+                data["dwjz"] = nav_match.group(1)
+            
+            gsz_match = re.search(r'"gsz":"?([^",}]*)"?', content)
+            if gsz_match:
+                data["gsz"] = gsz_match.group(1)
+            
+            gszzl_match = re.search(r'"gszzl":"?(-?[\d.]+)', content)
+            if gszzl_match:
+                data["gszzl"] = gszzl_match.group(1)
+            
+            # 格式化日期
+            jzrq_match = re.search(r'"jzrq":"?(\d{4}-\d{2}-\d{2})?', content)
+            if jzrq_match:
+                data["jzrq"] = jzrq_match.group(1)
+            
+            if data:
+                data["fundcode"] = fund_code
+                set_cache(cache_key, data)
+                return data
+        except Exception as e:
+            logger.error(f"Backup API parse error: {e}")
+    
+    logger.warning(f"Failed to fetch fund {fund_code} from all APIs")
+    return {"error": "Failed to fetch data"}
 
 
 def fetch_fund_detail(fund_code: str) -> Dict:
