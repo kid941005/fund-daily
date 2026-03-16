@@ -7,12 +7,9 @@ Database module for Fund Daily
 import os
 import sqlite3
 import logging
+import threading
 from typing import Optional, Dict, List
 from contextlib import contextmanager
-
-def get_placeholder():
-    """根据数据库类型返回正确的占位符"""
-    return "%s" if DB_TYPE == "postgres" else "?"
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +24,17 @@ DB_NAME = os.environ.get("FUND_DAILY_DB_NAME", "fund_daily")
 DB_USER = os.environ.get("FUND_DAILY_DB_USER", "kid")
 DB_PASSWORD = os.environ.get("FUND_DAILY_DB_PASSWORD", "")
 
+
+def get_placeholder():
+    """根据数据库类型返回正确的占位符"""
+    return "%s" if DB_TYPE == "postgres" else "?"
+
+
 _pg_conn = None
 _pg_conn_count = 0
+
+# PostgreSQL 连接池（线程本地存储）
+_pg_local = threading.local()
 
 
 def get_db():
@@ -60,21 +66,34 @@ def get_cursor(conn):
 
 
 def get_pg_connection():
-    """获取 PostgreSQL 连接"""
-    # Always create new connection for thread safety
+    """获取 PostgreSQL 连接（使用线程本地存储连接池）"""
     import psycopg2
+    
+    # 检查线程本地存储是否有可用连接
+    if hasattr(_pg_local, 'conn') and _pg_local.conn:
+        try:
+            # 验证连接是否有效
+            _pg_local.conn.execute("SELECT 1")
+            return _pg_local.conn
+        except Exception:
+            # 连接无效，关闭并重建
+            try:
+                _pg_local.conn.close()
+            except:
+                pass
+            _pg_local.conn = None
+    
     try:
-        import psycopg2
-        _pg_conn = psycopg2.connect(
+        conn = psycopg2.connect(
             host=DB_HOST,
             port=DB_PORT,
             database=DB_NAME,
             user=DB_USER,
             password=DB_PASSWORD,
         )
-        return _pg_conn
+        _pg_local.conn = conn
+        return conn
     except Exception as e:
-        logger.error(f"Error: {e}")
         logger.error(f"PostgreSQL 连接失败: {e}")
         # 回退到 SQLite
         return get_sqlite_connection()

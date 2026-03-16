@@ -136,7 +136,10 @@ def fetch_fund_data(fund_code: str) -> Dict:
         fund_code: 6-digit fund code
 
     Returns:
-        dict: Fund data or error
+        dict: 成功返回基金数据，失败返回 {"error": "错误信息"}
+        
+    Note:
+        调用方应检查返回字典中是否存在 "error" 键
     """
     cache_key = f"fund:{fund_code}"
     cached = get_cache(cache_key)
