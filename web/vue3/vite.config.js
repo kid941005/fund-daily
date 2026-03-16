@@ -20,6 +20,15 @@ export default defineConfig({
   },
   build: {
     outDir: '../../dist',
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'echarts': ['echarts'],
+          'vue-vendor': ['vue', 'vue-router', 'pinia']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 600
   }
 })

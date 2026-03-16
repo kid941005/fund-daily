@@ -47,13 +47,6 @@ def get_fund_detail(code):
     return jsonify({"success": True, "detail": detail})
 
 
-@funds_bp.route("/fund-detail-full/<code>")
-def get_fund_detail_full(code):
-    """Get full fund detail"""
-    detail = get_fund_detail_info(code)
-    return jsonify({"success": True, "detail": detail})
-
-
 @funds_bp.route("/score/<code>")
 def get_fund_score(code):
     """Get fund score report (100-point system)"""
