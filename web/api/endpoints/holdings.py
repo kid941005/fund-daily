@@ -54,6 +54,25 @@ def manage_holdings():
     return jsonify({"success": True, "message": "保存成功"})
 
 
+@holdings_bp.route("/holdings", methods=["DELETE"])
+def delete_holding():
+    """Delete a single holding"""
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "error": "请先登录", "need_login": True}), 401
+    
+    data = request.get_json()
+    code = data.get("code")
+    
+    if not code:
+        return jsonify({"success": False, "error": "缺少基金代码"})
+    
+    # 使用数据库直接删除
+    db.delete_holding(user_id, code)
+    
+    return jsonify({"success": True, "message": "删除成功"})
+
+
 @holdings_bp.route("/holdings/clear", methods=["POST"])
 def clear_all_holdings():
     """Clear all holdings"""

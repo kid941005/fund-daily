@@ -376,10 +376,10 @@ def save_holdings(user_id, holdings):
             (
                 user_id,
                 h.get("code", ""),
-                h.get("name", ""),
+                h.get("name") or "",
                 h.get("amount", 0),
-                h.get("buyNav", ""),
-                h.get("buyDate", ""),
+                h.get("buy_nav") or h.get("buyNav") or None,
+                h.get("buy_date") or h.get("buyDate") or None,
             ),
         )
     if hasattr(conn, "commit"): conn.commit()
