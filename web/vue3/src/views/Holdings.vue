@@ -246,9 +246,10 @@ const ocrResult = ref([])
 
 const totalAmount = computed(() => store.totalAmount)
 // 页面加载时获取基金数据
-onMounted(() => {
+onMounted(async () => {
   if (store.funds.length === 0) {
-    store.fetchFunds()
+    await store.fetchFunds()
+    await store.fetchHoldings()
   }
 })
 
