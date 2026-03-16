@@ -244,6 +244,7 @@ export const useFundStore = defineStore('fund', {
       if (data.success) {
         this.user = { username: data.username }
         await this.fetchHoldings()
+        await this.fetchFunds()
       }
       return data
     },
@@ -257,6 +258,7 @@ export const useFundStore = defineStore('fund', {
     async saveHoldings(funds) {
       await api.saveHoldings({ funds })
       await this.fetchHoldings()
+        await this.fetchFunds()
     },
     
     async clearHoldings() {
