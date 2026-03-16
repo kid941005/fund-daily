@@ -301,4 +301,21 @@ h1 {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+<style>
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .timing-grid,
+  .summary {
+    grid-template-columns: 1fr;
+  }
+  
+  .timing-card,
+  .summary-item {
+    padding: 12px;
+  }
+  
+  .rec-item {
+    flex-direction: column;
+  }
+}
 </style>

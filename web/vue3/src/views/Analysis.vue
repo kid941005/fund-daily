@@ -337,4 +337,19 @@ th {
 
 
 
+<style>
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .score-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .score-card {
+    padding: 12px;
+  }
+  
+  .score-details {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
