@@ -46,15 +46,20 @@
 
     <!-- 排序切换 -->
     <section class="section sort-section">
-      <div class="sort-tabs">
-        <button 
-          v-for="tab in sortTabs" 
-          :key="tab.key"
-          class="tab"
-          :class="{ active: sortBy === tab.key }"
-          @click="sortBy = tab.key"
-        >
-          {{ tab.label }}
+      <div class="sort-header">
+        <div class="sort-tabs">
+          <button 
+            v-for="tab in sortTabs" 
+            :key="tab.key"
+            class="tab"
+            :class="{ active: sortBy === tab.key }"
+            @click="sortBy = tab.key"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+        <button class="sort-order" @click="sortOrder = sortOrder === 'desc' ? 'asc' : 'desc'">
+          {{ sortOrder === 'desc' ? '↓ 降序' : '↑ 升序' }}
         </button>
       </div>
     </section>
@@ -171,6 +176,7 @@ const newHolding = ref({ code: '', amount: '' })
 
 // 排序
 const sortBy = ref('amount')
+const sortOrder = ref('desc')
 const sortTabs = [
   { key: 'amount', label: '持仓金额' },
   { key: 'change', label: '今日涨跌' },
@@ -192,13 +198,15 @@ const avgChange = computed(() => {
 
 const sortedHoldings = computed(() => {
   const list = [...store.holdings]
+  const order = sortOrder.value === 'desc' ? -1 : 1
+  
   switch (sortBy.value) {
     case 'amount':
-      return list.sort((a, b) => (b.amount || 0) - (a.amount || 0))
+      return list.sort((a, b) => ((b.amount || 0) - (a.amount || 0)) * order)
     case 'change':
-      return list.sort((a, b) => getChange(b) - getChange(a))
+      return list.sort((a, b) => (getChange(b) - getChange(a)) * order)
     case 'daily':
-      return list.sort((a, b) => getDailyProfit(b) - getDailyProfit(a))
+      return list.sort((a, b) => (getDailyProfit(b) - getDailyProfit(a)) * order)
     default:
       return list
   }
@@ -359,6 +367,29 @@ const handleOCRFile = async (e) => {
   background: #f3f4f6;
   padding: 4px;
   border-radius: 8px;
+}
+
+.sort-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sort-order {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.sort-order:hover {
+  background: #f3f4f6;
+  border-color: #3b82f6;
+  color: #3b82f6;
 }
 
 .tab {
