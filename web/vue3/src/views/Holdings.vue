@@ -15,7 +15,7 @@
       <div class="summary">
         <div class="summary-item">
           <span class="label">持仓总数</span>
-          <span class="value">{{ store.holdings.length }}</span>
+          <span class="value">{{ sortedHoldings.length }}</span>
         </div>
         <div class="summary-item">
           <span class="label">持仓金额</span>
@@ -23,7 +23,30 @@
         </div>
       </div>
       
-      <div v-if="store.holdings.length === 0" class="empty">
+      <!-- 排序按钮 -->
+      <div class="sort-controls">
+        <span class="sort-label">排序：</span>
+        <button 
+          @click="toggleSort('amount')" 
+          :class="{ active: sortKey === 'amount' }"
+        >
+          持仓金额 {{ sortKey === 'amount' ? (sortOrder === 'desc' ? '🔽' : '🔼') : '' }}
+        </button>
+        <button 
+          @click="toggleSort('today_return')" 
+          :class="{ active: sortKey === 'today_return' }"
+        >
+          当日收益 {{ sortKey === 'today_return' ? (sortOrder === 'desc' ? '🔽' : '🔼') : '' }}
+        </button>
+        <button 
+          @click="toggleSort('today_change')" 
+          :class="{ active: sortKey === 'today_change' }"
+        >
+          今日涨跌 {{ sortKey === 'today_change' ? (sortOrder === 'desc' ? '🔽' : '🔼') : '' }}
+        </button>
+      </div>
+      
+      <div v-if="sortedHoldings.length === 0" class="empty">
         <p>暂无持仓</p>
         <div class="empty-actions">
           <button @click="showAdd = true" class="btn-primary">手动添加</button>
@@ -32,7 +55,7 @@
       </div>
       
       <div v-else class="holding-list">
-        <div v-for="(holding, index) in store.holdings" :key="holding.code" class="holding-item">
+        <div v-for="(holding, index) in sortedHoldings" :key="holding.code" class="holding-item">
           <div class="holding-info">
             <span class="code">{{ holding.code }}</span>
             <span class="name">{{ holding.name || '未知' }}</span>
@@ -165,6 +188,49 @@ const showImport = ref(false)
 const importTab = ref('manual')
 const importText = ref('')
 const newHolding = ref({ code: '', amount: '' })
+
+// 排序
+const sortKey = ref('amount')
+const sortOrder = ref('desc')
+
+const sortedHoldings = computed(() => {
+  const holdings = [...store.holdings]
+  const key = sortKey.value
+  const order = sortOrder.value === 'desc' ? -1 : 1
+  
+  return holdings.sort((a, b) => {
+    let aVal, bVal
+    
+    if (key === 'amount') {
+      aVal = a.amount || 0
+      bVal = b.amount || 0
+    } else if (key === 'today_return') {
+      const fundA = store.funds.find(f => f.fund_code === a.code)
+      const fundB = store.funds.find(f => f.fund_code === b.code)
+      aVal = fundA?.dz || 0
+      bVal = fundB?.dz || 0
+    } else if (key === 'today_change') {
+      const fundA = store.funds.find(f => f.fund_code === a.code)
+      const fundB = store.funds.find(f => f.fund_code === b.code)
+      aVal = fundA?.dz_percent || 0
+      bVal = fundB?.dz_percent || 0
+    } else {
+      aVal = a.amount || 0
+      bVal = b.amount || 0
+    }
+    
+    return (aVal - bVal) * order
+  })
+})
+
+const toggleSort = (key) => {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc'
+  } else {
+    sortKey.value = key
+    sortOrder.value = 'desc'
+  }
+}
 
 // OCR state
 const ocrLoading = ref(false)
