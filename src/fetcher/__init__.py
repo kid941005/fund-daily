@@ -274,6 +274,9 @@ def fetch_market_news(limit: int = 8) -> List[Dict]:
                     }
                 )
             set_cache(cache_key, news_list)
+            # 新闻使用更短的缓存时间 (5分钟)
+            if HAS_REDIS:
+                redis_set(cache_key, news_list, 300)
             return news_list
     except Exception as e:
         logger.error(f"News parse error: {str(e)}")

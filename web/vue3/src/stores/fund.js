@@ -146,11 +146,32 @@ export const useFundStore = defineStore('fund', {
       }
     },
     
-    async fetchNews() {
+    async fetchNews(force = false) {
+      // 优先从缓存读取
+      if (!force) {
+        const cached = localStorage.getItem(CACHE_CONFIG.NEWS_KEY)
+        if (cached) {
+          try {
+            const { data, timestamp } = JSON.parse(cached)
+            if (Date.now() - timestamp < CACHE_CONFIG.NEWS_EXPIRY) {
+              this.news = data
+              return
+            }
+          } catch (e) {
+            console.error('News cache error:', e)
+          }
+        }
+      }
+      
       this.loading.news = true
       try {
         const data = await api.getNews()
         this.news = data.news || []
+        // 保存到缓存
+        localStorage.setItem(CACHE_CONFIG.NEWS_KEY, JSON.stringify({
+          data: this.news,
+          timestamp: Date.now()
+        }))
       } catch (e) {
         console.error('Failed to fetch news:', e)
       } finally {
