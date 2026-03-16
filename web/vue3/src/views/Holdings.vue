@@ -796,3 +796,84 @@ button {
   color: #667eea;
 }
 </style>
+
+/* 移动端自适应 */
+@media (max-width: 480px) {
+  .holdings {
+    padding: 12px;
+  }
+  
+  .holding-item {
+    padding: 12px;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .holding-info {
+    width: 100%;
+  }
+  
+  .holding-info .code {
+    font-size: 14px;
+  }
+  
+  .holding-info .name {
+    font-size: 12px;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+  }
+  
+  .holding-info .nav-info,
+  .holding-info .return-info {
+    font-size: 11px;
+    display: block;
+  }
+  
+  .holding-amount {
+    width: 100%;
+  }
+  
+  .holding-amount input {
+    width: 100%;
+    padding: 8px;
+    font-size: 14px;
+  }
+  
+  .holding-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .btn-danger {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+  
+  .sort-controls {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 8px;
+  }
+  
+  .sort-controls button {
+    padding: 4px 8px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  
+  .total-amount {
+    font-size: 24px;
+  }
+  
+  .total-label {
+    font-size: 14px;
+  }
+}
