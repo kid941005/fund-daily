@@ -113,6 +113,39 @@ def check_login():
     return jsonify({"success": True, "logged_in": False})
 
 
+@api.route("/password", methods=["POST"])
+def change_password():
+    """Change user password"""
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "message": "请先登录"}), 401
+    
+    data = request.json or {}
+    old_password = data.get("old_password", "")
+    new_password = data.get("new_password", "")
+    
+    if not old_password or not new_password:
+        return jsonify({"success": False, "message": "请填写完整"})
+    
+    if len(new_password) < 6:
+        return jsonify({"success": False, "message": "新密码至少6位"})
+    
+    # Verify old password
+    user = db.get_user_by_id(user_id)
+    if not user:
+        return jsonify({"success": False, "message": "用户不存在"})
+    
+    from .auth import verify_password
+    if not verify_password(old_password, user["password"]):
+        return jsonify({"success": False, "message": "当前密码错误"})
+    
+    # Update password
+    new_hash = hash_password(new_password)
+    db.update_user_password(user_id, new_hash)
+    
+    return jsonify({"success": True, "message": "密码修改成功"})
+
+
 # ============== Market Routes ==============
 @api.route("/news")
 def get_news():
