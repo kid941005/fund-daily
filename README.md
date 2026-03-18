@@ -3,7 +3,7 @@
 > 每日基金分析工具 - 智能持仓管理与风险分析
 
 [![GitHub Stars](https://img.shields.io/github/stars/kid941005/fund-daily?style=flat)](https://github.com/kid941005/fund-daily)
-[![Version](https://img.shields.io/badge/version-2.6.0-blue)](https://github.com/kid941005/fund-daily)
+[![Version](https://img.shields.io/badge/version-2.6.0-blue)](https://github.com/kid941005/fund-daily/releases/tag/v2.6.0)
 [![Python](https://img.shields.io/badge/python-3.11+-green)](https://www.python.org/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue)](https://www.docker.com/)
 [![Tests](https://img.shields.io/badge/tests-63+-green)](https://github.com/kid941005/fund-daily)
@@ -65,6 +65,17 @@ fund-daily/
 ├── Dockerfile                 # Docker 镜像
 └── pyproject.toml            # 项目配置
 ```
+
+## 🎉 最新版本 v2.6.0 已发布！
+
+**v2.6.0 主要改进**:
+- 🔒 **安全加固**: 统一输入验证系统，防止安全漏洞
+- 🗄️ **数据库优化**: PostgreSQL完全迁移 + 36个性能索引
+- 🏗️ **架构升级**: 服务层重构 + 模块化设计
+- ✨ **功能增强**: 清仓按钮 + 实时数据展示
+- ⚡ **性能优化**: 多级缓存 + 连接池优化
+
+[查看完整发布说明](CHANGELOG-2.6.0.md) | [下载 v2.6.0](https://github.com/kid941005/fund-daily/releases/tag/v2.6.0)
 
 ## 🚀 快速开始
 
