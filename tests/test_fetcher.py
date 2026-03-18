@@ -33,16 +33,20 @@ class TestCache:
     def test_cache_expiry(self):
         """Test cache expiration"""
         import time
-        from src.fetcher import CACHE_DURATION, _cache
-        set_cache("expiry_key", "value")
+        from src.cache.lru_cache import LRUCache
         
-        # 直接设置过期时间
-        if "expiry_key" in _cache:
-            _cache["expiry_key"] = ("value", time.time() - CACHE_DURATION - 100)
+        # 创建短期缓存测试过期
+        short_cache = LRUCache(max_size=100, default_ttl=1)
+        short_cache.set("test_key", "test_value")
         
-        result = get_cache("expiry_key")
-        # 缓存可能已过期
-        assert result is None or result == "value"  # 取决于缓存实现
+        result = short_cache.get("test_key")
+        assert result == "test_value"
+        
+        # 等待过期
+        time.sleep(1.5)
+        
+        result = short_cache.get("test_key")
+        assert result is None, "Cache should expire"
     
     def test_clear_cache(self):
         """Test cache clearing"""

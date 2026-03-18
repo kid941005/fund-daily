@@ -10,19 +10,19 @@
         <div class="risk-overview">
           <div class="risk-card">
             <span class="label">风险等级</span>
-            <span class="value">{{ analysis?.risk_metrics?.risk_level || '--' }}</span>
+            <span class="value">{{ analysis?.risk_level || '--' }}</span>
           </div>
           <div class="risk-card">
             <span class="label">风险评分</span>
-            <span class="value">{{ analysis?.risk_metrics?.risk_score || 0 }}</span>
+            <span class="value">{{ analysis?.risk_score || 0 }}</span>
           </div>
           <div class="risk-card">
             <span class="label">基金数量</span>
-            <span class="value">{{ analysis?.risk_metrics?.fund_count || 0 }}</span>
+            <span class="value">{{ analysis?.fund_count || 0 }}</span>
           </div>
           <div class="risk-card">
             <span class="label">分散度</span>
-            <span class="value">{{ analysis?.risk_metrics?.diversification || '--' }}</span>
+            <span class="value">{{ analysis?.diversification || '--' }}</span>
           </div>
         </div>
         
@@ -50,6 +50,55 @@
         
         </template>
     </section>
+    
+    <!-- 调仓建议 -->
+    <section class="section">
+      <h2>⚖️ 调仓建议</h2>
+      <div v-if="rebalancingLoading" class="loading">加载中...</div>
+      <div v-else-if="rebalancing.trades?.length">
+        <div class="rebalance-summary">
+          <div class="rb-stat">
+            <span class="label">持有</span>
+            <span class="value keep">{{ rebalancing.summary?.hold_count || 0 }}</span>
+          </div>
+          <div class="rb-stat">
+            <span class="label">卖出</span>
+            <span class="value sell">{{ rebalancing.summary?.sell_count || 0 }}</span>
+          </div>
+          <div class="rb-stat">
+            <span class="label">买入</span>
+            <span class="value buy">{{ rebalancing.summary?.buy_count || 0 }}</span>
+          </div>
+        </div>
+        
+        <!-- 转换建议 -->
+        <div v-if="rebalancing.summary?.conversion_advice?.length" class="conversion-advice">
+          <h3>🔄 转换建议</h3>
+          <div class="advice-content">
+            <p v-for="(advice, index) in rebalancing.summary.conversion_advice" :key="index">
+              {{ advice }}
+            </p>
+          </div>
+        </div>
+        
+        <h3>调整明细</h3>
+        <div class="trade-list">
+          <div v-for="trade in rebalancing.trades" :key="trade.fund_code" 
+               class="trade-item" :class="trade.action">
+            <div class="trade-info">
+              <span class="fund-code">{{ trade.fund_code }}</span>
+              <span class="fund-name">{{ trade.fund_name }}</span>
+            </div>
+            <div class="trade-action" :class="trade.action">{{ trade.action }}</div>
+            <div class="trade-detail">
+              当前 {{ trade.current_pct?.toFixed(1) }}% → 目标 {{ trade.target_pct?.toFixed(1) }}%
+            </div>
+            <div class="trade-reason">{{ trade.reason }}</div>
+          </div>
+        </div>
+      </div>
+      <div v-else class="empty">暂无调仓建议</div>
+    </section>
   </div>
 </template>
 
@@ -63,12 +112,15 @@ const pieChart = ref(null)
 const barChart = ref(null)
 const store = useFundStore()
 const analysis = ref(null)
-
+const rebalancing = computed(() => store.rebalancing)
+const rebalancingLoading = computed(() => store.loading.rebalancing)
 
 const sortByScore = (order) => {
   sortOrder.value = order
 }
 const loading = ref(true)
+
+store.fetchRebalancing()
 
 const fetchAnalysis = async () => {
   loading.value = true
@@ -351,5 +403,128 @@ th {
   .score-details {
     grid-template-columns: 1fr;
   }
+}
+
+/* 转换建议样式 */
+.conversion-advice {
+  padding: 16px;
+  background: #f0f9ff;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #3b82f6;
+}
+
+.conversion-advice h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.conversion-advice h3::before {
+  content: "🔄";
+}
+
+.advice-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.advice-content p {
+  margin: 8px 0;
+  padding-left: 12px;
+}
+
+.advice-content p:first-child {
+  font-weight: 600;
+  color: #1e40af;
+}
+
+/* 调仓建议样式 */
+.rebalance-summary {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.rb-stat {
+  text-align: center;
+}
+
+.rb-stat .label {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.rb-stat .value {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.rb-stat .value.keep { color: #667eea; }
+.rb-stat .value.sell { color: #ef4444; }
+.rb-stat .value.buy { color: #22c55e; }
+
+.trade-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trade-item {
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #ddd;
+}
+
+.trade-item.keep { border-left-color: #667eea; }
+.trade-item.sell { border-left-color: #ef4444; }
+.trade-item.buy { border-left-color: #22c55e; }
+
+.trade-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.trade-action {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.trade-action.keep { background: #e0e7ff; color: #667eea; }
+.trade-action.sell { background: #fee2e2; color: #ef4444; }
+.trade-action.buy { background: #dcfce7; color: #22c55e; }
+
+.trade-detail {
+  font-size: 14px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.trade-reason {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.empty {
+  text-align: center;
+  padding: 40px;
+  color: #999;
 }
 </style>

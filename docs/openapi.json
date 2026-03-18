@@ -1,0 +1,701 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Fund Daily API",
+    "version": "2.5.1",
+    "description": "基金每日分析系统 API 文档",
+    "contact": {
+      "name": "API Support",
+      "email": "support@example.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "开发服务器"
+    }
+  ],
+  "paths": {
+    "/api/register": {
+      "post": {
+        "summary": "",
+        "description": "创建新用户账户",
+        "tags": [
+          "认证"
+        ],
+        "responses": {
+          "200": {
+            "description": "注册成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "username": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "example": "testuser"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "password123"
+                  }
+                },
+                "required": [
+                  "username",
+                  "password"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/login": {
+      "post": {
+        "summary": "",
+        "description": "用户登录并创建会话",
+        "tags": [
+          "认证"
+        ],
+        "responses": {
+          "200": {
+            "description": "登录成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "username": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "example": "testuser"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "password123"
+                  }
+                },
+                "required": [
+                  "username",
+                  "password"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logout": {
+      "post": {
+        "summary": "",
+        "description": "销毁用户会话",
+        "tags": [
+          "认证"
+        ],
+        "responses": {
+          "200": {
+            "description": "登出成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/check-login": {
+      "get": {
+        "summary": "",
+        "description": "检查当前用户是否已登录",
+        "tags": [
+          "认证"
+        ],
+        "responses": {
+          "200": {
+            "description": "登录状态",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "logged_in": {
+                      "type": "boolean"
+                    },
+                    "username": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/funds": {
+      "get": {
+        "summary": "",
+        "description": "获取用户持有的基金列表或默认基金列表",
+        "tags": [
+          "基金数据"
+        ],
+        "responses": {
+          "200": {
+            "description": "基金列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "funds": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Fund"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "返回数量限制",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          }
+        ]
+      }
+    },
+    "/api/fund-detail/{code}": {
+      "get": {
+        "summary": "",
+        "description": "根据基金代码获取基金详细信息",
+        "tags": [
+          "基金数据"
+        ],
+        "responses": {
+          "200": {
+            "description": "基金详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "detail": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "description": "基金代码（6位数字）",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{6}$"
+            }
+          }
+        ]
+      }
+    },
+    "/api/score/{code}": {
+      "get": {
+        "summary": "",
+        "description": "获取基金的100分制评分报告",
+        "tags": [
+          "基金数据",
+          "投资建议"
+        ],
+        "responses": {
+          "200": {
+            "description": "评分报告",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "fund_code": {
+                      "type": "string"
+                    },
+                    "fund_name": {
+                      "type": "string"
+                    },
+                    "daily_change": {
+                      "type": "number"
+                    },
+                    "scoring": {
+                      "$ref": "#/components/schemas/ScoreResult"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "description": "基金代码（6位数字）",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{6}$"
+            }
+          }
+        ]
+      }
+    },
+    "/api/market": {
+      "get": {
+        "summary": "",
+        "description": "获取市场情绪、新闻和热门板块数据",
+        "tags": [
+          "市场数据"
+        ],
+        "responses": {
+          "200": {
+            "description": "市场数据",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "market": {
+                      "$ref": "#/components/schemas/MarketSentiment"
+                    },
+                    "news": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "hot_sectors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/advice": {
+      "get": {
+        "summary": "",
+        "description": "获取基于市场情绪的投资建议",
+        "tags": [
+          "投资建议"
+        ],
+        "responses": {
+          "200": {
+            "description": "投资建议",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "advice": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "summary": "",
+        "description": "检查系统健康状态",
+        "tags": [
+          "系统管理"
+        ],
+        "responses": {
+          "200": {
+            "description": "健康状态",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "health": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metrics": {
+      "get": {
+        "summary": "",
+        "description": "获取系统性能指标",
+        "tags": [
+          "性能监控"
+        ],
+        "responses": {
+          "200": {
+            "description": "性能指标",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "metrics": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "reset",
+            "in": "query",
+            "description": "是否重置指标计数器",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "detailed",
+            "in": "query",
+            "description": "是否返回详细指标",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ]
+      }
+    },
+    "/api/metrics/enhanced": {
+      "get": {
+        "summary": "",
+        "description": "获取包含历史数据、趋势分析和告警的增强版性能指标",
+        "tags": [
+          "性能监控"
+        ],
+        "responses": {
+          "200": {
+            "description": "增强版性能指标",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "metrics": {
+                      "type": "object"
+                    },
+                    "version": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "reset",
+            "in": "query",
+            "description": "是否重置历史数据",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "detailed",
+            "in": "query",
+            "description": "是否返回详细数据",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "VALIDATION_ERROR"
+              },
+              "message": {
+                "type": "string",
+                "example": "基金代码必须为6位数字"
+              },
+              "field": {
+                "type": "string",
+                "example": "code"
+              },
+              "value": {
+                "type": "string",
+                "example": "00001"
+              }
+            }
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "操作成功"
+          }
+        }
+      },
+      "Fund": {
+        "type": "object",
+        "properties": {
+          "fund_code": {
+            "type": "string",
+            "example": "000001"
+          },
+          "fund_name": {
+            "type": "string",
+            "example": "华夏成长"
+          },
+          "net_value": {
+            "type": "number",
+            "example": 1.2345
+          },
+          "daily_change": {
+            "type": "number",
+            "example": 1.23
+          },
+          "return_1y": {
+            "type": "number",
+            "example": 15.5
+          },
+          "risk_level": {
+            "type": "string",
+            "example": "中高风险"
+          },
+          "trend": {
+            "type": "string",
+            "example": "up"
+          },
+          "score": {
+            "type": "number",
+            "example": 85.5
+          }
+        }
+      },
+      "MarketSentiment": {
+        "type": "object",
+        "properties": {
+          "sentiment": {
+            "type": "string",
+            "example": "bullish"
+          },
+          "score": {
+            "type": "number",
+            "example": 75.0
+          },
+          "description": {
+            "type": "string",
+            "example": "市场情绪乐观"
+          }
+        }
+      },
+      "ScoreResult": {
+        "type": "object",
+        "properties": {
+          "total_score": {
+            "type": "number",
+            "example": 85.5
+          },
+          "breakdown": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "example": {
+              "valuation": 20,
+              "performance": 18,
+              "risk": 15
+            }
+          },
+          "grade": {
+            "type": "string",
+            "example": "B+"
+          },
+          "details": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "session_auth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "认证",
+      "description": "用户认证和会话管理"
+    },
+    {
+      "name": "基金数据",
+      "description": "基金信息获取和查询"
+    },
+    {
+      "name": "市场数据",
+      "description": "市场行情和情绪分析"
+    },
+    {
+      "name": "投资建议",
+      "description": "基金评分和投资建议"
+    },
+    {
+      "name": "投资组合",
+      "description": "用户投资组合管理"
+    },
+    {
+      "name": "系统管理",
+      "description": "系统状态和监控"
+    },
+    {
+      "name": "性能监控",
+      "description": "系统性能指标"
+    }
+  ]
+}

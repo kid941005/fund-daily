@@ -29,50 +29,68 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
     # 按评分排序
     scored.sort(key=lambda x: x["score"], reverse=True)
     
-    # 第一步：计算卖出总金额
-    sell_amount = 0
+    # 第一步：识别需要卖出的低评分基金
+    sell_funds = []
+    hold_funds = []
+    buy_candidates = []
+    
     for item in scored:
         score = item["score"]
-        amount = item["amount"]
         
-        if score < ST["VERY_LOW"]:
-            # 低分 - 卖出
+        if score < ST["VERY_LOW"]:  # < 40分
+            # 低评分 - 卖出
             item["action"] = "卖出"
             item["target_amount"] = 0
             item["target_pct"] = 0
-            sell_amount += amount
-        elif score < ST["ACTIVE"]:
-            # 中低分 - 持有
+            sell_funds.append(item)
+        elif score < ST["ACTIVE"]:  # 40-55分
+            # 中低评分 - 持有
             item["action"] = "持有"
-            item["target_amount"] = amount
+            item["target_amount"] = item["amount"]
             item["target_pct"] = item["pct"]
-        else:
-            # 高分 - 持有（待增持）
+            hold_funds.append(item)
+        else:  # ≥ 55分
+            # 高评分 - 持有（可能增持）
             item["action"] = "持有"
-            item["target_amount"] = amount
+            item["target_amount"] = item["amount"]
             item["target_pct"] = item["pct"]
+            buy_candidates.append(item)
     
-    # 第二步：将卖出金额分配给高分基金（保持总金额不变）
-    if sell_amount > 0:
-        # 高分基金列表
-        high_score_funds = [item for item in scored if item["score"] >= ST["HIGH"]]
+    # 计算卖出总金额
+    sell_amount = sum(item["amount"] for item in sell_funds)
+    
+    # 第二步：将卖出金额分配给高评分基金
+    conversion_suggestions = []
+    if sell_amount > 0 and buy_candidates:
+        # 按评分排序，优先分配给最高分的基金
+        buy_candidates.sort(key=lambda x: x["score"], reverse=True)
         
-        if high_score_funds:
-            # 按评分排序，优先分配给高分基金
-            high_score_funds.sort(key=lambda x: x["score"], reverse=True)
+        # 计算当前高评分基金总金额
+        current_high_total = sum(item["amount"] for item in buy_candidates)
+        
+        # 将卖出金额按比例分配
+        remaining_sell_amount = sell_amount
+        for item in buy_candidates:
+            if remaining_sell_amount <= 0:
+                break
             
-            # 计算当前高分基金总金额
-            current_high_total = sum(item["amount"] for item in high_score_funds)
+            # 按当前占比分配
+            ratio = item["amount"] / current_high_total if current_high_total > 0 else 1.0 / len(buy_candidates)
+            add_amount = remaining_sell_amount * ratio
+            item["target_amount"] += add_amount
+            item["target_pct"] = item["target_amount"] / total_amount * 100
             
-            # 将卖出金额按比例分配
-            for item in high_score_funds:
-                if sell_amount <= 0:
-                    break
-                # 按当前占比分配
-                ratio = item["amount"] / current_high_total if current_high_total > 0 else 0
-                add_amount = sell_amount * ratio
-                item["target_amount"] += add_amount
-                item["target_pct"] = item["target_amount"] / total_amount * 100
+            # 记录转换建议
+            if add_amount > 10:  # 只有增持金额大于10元才记录
+                conversion_suggestions.append({
+                    "fund_code": item["fund"].get("fund_code", ""),
+                    "fund_name": item["fund"].get("fund_name", ""),
+                    "score": item["score"],
+                    "add_amount": round(add_amount, 2),
+                    "new_pct": round(item["target_pct"], 1)
+                })
+            
+            remaining_sell_amount -= add_amount
     
     # 第三步：生成交易清单
     trades = []
@@ -93,7 +111,7 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
                 "current_pct": round(item["pct"], 1),
                 "target_amount": 0,
                 "target_pct": 0,
-                "reason": f"评分{item['score']}分，{action}"
+                "reason": f"评分{item['score']}分（低评分），建议卖出"
             })
         # 记录增持的基金
         elif target_amount > current_amount + 10:
@@ -106,7 +124,7 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
                 "current_pct": round(item["pct"], 1),
                 "target_amount": round(target_amount, 2),
                 "target_pct": round(item["target_pct"], 1),
-                "reason": f"评分{item['score']}分，买入"
+                "reason": f"评分{item['score']}分（高评分），建议增持"
             })
         # 记录不变的
         elif action == "持有":
@@ -119,8 +137,45 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
                 "current_pct": round(item["pct"], 1),
                 "target_amount": round(target_amount, 2),
                 "target_pct": round(item["target_pct"], 1),
-                "reason": f"评分{item['score']}分，持有"
+                "reason": f"评分{item['score']}分，建议持有"
             })
+    
+    # 第四步：生成转换建议
+    conversion_advice = []
+    if sell_funds and conversion_suggestions:
+        # 汇总卖出基金
+        sell_summary = []
+        for item in sell_funds:
+            sell_summary.append({
+                "fund_code": item["fund"].get("fund_code", ""),
+                "fund_name": item["fund"].get("fund_name", ""),
+                "score": item["score"],
+                "amount": round(item["amount"], 2)
+            })
+        
+        # 汇总买入基金
+        buy_summary = []
+        for suggestion in conversion_suggestions:
+            buy_summary.append({
+                "fund_code": suggestion["fund_code"],
+                "fund_name": suggestion["fund_name"],
+                "score": suggestion["score"],
+                "add_amount": suggestion["add_amount"]
+            })
+        
+        # 生成转换建议文本
+        conversion_advice.append(f"建议卖出{len(sell_funds)}只低评分基金（<40分），总金额{round(sell_amount, 2)}元")
+        conversion_advice.append(f"将资金转换到{len(buy_summary)}只高评分基金（≥55分）")
+        
+        if sell_summary:
+            conversion_advice.append("卖出基金：")
+            for sell in sell_summary:
+                conversion_advice.append(f"  • {sell['fund_name']}({sell['fund_code']}) - 评分{sell['score']}分，金额{sell['amount']}元")
+        
+        if buy_summary:
+            conversion_advice.append("增持基金：")
+            for buy in buy_summary:
+                conversion_advice.append(f"  • {buy['fund_name']}({buy['fund_code']}) - 评分{buy['score']}分，增持{buy['add_amount']}元")
     
     # 统计
     summary = {
@@ -128,6 +183,7 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
         "sell_count": len([t for t in trades if t["action"] == "卖出"]),
         "hold_count": len([t for t in trades if t["action"] == "持有"]),
         "sell_amount": round(sell_amount, 2),
+        "conversion_advice": conversion_advice
     }
     
     return {

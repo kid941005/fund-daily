@@ -15,6 +15,15 @@
       </div>
     </header>
     
+    <!-- 全局错误提示 -->
+    <div v-if="store.error" class="error-banner">
+      <div class="error-content">
+        <span class="error-icon">⚠️</span>
+        <span class="error-message">{{ store.error }}</span>
+        <button class="error-close" @click="clearError">×</button>
+      </div>
+    </div>
+    
     <nav class="nav">
       <router-link to="/">首页</router-link>
       <router-link to="/holdings">持仓</router-link>
@@ -30,20 +39,68 @@
       </router-view>
     </main>
     
-    <!-- Login Modal -->
-    <div v-if="showLogin" class="modal" @click.self="showLogin = false">
-      <div class="modal-content">
-        <h2>登录</h2>
-        <div class="form-group">
-          <input v-model="loginForm.username" placeholder="用户名" />
+    <!-- Login/Register Modal -->
+    <div v-if="showLogin" class="modal" @click.self="closeLogin">
+      <div class="modal-content auth-modal">
+        <h2>{{ isRegistering ? '📝 注册新账号' : '🔐 登录' }}</h2>
+        
+        <!-- 登录/注册 Tab 切换 -->
+        <div class="auth-tabs">
+          <button 
+            :class="{ active: !isRegistering }" 
+            @click="switchToLogin"
+          >
+            🔐 登录
+          </button>
+          <button 
+            :class="{ active: isRegistering }" 
+            @click="switchToRegister"
+          >
+            📝 注册
+          </button>
         </div>
-        <div class="form-group">
-          <input v-model="loginForm.password" type="password" placeholder="密码" @keyup.enter="handleLogin" />
-        </div>
-        <div class="modal-actions">
-          <button @click="showLogin = false">取消</button>
-          <button class="primary" @click="handleLogin">登录</button>
-        </div>
+        
+        <!-- 登录表单 -->
+        <form v-if="!isRegistering" @submit.prevent="handleLogin" class="auth-form">
+          <div class="form-group">
+            <label>用户名</label>
+            <input v-model="loginForm.username" placeholder="请输入用户名" required />
+          </div>
+          <div class="form-group">
+            <label>密码</label>
+            <input v-model="loginForm.password" type="password" placeholder="请输入密码" required @keyup.enter="handleLogin" />
+          </div>
+          <div class="modal-actions">
+            <button type="button" @click="closeLogin">取消</button>
+            <button type="submit" class="primary">登录</button>
+          </div>
+          <p class="auth-switch">
+            没有账号？<a href="#" @click.prevent="switchToRegister">立即注册</a>
+          </p>
+        </form>
+        
+        <!-- 注册表单 -->
+        <form v-else @submit.prevent="handleRegister" class="auth-form">
+          <div class="form-group">
+            <label>用户名</label>
+            <input v-model="loginForm.username" placeholder="请输入用户名（至少3位）" required minlength="3" />
+          </div>
+          <div class="form-group">
+            <label>密码</label>
+            <input v-model="loginForm.password" type="password" placeholder="请输入密码（至少6位）" required minlength="6" />
+          </div>
+          <div class="form-group">
+            <label>确认密码</label>
+            <input v-model="loginForm.confirmPassword" type="password" placeholder="请再次输入密码" required @keyup.enter="handleRegister" />
+          </div>
+          <div class="modal-actions">
+            <button type="button" @click="closeLogin">取消</button>
+            <button type="submit" class="primary">注册</button>
+          </div>
+          <p class="auth-switch">
+            已有账号？<a href="#" @click.prevent="switchToLogin">立即登录</a>
+          </p>
+        </form>
       </div>
     </div>
     
@@ -144,7 +201,8 @@ const store = useFundStore()
 const showLogin = ref(false)
 const showSettings = ref(false)
 const settingsTab = ref('notify')
-const loginForm = ref({ username: '', password: '' })
+const isRegistering = ref(false)
+const loginForm = ref({ username: '', password: '', confirmPassword: '' })
 
 const settings = reactive({
   dingtalk: { enabled: false, webhook: '' },
@@ -167,14 +225,69 @@ const currentDate = computed(() => {
   })
 })
 
+const switchToLogin = () => {
+  isRegistering.value = false
+  loginForm.value = { username: '', password: '', confirmPassword: '' }
+}
+
+const switchToRegister = () => {
+  isRegistering.value = true
+  loginForm.value = { username: '', password: '', confirmPassword: '' }
+}
+
+const closeLogin = () => {
+  showLogin.value = false
+  loginForm.value = { username: '', password: '', confirmPassword: '' }
+}
+
 const handleLogin = async () => {
   const result = await store.login(loginForm.value.username, loginForm.value.password)
   if (result.success) {
     showLogin.value = false
-    loginForm.value = { username: '', password: '' }
+    loginForm.value = { username: '', password: '', confirmPassword: '' }
     loadSettings()
   } else {
     alert(result.message || '登录失败')
+  }
+}
+
+const handleRegister = async () => {
+  const { username, password, confirmPassword } = loginForm.value
+  
+  if (!username || !password) {
+    alert('用户名和密码不能为空')
+    return
+  }
+  
+  if (password.length < 6) {
+    alert('密码长度至少6位')
+    return
+  }
+  
+  if (password !== confirmPassword) {
+    alert('两次输入的密码不一致')
+    return
+  }
+  
+  try {
+    const response = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    })
+    
+    const data = await response.json()
+    
+    if (data.success) {
+      alert('注册成功！请使用新账号登录')
+      isRegistering.value = false
+      loginForm.value = { username: '', password: '', confirmPassword: '' }
+    } else {
+      alert(data.error?.message || '注册失败')
+    }
+  } catch (error) {
+    alert('注册请求失败，请检查网络连接')
+    console.error('Registration error:', error)
   }
 }
 
@@ -255,6 +368,11 @@ onMounted(async () => {
     loadSettings()
   }
 })
+
+// 清除错误
+const clearError = () => {
+  store.error = null
+}
 </script>
 
 <style scoped>
@@ -483,5 +601,155 @@ onMounted(async () => {
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
+}
+
+/* 错误提示样式 */
+.error-banner {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.error-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.error-icon {
+  margin-right: 8px;
+}
+
+.error-message {
+  flex: 1;
+}
+
+.error-close {
+  background: none;
+  border: none;
+  color: #856404;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.error-close:hover {
+  opacity: 0.7;
+}
+
+/* 登录注册模态框样式 */
+.auth-modal {
+  max-width: 400px;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 12px;
+}
+
+.auth-tabs button {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  background: #f8f9fa;
+  color: #6c757d;
+  border-radius: 6px 6px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.auth-tabs button:hover {
+  background: #e9ecef;
+}
+
+.auth-tabs button.active {
+  background: #667eea;
+  color: white;
+}
+
+.auth-form .form-group {
+  margin-bottom: 16px;
+}
+
+.auth-form label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #495057;
+  font-weight: 500;
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.modal-actions {
+  margin-top: 20px;
+}
+
+.modal-actions button {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-actions button:not(.primary) {
+  background: #f8f9fa;
+  color: #6c757d;
+  margin-right: 12px;
+}
+
+.modal-actions button:not(.primary):hover {
+  background: #e9ecef;
+}
+
+.modal-actions button.primary {
+  background: #667eea;
+  color: white;
+}
+
+.modal-actions button.primary:hover {
+  background: #5a67d8;
+}
+
+.auth-switch {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.auth-switch a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
 }
 </style>

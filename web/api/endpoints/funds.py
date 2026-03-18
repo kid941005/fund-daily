@@ -4,19 +4,27 @@ Funds API endpoints
 
 from flask import Blueprint, jsonify, request, session
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from web.services import fund_service
-from db import database as db
+from db import database_pg as db
 from src.fetcher import fetch_fund_data, fetch_market_news, fetch_hot_sectors
 from src.advice import analyze_fund, get_fund_detail_info, generate_100_score
+from src.validation import validate_fund_code_param, validate_query_params, validate_limit
 
 funds_bp = Blueprint("funds", __name__)
 
 
 @funds_bp.route("/funds")
 def get_funds():
-    """Get all funds for user"""
+    """Get all funds for user
+    
+    Query params:
+        force: if 'true', bypass cache and fetch fresh data
+    """
     user_id = session.get("user_id")
     holdings = db.get_holdings(user_id) if user_id else []
+    
+    # 检查是否强制刷新
+    force_refresh = request.args.get("force", "false").lower() == "true"
+    use_cache = not force_refresh
     
     codes = [h["code"] for h in holdings if h.get("amount", 0) > 0]
     if not codes:
@@ -24,7 +32,7 @@ def get_funds():
     
     # 并行获取基金数据
     def process_fund(code):
-        data = fetch_fund_data(code)
+        data = fetch_fund_data(code, use_cache=use_cache)
         if not data.get("error"):
             return analyze_fund(data)
         return None
@@ -37,21 +45,40 @@ def get_funds():
             if result:
                 funds_data.append(result)
     
-    return jsonify({"success": True, "funds": funds_data})
+    return jsonify({
+        "success": True, 
+        "funds": funds_data,
+        "force_refresh": force_refresh
+    })
 
 
 @funds_bp.route("/fund-detail/<code>")
+@validate_fund_code_param("code")
 def get_fund_detail(code):
-    """Get fund detail"""
-    detail = get_fund_detail_info(code)
+    """Get fund detail
+    
+    Query params:
+        force: if 'true', bypass cache
+    """
+    force_refresh = request.args.get("force", "false").lower() == "true"
+    use_cache = not force_refresh
+    detail = get_fund_detail_info(code, use_cache=use_cache)
     return jsonify({"success": True, "detail": detail})
 
 
 @funds_bp.route("/score/<code>")
+@validate_fund_code_param("code")
 def get_fund_score(code):
-    """Get fund score report (100-point system)"""
+    """Get fund score report (100-point system)
+    
+    Query params:
+        force: if 'true', bypass cache
+    """
+    force_refresh = request.args.get("force", "false").lower() == "true"
+    use_cache = not force_refresh
+    
     try:
-        fund_data = fetch_fund_data(code)
+        fund_data = fetch_fund_data(code, use_cache=use_cache)
         if fund_data.get("error"):
             return jsonify({"success": False, "error": fund_data.get("error", "获取数据失败")})
         

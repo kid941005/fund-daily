@@ -8,6 +8,7 @@ import os
 import sys
 import uuid
 import logging
+import secrets
 from datetime import datetime
 
 # Add parent directory to path for imports
@@ -38,31 +39,55 @@ def get_version():
 
 VERSION = get_version()
 
+# 导入配置管理器
+from src.config import get_config
+config = get_config()
+
 # Flask app
 app = Flask(__name__, static_folder='../dist/assets', template_folder='../dist')
 
 # CORS
 CORS(app, supports_credentials=True)
 
-# Secret key
-secret_key = os.environ.get("FUND_DAILY_SECRET_KEY")
+# Secret key - 使用配置管理器
+secret_key = config.security.secret_key
 if not secret_key:
-    secret_key = "fund-daily-dev-key-please-change-in-production"
+    # 生产环境必须设置密钥
+    if config.is_production():
+        raise ValueError(
+            "FUND_DAILY_SECRET_KEY must be set in production environment! "
+            "Please set a strong secret key via environment variable."
+        )
+    # 开发环境使用随机生成的密钥
+    secret_key = secrets.token_hex(32)
+    logger.warning(
+        f"Using auto-generated secret key for development. "
+        f"For production, set FUND_DAILY_SECRET_KEY environment variable."
+    )
+
 app.secret_key = secret_key.encode() if isinstance(secret_key, str) else secret_key
 
-# Session config - 宽松配置以确保登录状态持久
+# Session config - 使用配置管理器
 app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = None
-app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FUND_DAILY_SECURE_COOKIES", "").lower() == "true"
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # 更安全的默认值
+app.config["SESSION_COOKIE_SECURE"] = config.security.secure_cookies
 app.config["PERMANENT_SESSION_LIFETIME"] = 60 * 60 * 24 * 7  # 7 天
 
 # Initialize database
-from db import database as db
+from db import database_pg as db
 db.init_db()
 
 # Register API blueprint
 from web.api.routes import api as api_blueprint
 app.register_blueprint(api_blueprint, url_prefix="/api")
+
+# Register API documentation blueprint (P2优化)
+try:
+    from src.openapi import init_openapi_docs
+    init_openapi_docs(app)
+    logger.info("✅ OpenAPI文档已初始化")
+except Exception as e:
+    logger.warning(f"⚠️ OpenAPI文档初始化失败: {e}")
 
 # Config paths
 DATA_DIR = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/data")
@@ -112,7 +137,7 @@ def before_request():
 
 @app.after_request
 def after_request(response):
-    """Add request ID to response headers"""
+    """Add request ID to response headers and record metrics"""
     if hasattr(g, 'request_id'):
         response.headers['X-Request-ID'] = g.request_id
     
@@ -120,6 +145,35 @@ def after_request(response):
     if hasattr(g, 'start_time'):
         duration = (datetime.now() - g.start_time).total_seconds()
         response.headers['X-Process-Time'] = f"{duration:.3f}"
+        
+        # 记录性能指标（排除/metrics端点自身以避免循环）
+        if request.path != '/api/metrics' and request.path != '/api/metrics/enhanced':
+            try:
+                # 记录到标准指标服务
+                from src.services.metrics_service import get_metrics_service
+                metrics_service = get_metrics_service()
+                metrics_service.record_request(
+                    method=request.method,
+                    path=request.path,
+                    status_code=response.status_code,
+                    duration=duration
+                )
+                
+                # 记录到增强版指标服务（P2优化）
+                try:
+                    from src.services.enhanced_metrics_service import get_enhanced_metrics_service
+                    enhanced_metrics_service = get_enhanced_metrics_service()
+                    enhanced_metrics_service.record_request(
+                        method=request.method,
+                        path=request.path,
+                        status_code=response.status_code,
+                        duration=duration
+                    )
+                except Exception as e2:
+                    logger.debug(f"Enhanced metrics recording failed (non-critical): {e2}")
+                    
+            except Exception as e:
+                logger.error(f"Failed to record request metrics: {e}")
     
     return response
 
@@ -228,9 +282,11 @@ def serve_vue(path):
         from flask import jsonify
         return jsonify({'error': 'Not found'}), 404
     
-    static_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'dist', path)
-    if os.path.exists(static_path):
-        return app.send_static_file(path)
+    # 对于静态资源请求，直接由Flask处理
+    if path.startswith('assets/'):
+        return app.send_static_file(path[len('assets/'):])
+    
+    # 其他路径返回Vue应用
     return render_template('index.html')
 
 
@@ -241,26 +297,37 @@ def health_check():
     import psycopg2
     import redis
     
+    # 使用配置管理器
+    from src.config import get_config
+    config = get_config()
+    
     # Check PostgreSQL
     pg_status = "ok"
-    try:
-        conn = psycopg2.connect(
-            host=os.environ.get("FUND_DAILY_DB_HOST", "localhost"),
-            port=os.environ.get("FUND_DAILY_DB_PORT", "5432"),
-            database=os.environ.get("FUND_DAILY_DB_NAME", "fund_daily"),
-            user=os.environ.get("FUND_DAILY_DB_USER", "kid"),
-            password=os.environ.get("FUND_DAILY_DB_PASSWORD", ""),
-        )
-        conn.close()
-    except Exception as e:
-        pg_status = str(e)
+    if config.database.type == "postgres":
+        try:
+            conn = psycopg2.connect(
+                host=config.database.host,
+                port=config.database.port,
+                database=config.database.name,
+                user=config.database.user,
+                password=config.database.password,
+            )
+            conn.close()
+        except Exception as e:
+            pg_status = str(e)
+    else:
+        pg_status = "sqlite (not checked)"
     
     # Check Redis
     redis_status = "ok"
     try:
         r = redis.Redis(
-            host=os.environ.get("REDIS_HOST", "localhost"),
-            port=int(os.environ.get("REDIS_PORT", 6379))
+            host=config.redis.host,
+            port=config.redis.port,
+            db=config.redis.db,
+            password=config.redis.password,
+            socket_connect_timeout=3,
+            socket_timeout=3,
         )
         r.ping()
     except Exception as e:
@@ -269,13 +336,20 @@ def health_check():
     return {
         "status": "ok" if pg_status == "ok" and redis_status == "ok" else "degraded",
         "version": VERSION,
-        "postgres": pg_status,
+        "database": pg_status,
         "redis": redis_status,
+        "config": {
+            "env": config.app.env,
+            "database_type": config.database.type,
+            "cache_enabled": config.cache.duration > 0,
+        }
     }
 
 
 # ============== Main ==============
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    debug = os.environ.get("FLASK_DEBUG", "true").lower() == "true"
-    app.run(host="0.0.0.0", port=port, debug=debug)
+    # 使用配置管理器
+    from src.config import get_config
+    config = get_config()
+    
+    app.run(host=config.server.host, port=config.server.port, debug=config.server.debug)

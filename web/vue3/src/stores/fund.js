@@ -64,7 +64,16 @@ export const useFundStore = defineStore('fund', {
   
   actions: {
     async fetchFunds(force = false) {
-      // 优先从本地缓存读取
+      // 强制刷新时清除本地缓存
+      if (force) {
+        try {
+          localStorage.removeItem(CACHE_CONFIG.FUNDS_KEY)
+        } catch (e) {
+          console.error('Cache clear error:', e)
+        }
+      }
+      
+      // 优先从本地缓存读取（非强制刷新时）
       if (!force) {
         const cached = getCachedFunds()
         if (cached) {
@@ -76,12 +85,15 @@ export const useFundStore = defineStore('fund', {
       // 缓存过期或强制刷新，从API获取
       this.loading.funds = true
       try {
-        const data = await api.getFunds()
+        // 传递 force 参数给后端 API
+        const data = await api.getFunds(force)
         this.funds = data.funds || []
         setCachedFunds(this.funds)
       } catch (e) {
-        this.error = e.message
-        console.error('Failed to fetch funds:', e)
+        // 使用格式化错误消息（如果可用）
+        const errorMessage = e.formatted?.message || e.message || '获取基金数据失败'
+        this.error = errorMessage
+        console.error('Failed to fetch funds:', e.formatted || e)
       } finally {
         this.loading.funds = false
       }
@@ -116,7 +128,10 @@ export const useFundStore = defineStore('fund', {
           }
         }
       } catch (e) {
-        console.error('Failed to fetch holdings:', e)
+        // 使用格式化错误消息（如果可用）
+        const errorMessage = e.formatted?.message || e.message || '获取持仓数据失败'
+        this.error = errorMessage
+        console.error('Failed to fetch holdings:', e.formatted || e)
       } finally {
         this.loading.holdings = false
       }
@@ -128,7 +143,10 @@ export const useFundStore = defineStore('fund', {
         const data = await api.getAdvice()
         this.advice = data.advice || null
       } catch (e) {
-        console.error('Failed to fetch advice:', e)
+        // 使用格式化错误消息（如果可用）
+        const errorMessage = e.formatted?.message || e.message || '获取投资建议失败'
+        this.error = errorMessage
+        console.error('Failed to fetch advice:', e.formatted || e)
       } finally {
         this.loading.advice = false
       }
@@ -140,7 +158,10 @@ export const useFundStore = defineStore('fund', {
         const data = await api.getSectors()
         this.sectors = data.sectors || []
       } catch (e) {
-        console.error('Failed to fetch sectors:', e)
+        // 使用格式化错误消息（如果可用）
+        const errorMessage = e.formatted?.message || e.message || '获取热点板块失败'
+        this.error = errorMessage
+        console.error('Failed to fetch sectors:', e.formatted || e)
       } finally {
         this.loading.sectors = false
       }
@@ -173,7 +194,10 @@ export const useFundStore = defineStore('fund', {
           timestamp: Date.now()
         }))
       } catch (e) {
-        console.error('Failed to fetch news:', e)
+        // 使用格式化错误消息（如果可用）
+        const errorMessage = e.formatted?.message || e.message || '获取市场新闻失败'
+        this.error = errorMessage
+        console.error('Failed to fetch news:', e.formatted || e)
       } finally {
         this.loading.news = false
       }

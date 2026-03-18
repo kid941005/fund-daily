@@ -40,5 +40,23 @@ ALLOCATION_RATIOS = {
 # 缓存配置
 CACHE_DURATION = int(os.environ.get('FUND_DAILY_CACHE_DURATION', 600))
 
+# 缓存键前缀（统一版本控制）
+CACHE_PREFIXES = {
+    "fund": "fund_daily:v2:",
+    "score": "score:v2:",
+    "market": "market:v2:",
+    "scoring": "fund_score:v2:"
+}
+
+# 缓存时间配置（秒）
+CACHE_TTL = {
+    "fund_data": 600,           # 10分钟
+    "market_data": 300,         # 5分钟
+    "score_data": 3600,         # 1小时
+    "sentiment": 1800,          # 30分钟
+    "hot_sectors": 900,         # 15分钟
+    "news": 1200,               # 20分钟
+}
+
 # 别名（保持向后兼容）
 ST = SCORE_THRESHOLDS

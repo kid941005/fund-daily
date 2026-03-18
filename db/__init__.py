@@ -1,23 +1,38 @@
 """
 db package
+PostgreSQL 数据库模块
 """
 
-from .database import (
+from .database_pg import (
     get_db,
     init_db,
     create_user,
     get_user_by_username,
     get_user_by_id,
+    verify_user,
     update_user_password,
     get_holdings,
     save_holdings,
+    save_holding,
     delete_holding,
-    get_user_config,
-    save_user_config,
+    clear_holdings,
+    get_config as get_user_config,
+    save_config as save_user_config,
     get_watchlist,
     add_to_watchlist,
     remove_from_watchlist,
-    migrate_from_json,
+    get_all_holdings,
+    # 基金数据函数
+    save_fund_info,
+    save_fund_nav,
+    save_fund_score,
+    get_fund_info,
+    get_fund_nav,
+    get_fund_score,
+    get_recent_funds,
+    search_funds,
+    get_fund_history,
+    save_fund_data,
 )
 
 __all__ = [
@@ -26,14 +41,28 @@ __all__ = [
     "create_user",
     "get_user_by_username",
     "get_user_by_id",
+    "verify_user",
     "update_user_password",
     "get_holdings",
     "save_holdings",
+    "save_holding",
     "delete_holding",
+    "clear_holdings",
     "get_user_config",
     "save_user_config",
     "get_watchlist",
     "add_to_watchlist",
     "remove_from_watchlist",
-    "migrate_from_json",
+    "get_all_holdings",
+    # 基金数据函数
+    "save_fund_info",
+    "save_fund_nav",
+    "save_fund_score",
+    "get_fund_info",
+    "get_fund_nav",
+    "get_fund_score",
+    "get_recent_funds",
+    "search_funds",
+    "get_fund_history",
+    "save_fund_data",
 ]

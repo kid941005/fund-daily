@@ -3,7 +3,9 @@ Holdings API endpoints
 """
 
 from flask import Blueprint, jsonify, request, session
-from db import database as db
+from db import database_pg as db
+from web.api.validation import validate_request, ValidationError
+from src.error import create_error_response, ErrorCode
 
 holdings_bp = Blueprint("holdings", __name__)
 
@@ -20,6 +22,7 @@ def get_holdings():
 
 
 @holdings_bp.route("/holdings", methods=["POST"])
+@validate_request('batch_holdings')
 def manage_holdings():
     """Add/update holdings"""
     user_id = session.get("user_id")
@@ -32,18 +35,26 @@ def manage_holdings():
     if action == "delete":
         code = data.get("code")
         if code:
-            db.delete_holding(user_id, code)
+            # 验证基金代码
+            try:
+                from web.api.validation import validator
+                validated_code = validator.validate_fund_code(code, 'code')
+                db.delete_holding(user_id, validated_code)
+            except ValidationError as e:
+                return create_error_response(
+                    code=ErrorCode.INVALID_INPUT,
+                    message=f"输入验证失败: {e.message}",
+                    details={"field": e.field},
+                    http_status=400
+                )
         return jsonify({"success": True, "message": "删除成功"})
     
-    # Add or update - 支持单条和多条格式
-    funds = data.get("funds", [])
-    # 如果没有 funds 数组，检查是否有单条 code/amount
-    if not funds and data.get("code"):
-        funds = [data]
+    # 使用验证后的数据
+    validated_funds = request.validated_data
     
-    for f in funds:
-        code = f.get("code")
-        amount = float(f.get("amount", 0))
+    for fund in validated_funds:
+        code = fund.get("code")
+        amount = fund.get("amount", 0)
         
         if amount <= 0:
             if code:
@@ -55,17 +66,23 @@ def manage_holdings():
 
 
 @holdings_bp.route("/holdings", methods=["DELETE"])
+@validate_request('holding')
 def delete_holding():
     """Delete a single holding"""
     user_id = session.get("user_id")
     if not user_id:
         return jsonify({"success": False, "error": "请先登录", "need_login": True}), 401
     
-    data = request.get_json()
-    code = data.get("code")
+    # 使用验证后的数据
+    validated_data = request.validated_data
+    code = validated_data.get("code")
     
     if not code:
-        return jsonify({"success": False, "error": "缺少基金代码"})
+        return create_error_response(
+            code=ErrorCode.INVALID_INPUT,
+            message="缺少基金代码",
+            http_status=400
+        )
     
     # 使用数据库直接删除
     db.delete_holding(user_id, code)
@@ -81,6 +98,11 @@ def clear_all_holdings():
         # 未登录用户：尝试从 localStorage 清除
         return jsonify({"success": False, "error": "请先登录", "need_login": True}), 401
     
+    # 验证用户是否有持仓（可选，但可以防止误操作）
+    holdings = db.get_holdings(user_id)
+    if not holdings:
+        return jsonify({"success": False, "error": "当前没有持仓可清空"}), 400
+    
     db.clear_holdings(user_id)
     return jsonify({"success": True, "message": "已清空所有持仓"})
 
@@ -89,3 +111,58 @@ def clear_all_holdings():
 def import_holdings():
     """Import holdings"""
     return jsonify({"success": False, "error": "No data provided"}), 400
+
+
+@holdings_bp.route("/import-screenshot", methods=["POST"])
+def import_screenshot():
+    """OCR识别截图并导入持仓"""
+    import os
+    import tempfile
+    
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "error": "请先登录", "need_login": True}), 401
+    
+    if 'file' not in request.files:
+        return jsonify({"success": False, "error": "没有上传文件"})
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"success": False, "error": "文件名为空"})
+    
+    try:
+        # 保存临时文件
+        suffix = os.path.splitext(file.filename)[1] or '.jpg'
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp_path = tmp.name
+            file.save(tmp_path)
+        
+        try:
+            # OCR 识别
+            from src.ocr import FundOcrParser, parse_image_easyocr
+            import easyocr
+            
+            # 使用 EasyOCR 解析图片
+            results = parse_image_easyocr(tmp_path)
+            parsed = results.get("funds", [])
+            
+            if not parsed:
+                return jsonify({
+                    "success": True,
+                    "parsed": [],
+                    "message": results.get("message", "未识别到基金数据")
+                })
+            
+            return jsonify({
+                "success": True,
+                "parsed": [{"code": r.get("code", ""), "amount": r.get("amount", 0), "name": r.get("name", "")} for r in parsed]
+            })
+        finally:
+            # 删除临时文件
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+                
+    except Exception as e:
+        import logging
+        logging.error(f"OCR error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500

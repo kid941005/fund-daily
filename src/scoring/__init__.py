@@ -6,8 +6,11 @@ from typing import List, Dict, Optional, Tuple
 
 import re
 import logging
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Tuple
 from datetime import datetime
+
+# 导入数据模型
+from .models import ScoreInput, ScoreResult
 
 logger = logging.getLogger(__name__)
 
@@ -20,21 +23,80 @@ except ImportError:
     logger.warning("Fetcher not available, scoring cache disabled")
 
 # ============== 评分缓存配置 ==============
-SCORE_CACHE_TTL = 600  # 10分钟  
-SCORE_CACHE_PREFIX = "fund_score:"
+from src.constants import CACHE_PREFIXES, CACHE_TTL
+SCORE_CACHE_TTL = CACHE_TTL.get("score_data", 600)  # 使用统一配置
+SCORE_CACHE_PREFIX = CACHE_PREFIXES.get("scoring", "fund_score:v2:")
 
-# ============== 评分权重配置 ==============
-# 评分权重 - 增加区分度
-SCORE_WEIGHTS = {
-    "valuation": 25,      # 估值面 (25分) - 保持不变
-    "performance": 25,   # 业绩表现 (20→25分) - 扩大
-    "risk_control": 15,  # 风险控制 (15分) - 保持
-    "momentum": 20,       # 动量趋势 (15→20分) - 扩大
-    "sentiment": 10,     # 市场情绪 (10分) - 保持
-    "sector": 10,        # 板块景气 (8→10分) - 扩大
-    "manager": 3,        # 基金经理 (4→3分) - 减小
-    "liquidity": 2,      # 流动性 (3→2分) - 减小
-}
+# ============== 评分权重配置（从weights模块导入） ==============
+from .weights import SCORE_WEIGHTS, validate_weights, get_weight, get_all_weights, get_total_weight
+
+# 权重校验函数（保留向后兼容）
+def validate_weights_compat() -> Tuple[bool, str]:
+    """
+    校验权重配置是否合法
+    
+    Returns:
+        (是否有效, 错误信息)
+    """
+    # 1. 检查权重字典是否为空
+    if not SCORE_WEIGHTS:
+        return False, "权重配置为空"
+    
+    # 2. 检查权重总和是否为100
+    total = sum(SCORE_WEIGHTS.values())
+    if total != 100:
+        return False, f"权重总和应为100，实际为{total}"
+    
+    # 3. 检查权重类型和范围
+    for dimension, weight in SCORE_WEIGHTS.items():
+        # 类型检查
+        if not isinstance(weight, (int, float)):
+            return False, f"维度'{dimension}'的权重必须是数字，实际类型为{type(weight).__name__}"
+        
+        # 正数检查
+        if weight <= 0:
+            return False, f"维度'{dimension}'的权重必须为正数，实际为{weight}"
+        
+        # 范围检查：单个权重不应超过总分的一半（50分）
+        if weight > 50:
+            return False, f"维度'{dimension}'的权重过大（{weight}分），不应超过50分"
+        
+        # 整数检查（建议为整数，但允许小数）
+        if not isinstance(weight, int):
+            logger.warning(f"维度'{dimension}'的权重为小数{weight}，建议使用整数")
+    
+    # 4. 检查维度是否完整
+    required_dimensions = ["valuation", "performance", "risk_control", "momentum", 
+                          "sentiment", "sector", "manager", "liquidity"]
+    for dim in required_dimensions:
+        if dim not in SCORE_WEIGHTS:
+            return False, f"缺失必要维度: {dim}"
+    
+    # 5. 检查是否有多余的维度
+    extra_dims = set(SCORE_WEIGHTS.keys()) - set(required_dimensions)
+    if extra_dims:
+        logger.warning(f"评分系统包含额外的维度: {', '.join(extra_dims)}")
+    
+    # 6. 检查权重分布是否合理
+    # 主要维度（估值、业绩、风控、动量）应占总分的较大比例
+    major_dims = ["valuation", "performance", "risk_control", "momentum"]
+    major_total = sum(SCORE_WEIGHTS.get(dim, 0) for dim in major_dims)
+    if major_total < 60:  # 主要维度应至少占60分
+        logger.warning(f"主要维度（估值、业绩、风控、动量）总分仅{major_total}分，建议至少60分")
+    
+    # 7. 检查流动性权重是否合理（通常不应过高）
+    liquidity_weight = SCORE_WEIGHTS.get("liquidity", 0)
+    if liquidity_weight > 10:
+        logger.warning(f"流动性权重({liquidity_weight}分)过高，通常不应超过10分")
+    
+    return True, "权重配置有效"
+
+
+# 启动时自动校验权重
+_is_valid, _error_msg = validate_weights()
+if not _is_valid:
+    logger.error(f"评分权重配置错误: {_error_msg}")
+    raise ValueError(f"评分权重配置错误: {_error_msg}")
 
 
 def _get_cache_key(fund_code: str) -> str:
@@ -63,409 +125,32 @@ def _set_cached_score(fund_code: str, score: Dict) -> None:
 
 
 # ============== 1. 估值面评分 (25分) ==============
-def calculate_valuation_score(fund_detail: Dict, fund_data: Dict = None) -> Dict:
-    """
-    估值面评分 (满分25分)
-    基于基金收益率、规模调整
-    """
-    details = {}
-    scores = []
-    
-    # 1.1 近1年收益评分 (15分) - 基于实际收益率
-    return_1y = 0
-    if fund_data and fund_data.get("return_1y"):
-        return_1y = float(fund_data.get("return_1y", 0) or 0)
-    
-    if return_1y > 50:
-        s = 15
-        r = f"近1年收益{return_1y:.1f}%，顶尖"
-    elif return_1y > 30:
-        s = 12
-        r = f"近1年收益{return_1y:.1f}%，优秀"
-    elif return_1y > 15:
-        s = 10
-        r = f"近1年收益{return_1y:.1f}%，良好"
-    elif return_1y > 5:
-        s = 7
-        r = f"近1年收益{return_1y:.1f}%，一般"
-    elif return_1y > 0:
-        s = 4
-        r = f"近1年收益{return_1y:.1f}%，较小"
-    else:
-        s = 1
-        r = f"近1年收益{return_1y:.1f}%"
-    scores.append(s)
-    details["return_1y_score"] = s
-    details["return_1y_reason"] = r
-    
-    # 1.2 近3月收益评分 (10分)
-    return_3m = 0
-    if fund_data and fund_data.get("return_3m"):
-        return_3m = float(fund_data.get("return_3m", 0) or 0)
-    
-    if return_3m > 20:
-        s = 10
-        r = f"近3月{return_3m:.1f}%"
-    elif return_3m > 10:
-        s = 8
-        r = f"近3月{return_3m:.1f}%"
-    elif return_3m > 5:
-        s = 5
-        r = f"近3月{return_3m:.1f}%"
-    elif return_3m > 0:
-        s = 3
-        r = f"近3月{return_3m:.1f}%"
-    else:
-        s = 1
-        r = f"近3月{return_3m:.1f}%"
-    scores.append(s)
-    details["return_3m_score"] = s
-    details["return_3m_reason"] = r
-    
-    total = min(25, sum(scores))
-    return {
-        "score": total,
-        "reason": "基于收益率表现",
-        "details": details
-    }
+from .valuation import calculate_valuation_score
 
 
 # ============== 2. 业绩表现评分 (20分) ==============
-def calculate_performance_score(fund_data: Dict = None) -> Dict:
-    """
-    业绩表现评分 (满分20分)
-    基于各时间段收益表现
-    """
-    details = {}
-    scores = []
-    
-    if not fund_data:
-        return {"score": 6, "reason": "无数据", "details": {}}
-    
-    # 2.1 近3月表现 (8分)
-    return_3m = float(fund_data.get("return_3m", 0) or 0)
-    if return_3m > 30:
-        s = 8
-        r = f"近3月{return_3m:.1f}%"
-    elif return_3m > 15:
-        s = 6
-        r = f"近3月{return_3m:.1f}%"
-    elif return_3m > 5:
-        s = 4
-        r = f"近3月{return_3m:.1f}%"
-    elif return_3m > 0:
-        s = 2
-        r = f"近3月{return_3m:.1f}%"
-    else:
-        s = 0
-        r = f"近3月{return_3m:.1f}%"
-    scores.append(s)
-    details["return_3m"] = s
-    
-    # 2.2 近1月表现 (6分)
-    return_1m = float(fund_data.get("return_1m", 0) or 0)
-    if return_1m > 10:
-        s = 6
-    elif return_1m > 5:
-        s = 5
-    elif return_1m > 0:
-        s = 3
-    elif return_1m > -5:
-        s = 1
-    else:
-        s = 0
-    scores.append(s)
-    details["return_1m"] = s
-    
-    # 2.3 收益稳定性 (6分)
-    # 比较近1月和近3月趋势
-    if return_1m > 0 and return_3m > 0:
-        s = 6  # 趋势一致向上
-        r = "收益稳定上升"
-    elif return_1m > 0 and return_3m < 0:
-        s = 4  # 短期反弹
-        r = "短期反弹"
-    elif return_1m < 0 and return_3m > 0:
-        s = 3  # 短期回调
-        r = "短期回调"
-    elif return_1m < 0 and return_3m < 0:
-        s = 0  # 持续下跌
-        r = "持续下跌"
-    else:
-        s = 2
-        r = "震荡"
-    scores.append(s)
-    details["stability"] = s
-    
-    total = min(20, sum(scores))
-    return {
-        "score": total,
-        "reason": f"近3月{return_3m:+.1f}%，近1月{return_1m:+.1f}%",
-        "details": details
-    }
+from .performance import calculate_performance_score
 
 
 # ============== 3. 风险控制评分 (15分) ==============
-def calculate_risk_control_score(risk_metrics: Dict, fund_data: Dict = None) -> Dict:
-    """
-    风险控制评分 (满分15分)
-    基于夏普比率、最大回撤、波动率
-    """
-    details = {}
-    scores = []
-    
-    # 3.1 夏普比率 (6分)
-    sharpe = risk_metrics.get("sharpe_ratio", 0) or 0
-    if sharpe >= 1.5:
-        s = 6
-        r = f"夏普比率{sharpe:.2f}，优秀"
-    elif sharpe >= 1.0:
-        s = 5
-        r = f"夏普比率{sharpe:.2f}，良好"
-    elif sharpe >= 0.5:
-        s = 3
-        r = f"夏普比率{sharpe:.2f}，一般"
-    elif sharpe >= 0:
-        s = 1
-        r = f"夏普比率{sharpe:.2f}，较差"
-    else:
-        s = 0
-        r = f"夏普比率{sharpe:.2f}，很差"
-    scores.append(s)
-    details["sharpe"] = s
-    
-    # 3.2 最大回撤 (5分)
-    drawdown = risk_metrics.get("estimated_max_drawdown", 0) or 0
-    if drawdown < 10:
-        s = 5
-        r = f"回撤{drawdown:.1f}%，控制良好"
-    elif drawdown < 20:
-        s = 3
-        r = f"回撤{drawdown:.1f}%，控制一般"
-    elif drawdown < 30:
-        s = 1
-        r = f"回撤{drawdown:.1f}%，波动较大"
-    else:
-        s = 0
-        r = f"回撤{drawdown:.1f}%，风险较高"
-    scores.append(s)
-    details["drawdown"] = s
-    
-    # 3.3 波动率 (4分)
-    volatility = risk_metrics.get("volatility", 0) or 0
-    if volatility < 10:
-        s = 4
-        r = f"波动{volatility:.1f}%，较低"
-    elif volatility < 20:
-        s = 2
-        r = f"波动{volatility:.1f}%，中等"
-    else:
-        s = 0
-        r = f"波动{volatility:.1f}%，较高"
-    scores.append(s)
-    details["volatility"] = s
-    
-    total = min(15, sum(scores))
-    return {
-        "score": total,
-        "reason": f"夏普{sharpe:.2f}，回撤{drawdown:.1f}%",
-        "details": details
-    }
+from .risk_control import calculate_risk_control_score
 
 
 # ============== 4. 动量趋势评分 (15分) ==============
-def calculate_momentum_score(fund_data: Dict = None) -> Dict:
-    """
-    动量趋势评分 (满分15分)
-    基于短期动量和趋势强度
-    """
-    details = {}
-    scores = []
-    
-    if not fund_data:
-        return {"score": 5, "reason": "无数据", "details": {}}
-    
-    # 4.1 短期动量 (8分)
-    return_1m = float(fund_data.get("return_1m", 0) or 0)
-    daily_change = float(fund_data.get("daily_change", 0) or 0)
-    
-    # 动量评分
-    if return_1m > 10 and daily_change > 2:
-        s = 8
-        r = "强势上涨"
-    elif return_1m > 5 and daily_change > 0:
-        s = 6
-        r = "温和上涨"
-    elif return_1m > 0:
-        s = 4
-        r = "小幅上涨"
-    elif return_1m > -5:
-        s = 2
-        r = "小幅下跌"
-    elif return_1m > -10:
-        s = 1
-        r = "明显下跌"
-    else:
-        s = 0
-        r = "大幅下跌"
-    scores.append(s)
-    details["momentum"] = s
-    
-    # 4.2 趋势强度 (7分)
-    # 比较近1月和近3月
-    return_3m = float(fund_data.get("return_3m", 0) or 0)
-    if return_1m > 0 and return_3m > 0 and return_1m > return_3m / 3:
-        s = 7
-        r = "上升趋势强劲"
-    elif return_1m > 0 and return_3m > 0:
-        s = 5
-        r = "上升趋势稳健"
-    elif return_1m < 0 and return_3m < 0 and return_1m < return_3m / 3:
-        s = 0
-        r = "下降趋势加速"
-    elif return_1m < 0 and return_3m < 0:
-        s = 2
-        r = "下降趋势"
-    elif return_1m * return_3m < 0:
-        s = 3
-        r = "趋势震荡"
-    else:
-        s = 4
-        r = "趋势不明"
-    scores.append(s)
-    details["trend"] = s
-    
-    total = min(15, sum(scores))
-    return {
-        "score": total,
-        "reason": f"动量{r}，趋势{r}",
-        "details": details
-    }
+from .momentum import calculate_momentum_score
 
 
 # ============== 5. 市场情绪评分 (10分) ==============
-def calculate_sentiment_score(market_sentiment: str, market_score: int) -> Dict:
-    """
-    市场情绪评分 (满分10分)
-    """
-    sentiment_map = {
-        "乐观": 10,
-        "偏多": 8,
-        "平稳": 5,
-        "偏空": 2,
-        "恐慌": 0,
-    }
-    
-    score = sentiment_map.get(market_sentiment, 5)
-    
-    return {
-        "score": score,
-        "reason": f"市场{market_sentiment}",
-        "details": {"sentiment": market_sentiment, "score": market_score}
-    }
-
+from .sentiment import calculate_sentiment_score
 
 # ============== 6. 板块景气评分 (8分) ==============
-def calculate_sector_score(fund_type: str, hot_sectors: List[Dict], commodity_sentiment: str, fund_data: Dict = None) -> Dict:
-    """
-    板块景气评分 (满分8分)
-    """
-    details = {}
-    scores = []
-    
-    # 6.1 大宗商品环境 (4分)
-    if commodity_sentiment in ["乐观", "偏多"]:
-        s = 4
-        r = "商品景气高"
-    elif commodity_sentiment == "平稳":
-        s = 2
-        r = "商品平稳"
-    else:
-        s = 1
-        r = "商品低迷"
-    scores.append(s)
-    details["commodity"] = s
-    
-    # 6.2 行业匹配 (4分)
-    hot_names = [s.get("name", "").lower() for s in hot_sectors[:5]]
-    fund_type_lower = fund_type.lower() if fund_type else ""
-    
-    matched = False
-    for name in hot_names:
-        if name in fund_type_lower or fund_type_lower in name:
-            s = 4
-            r = f"属于热门板块{name}"
-            matched = True
-            break
-    
-    if not matched:
-        s = 2
-        r = "行业一般"
-    scores.append(s)
-    details["sector_match"] = s
-    
-    total = min(8, sum(scores))
-    return {
-        "score": total,
-        "reason": r,
-        "details": details
-    }
-
+from .sector import calculate_sector_score
 
 # ============== 7. 基金经理评分 (4分) ==============
-def calculate_manager_score(fund_manager: Optional[Dict]) -> Dict:
-    """
-    基金经理评分 (满分4分)
-    """
-    if not fund_manager:
-        return {"score": 1, "reason": "无数据", "details": {}}
-    
-    star = fund_manager.get("star", 0) or 0
-    work_time = fund_manager.get("workTime", "")
-    
-    # 解析任职年限
-    years = 0
-    match = re.search(r"(\d+)年", work_time)
-    if match:
-        years = int(match.group(1))
-    
-    if star >= 5 and years >= 5:
-        score = 4
-    elif star >= 4 and years >= 3:
-        score = 3
-    elif star >= 3 and years >= 1:
-        score = 2
-    else:
-        score = 1
-    
-    return {
-        "score": score,
-        "reason": f"{star}星，{years}年",
-        "details": {"star": star, "years": years}
-    }
-
+from .manager import calculate_manager_score
 
 # ============== 8. 流动性评分 (3分) ==============
-def calculate_liquidity_score(daily_change: float, fund_scale: float) -> Dict:
-    """
-    流动性评分 (满分3分)
-    """
-    # 涨幅太大或太小都影响流动性
-    if abs(daily_change) < 3:
-        s = 3
-        r = f"涨跌{daily_change:+.2f}%，正常"
-    elif abs(daily_change) < 5:
-        s = 2
-        r = f"涨跌{daily_change:+.2f}%，波动较大"
-    else:
-        s = 1
-        r = f"涨跌{daily_change:+.2f}%，异常波动"
-    
-    return {
-        "score": s,
-        "reason": r,
-        "details": {"daily_change": daily_change}
-    }
+from .liquidity import calculate_liquidity_score
 
 
 # ============== 综合评分 ==============
@@ -531,9 +216,78 @@ def calculate_total_score(
         liquidity["score"]
     )
     
+    # 权重校验
+    validation_errors = []
+    
+    # 1. 检查各维度分数是否超过权重上限
+    dimension_scores = {
+        "valuation": valuation["score"],
+        "performance": performance["score"],
+        "risk_control": risk_control["score"],
+        "momentum": momentum["score"],
+        "sentiment": sentiment["score"],
+        "sector": sector["score"],
+        "manager": manager["score"],
+        "liquidity": liquidity["score"],
+    }
+    
+    for dim, score in dimension_scores.items():
+        max_score = SCORE_WEIGHTS[dim]
+        if score > max_score:
+            validation_errors.append(f"维度'{dim}'分数{score}超过权重上限{max_score}")
+        if score < 0:
+            validation_errors.append(f"维度'{dim}'分数{score}为负数")
+    
+    # 2. 检查总分范围
+    if total_score < 0 or total_score > 100:
+        validation_errors.append(f"总分{total_score}超出范围[0, 100]")
+    
+    # 3. 检查各维度分数之和是否等于总分
+    calculated_total = sum(dimension_scores.values())
+    if abs(calculated_total - total_score) > 0.001:
+        validation_errors.append(f"维度分数之和{calculated_total}与总分{total_score}不一致")
+    
+    # 如果有校验错误，记录日志
+    if validation_errors:
+        logger.warning(f"评分校验警告 {fund_code}: {', '.join(validation_errors)}")
+        # 修复明显错误：如果分数超过上限，则限制到上限
+        for dim in dimension_scores:
+            max_score = SCORE_WEIGHTS[dim]
+            if dimension_scores[dim] > max_score:
+                if dim == "valuation":
+                    valuation["score"] = min(valuation["score"], max_score)
+                elif dim == "performance":
+                    performance["score"] = min(performance["score"], max_score)
+                elif dim == "risk_control":
+                    risk_control["score"] = min(risk_control["score"], max_score)
+                elif dim == "momentum":
+                    momentum["score"] = min(momentum["score"], max_score)
+                elif dim == "sentiment":
+                    sentiment["score"] = min(sentiment["score"], max_score)
+                elif dim == "sector":
+                    sector["score"] = min(sector["score"], max_score)
+                elif dim == "manager":
+                    manager["score"] = min(manager["score"], max_score)
+                elif dim == "liquidity":
+                    liquidity["score"] = min(liquidity["score"], max_score)
+        
+        # 重新计算总分
+        total_score = (
+            valuation["score"] +
+            performance["score"] +
+            risk_control["score"] +
+            momentum["score"] +
+            sentiment["score"] +
+            sector["score"] +
+            manager["score"] +
+            liquidity["score"]
+        )
+    
     # 汇总结果
     result = {
         "total_score": total_score,
+        "base_score": total_score,  # 初始时基础分等于总分
+        "ranking_bonus": 0,         # 排名加分，初始为0
         "max_score": 100,
         "grade": _get_grade(total_score),
         "details": {
@@ -575,22 +329,38 @@ def format_score_report(scoring_result: Dict) -> str:
     """格式化评分报告"""
     details = scoring_result["details"]
     
+    # 计算维度分数之和
+    dimension_scores = sum(detail.get('score', 0) for detail in details.values())
+    
     lines = [
         f"📊 基金综合评分报告",
         "=" * 40,
-        f"总分: {scoring_result['total_score']}/100 ({scoring_result['grade']}级)",
-        "",
-        "【各维度评分】",
-        f"  1. 估值面: {details['valuation']['score']}/25",
-        f"  2. 业绩表现: {details['performance']['score']}/20",
-        f"  3. 风险控制: {details['risk_control']['score']}/15",
-        f"  4. 动量趋势: {details['momentum']['score']}/15",
-        f"  5. 市场情绪: {details['sentiment']['score']}/10",
-        f"  6. 板块景气: {details['sector']['score']}/8",
-        f"  7. 基金经理: {details['manager']['score']}/4",
-        f"  8. 流动性: {details['liquidity']['score']}/3",
-        "",
+        f"总分: {scoring_result['total_score']}/100 ({scoring_result.get('grade', 'N/A')}级)",
     ]
+    
+    # 如果有排名加分，显示详细信息
+    if scoring_result.get('ranking_bonus', 0) > 0:
+        base_score = scoring_result.get('base_score', dimension_scores)
+        ranking_bonus = scoring_result.get('ranking_bonus', 0)
+        lines.append(f"  基础分: {base_score} + 排名加分: {ranking_bonus} = {base_score + ranking_bonus}")
+    
+    lines.append("")
+    lines.append("【各维度评分】")
+    lines.append(f"  1. 估值面: {details['valuation']['score']}/25")
+    lines.append(f"  2. 业绩表现: {details['performance']['score']}/20")
+    lines.append(f"  3. 风险控制: {details['risk_control']['score']}/15")
+    lines.append(f"  4. 动量趋势: {details['momentum']['score']}/15")
+    lines.append(f"  5. 市场情绪: {details['sentiment']['score']}/10")
+    lines.append(f"  6. 板块景气: {details['sector']['score']}/8")
+    lines.append(f"  7. 基金经理: {details['manager']['score']}/4")
+    lines.append(f"  8. 流动性: {details['liquidity']['score']}/3")
+    lines.append(f"  维度分数总和: {dimension_scores}")
+    
+    # 验证一致性
+    if abs(dimension_scores - scoring_result.get('total_score', 0)) > 0.001:
+        lines.append(f"  ⚠️  注意: 维度分数之和({dimension_scores})与总分({scoring_result.get('total_score', 0)})不一致")
+    
+    lines.append("")
     
     return "\n".join(lines)
 
@@ -598,6 +368,8 @@ def format_score_report(scoring_result: Dict) -> str:
 def apply_ranking_bonus(funds: List[Dict]) -> List[Dict]:
     """
     根据持仓内排名加分，拉开分数差距
+    
+    修改：添加 ranking_bonus 字段，保持总分 = 维度分数之和 + ranking_bonus
     """
     if not funds or len(funds) < 2:
         return funds
@@ -611,25 +383,88 @@ def apply_ranking_bonus(funds: List[Dict]) -> List[Dict]:
     m1_returns.sort(key=lambda x: x[1], reverse=True)
     
     for i, fund in enumerate(funds):
-        score = fund.get('score_100', {}).get('total_score', 0)
-        if not score:
+        if 'score_100' not in fund:
             continue
+            
+        score_100 = fund['score_100']
+        base_score = score_100.get('total_score', 0)
+        if not base_score:
+            continue
+        
+        # 计算排名加分
+        ranking_bonus = 0
         
         # 涨幅排名前25%加8分
         if i < len(funds) * 0.25:
-            score += 8
+            ranking_bonus += 8
         elif i < len(funds) * 0.5:
-            score += 4
+            ranking_bonus += 4
         
         # 近1月排名前25%加8分
         idx_m1 = next((j for j, x in enumerate(m1_returns) if x[0] == funds.index(fund)), -1)
         if idx_m1 >= 0 and idx_m1 < len(funds) * 0.25:
-            score += 8
+            ranking_bonus += 8
         elif idx_m1 >= 0 and idx_m1 < len(funds) * 0.5:
-            score += 4
+            ranking_bonus += 4
         
-        if 'score_100' not in fund:
-            fund['score_100'] = {}
-        fund['score_100']['total_score'] = min(score, 100)  # 不超过100分
+        # 应用加分（不超过100分）
+        total_score = min(base_score + ranking_bonus, 100)
+        
+        # 更新评分结果
+        score_100['total_score'] = total_score
+        score_100['ranking_bonus'] = ranking_bonus
+        score_100['base_score'] = base_score
+        
+        # 更新等级
+        score_100['grade'] = _get_grade(total_score)
     
     return funds
+
+
+# ============== 新版评分函数（使用数据类） ==============
+def calculate_score_v2(input_data: ScoreInput) -> Dict:
+    """
+    新版评分函数，使用ScoreInput数据类封装参数
+    
+    Args:
+        input_data: ScoreInput对象，包含所有评分参数
+        
+    Returns:
+        评分结果字典
+    """
+    # 调用原有的calculate_total_score函数，保持逻辑一致
+    return calculate_total_score(
+        fund_detail=input_data.fund_detail,
+        risk_metrics=input_data.risk_metrics,
+        market_sentiment=input_data.market_sentiment,
+        market_score=input_data.market_score,
+        news=input_data.news,
+        hot_sectors=input_data.hot_sectors,
+        commodity_sentiment=input_data.commodity_sentiment,
+        fund_manager=input_data.fund_manager,
+        fund_type=input_data.fund_type,
+        fund_scale=input_data.fund_scale,
+        daily_change=input_data.daily_change,
+        fund_data=input_data.fund_data,
+        fund_code=input_data.fund_code
+    )
+
+
+# 导出列表
+__all__ = [
+    'validate_weights',
+    'calculate_valuation_score',
+    'calculate_performance_score',
+    'calculate_risk_control_score',
+    'calculate_momentum_score',
+    'calculate_sentiment_score',
+    'calculate_sector_score',
+    'calculate_manager_score',
+    'calculate_liquidity_score',
+    'calculate_total_score',
+    'format_score_report',
+    'apply_ranking_bonus',
+    'calculate_score_v2',
+    'ScoreInput',
+    'ScoreResult'
+]

@@ -24,11 +24,12 @@ MARKET_CYCLES = {
         "valuation": 25,    # 估值重要
         "performance": 20,
         "risk_control": 25,  # 风控增加
-        "momentum": 10,     # 动量降低
+        "momentum": 15,     # 动量适当提高
         "sentiment": 5,
         "sector": 5,
         "manager": 3,
         "liquidity": 2
+        # 总计: 25+20+25+15+5+5+3+2 = 100分
     },
     "震荡": {       # 震荡市
         "name": "震荡市",

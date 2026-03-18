@@ -4,8 +4,9 @@ Analysis API endpoints
 
 from flask import Blueprint, jsonify, request, session
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from web.services import fund_service
-from db import database as db
+from src.services.fund_service import get_fund_service
+from src.analyzer import calculate_expected_return
+from db import database_pg as db
 
 analysis_bp = Blueprint("analysis", __name__)
 
@@ -13,18 +14,156 @@ analysis_bp = Blueprint("analysis", __name__)
 @analysis_bp.route("/portfolio-analysis")
 @analysis_bp.route("/analysis/portfolio")  # 兼容前端调用
 def get_portfolio_analysis():
-    """Get portfolio analysis"""
+    """Get portfolio analysis using new service layer"""
     user_id = session.get("user_id")
+    
+    # 如果没有用户ID，使用默认用户或获取所有持仓
+    if not user_id:
+        # 尝试从数据库获取第一个用户
+        try:
+            conn = db.get_db()
+            cursor = conn.cursor()
+            cursor.execute("SELECT id FROM users LIMIT 1")
+            user = cursor.fetchone()
+            if user:
+                user_id = user[0]
+                print(f"[DEBUG] 使用默认用户ID: {user_id}")
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print(f"[DEBUG] 获取默认用户失败: {e}")
+            user_id = None
 
     if user_id:
         holdings = db.get_holdings(user_id)
+        print(f"[DEBUG] 用户 {user_id} 的持仓数量: {len(holdings)}")
         holdings_dict = {h["code"]: h for h in holdings}
     else:
-        holdings = []
-        holdings_dict = {}
+        # 如果没有用户，尝试获取所有持仓
+        try:
+            # 使用数据库连接池
+            pool = db.get_pool()
+            conn = pool.getconn()
+            cursor = conn.cursor()
+            cursor.execute("SELECT code, name, amount FROM holdings WHERE amount > 0")
+            holdings = []
+            for row in cursor.fetchall():
+                holdings.append({
+                    "code": row[0],
+                    "name": row[1] or f"基金{row[0]}",
+                    "amount": float(row[2])
+                })
+            print(f"[DEBUG] 获取所有持仓数量: {len(holdings)}")
+            holdings_dict = {h["code"]: h for h in holdings}
+            cursor.close()
+            pool.putconn(conn)
+        except Exception as e:
+            print(f"[DEBUG] 获取所有持仓失败: {e}")
+            holdings = []
+            holdings_dict = {}
 
-    analysis = fund_service.get_portfolio_analysis(holdings, holdings_dict)
-    return jsonify({"success": True, "analysis": analysis})
+    try:
+        # 使用新的FundService获取持仓建议
+        fund_service = get_fund_service(cache_enabled=True)
+        advice_result = fund_service.calculate_holdings_advice(holdings)
+        
+        funds = advice_result.get("funds", [])
+        total_amount = advice_result.get("total_amount", 0)
+        
+        # 构建基本的投资组合分析
+        if funds and total_amount > 0:
+            # 计算风险指标
+            risk_scores = []
+            returns_1y = []
+            
+            for fund in funds:
+                # 尝试从score_100获取风险评分
+                score_data = fund.get("score_100", {})
+                risk_score = score_data.get("details", {}).get("risk_control", {}).get("score", 4)
+                risk_scores.append(risk_score)
+                
+                # 获取1年收益率
+                fund_data = fund.get("fund_data", {})
+                return_1y = float(fund_data.get("return_1y", 0) or 0)
+                returns_1y.append(return_1y)
+            
+            # 计算加权平均风险
+            weights = [fund.get("current_pct", 0) for fund in funds]
+            if sum(weights) > 0:
+                weighted_risk = sum(r * w for r, w in zip(risk_scores, weights)) / sum(weights)
+                weighted_return = sum(r * w for r, w in zip(returns_1y, weights)) / sum(weights)
+            else:
+                weighted_risk = sum(risk_scores) / len(risk_scores) if risk_scores else 4
+                weighted_return = sum(returns_1y) / len(returns_1y) if returns_1y else 0
+            
+            # 确定风险级别
+            if weighted_risk > 6:
+                risk_level = "高风险"
+            elif weighted_risk > 4:
+                risk_level = "中高风险"
+            elif weighted_risk > 2:
+                risk_level = "中等风险"
+            else:
+                risk_level = "中低风险"
+            
+            # 分散度评估
+            fund_count = len(funds)
+            if fund_count >= 5:
+                diversification = "良好"
+            elif fund_count >= 3:
+                diversification = "一般"
+            else:
+                diversification = "需分散"
+            
+            analysis = {
+                "risk_level": risk_level,
+                "risk_score": round(weighted_risk, 1),
+                "avg_return_1y": round(weighted_return, 2),
+                "fund_count": fund_count,
+                "diversification": diversification,
+                "total_amount": total_amount,
+                "funds": funds,  # 添加基金数据供图表使用
+                "message": "分析完成"
+            }
+        else:
+            # 即使没有基金数据，也返回持仓数据供图表使用
+            # 从持仓数据构建基本的基金信息
+            chart_funds = []
+            for holding in holdings:
+                chart_funds.append({
+                    "fund_code": holding.get("code"),
+                    "fund_name": holding.get("name") or f"基金{holding.get('code')}",
+                    "amount": holding.get("amount", 0),
+                    "score_100": {"total_score": 50}  # 默认评分
+                })
+            
+            analysis = {
+                "risk_level": "未知",
+                "risk_score": 0,
+                "avg_return_1y": 0,
+                "fund_count": len(holdings),
+                "diversification": "无详细数据",
+                "total_amount": sum(h.get("amount", 0) for h in holdings),
+                "funds": chart_funds,  # 使用持仓数据
+                "message": "使用持仓数据，基金详情待更新"
+            }
+        
+        return jsonify({"success": True, "analysis": analysis})
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "analysis": {
+                "risk_level": "未知",
+                "risk_score": 0,
+                "avg_return_1y": 0,
+                "fund_count": 0,
+                "diversification": "分析失败",
+                "total_amount": 0,
+                "message": f"分析失败: {str(e)}"
+            }
+        })
 
 
 @analysis_bp.route("/expected-return")

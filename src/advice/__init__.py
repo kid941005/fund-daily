@@ -3,22 +3,22 @@ Advice module - 投资建议模块
 提供基金分析、建议生成、评分等功能
 """
 
+from typing import Dict, List, Optional
+
 from .generate import (
-    generate_advice, 
+    generate_advice,
     generate_daily_report,
     format_report_for_share,
-    ADVICE_SCORE_THRESHOLDS as SCORE_THRESHOLDS, 
-    ADVICE_ALLOCATION_RATIOS as ALLOCATION_RATIOS, 
-    ADVICE_WEIGHT_CONFIG as WEIGHT_CONFIG
+    ADVICE_SCORE_THRESHOLDS as SCORE_THRESHOLDS,
+    ADVICE_ALLOCATION_RATIOS as ALLOCATION_RATIOS,
+    ADVICE_WEIGHT_CONFIG as WEIGHT_CONFIG,
 )
 from ..fetcher import fetch_fund_data, fetch_fund_detail, fetch_fund_manager, fetch_fund_scale
 from ..analyzer import calculate_risk_metrics, get_market_sentiment, get_commodity_sentiment
+from src.scoring.utils import normalize_returns
 
 # 保留原有函数以保持兼容性
 from .generate import generate_advice as _generate_advice_old
-
-# 导入技术分析
-from typing import Dict, List, Optional
 
 
 def analyze_fund(fund_data: Dict) -> Dict:
@@ -27,11 +27,11 @@ def analyze_fund(fund_data: Dict) -> Dict:
         return {"error": fund_data["error"]}
     if not fund_data.get("fundcode"):
         return {"error": "No fund data available"}
-    
+
     gszzl = float(fund_data.get("gszzl", 0))
     trend = "up" if gszzl > 0 else "down" if gszzl < 0 else "flat"
-    
-    # 生成summary
+
+    # 生成 summary
     name = fund_data.get("name", "Unknown")
     nav = fund_data.get("dwjz", "N/A")
     if gszzl > 3:
@@ -44,9 +44,9 @@ def analyze_fund(fund_data: Dict) -> Dict:
         summary = f"📉 {name} 下跌 {gszzl}%，净值 {nav}"
     else:
         summary = f"🔻 {name} 大跌 {gszzl}%，净值 {nav}"
-    
+
     fund_code = fund_data.get("fundcode")
-    
+
     # 生成100分制评分
     score_100 = {}
     try:
@@ -54,7 +54,7 @@ def analyze_fund(fund_data: Dict) -> Dict:
         score_100 = generate_100_score(fund_code, gszzl) or {}
     except Exception as e:
         logger.error(f"Error generating score for {fund_code}: {e}")
-    
+
     return {
         "fund_code": fund_code,
         "fund_name": name,
@@ -68,13 +68,19 @@ def analyze_fund(fund_data: Dict) -> Dict:
     }
 
 
-def get_fund_detail_info(code: str) -> Dict:
-    """Get detailed fund information"""
+def get_fund_detail_info(code: str, use_cache: bool = True) -> Dict:
+    """Get detailed fund information
+    
+    Args:
+        code: Fund code
+        use_cache: Whether to use cache, default True
+    """
     try:
-        fund_data = fetch_fund_data(code)
+        fund_data = fetch_fund_data(code, use_cache=use_cache)
         detail_data = fetch_fund_detail(code)
-        
+
         import re
+
         syl_1n = re.search(r'syl_1n="([^"]+)"', detail_data.get("raw_html", ""))
         syl_3y = re.search(r'syl_3y="([^"]+)"', detail_data.get("raw_html", ""))
         syl_1y = re.search(r'syl_1y="([^"]+)"', detail_data.get("raw_html", ""))
@@ -147,7 +153,7 @@ def calculate_rsi(closes: List[float], period: int = 14) -> Optional[float]:
     """Calculate RSI indicator"""
     if len(closes) < period + 1:
         return None
-    
+
     gains = []
     losses = []
     for i in range(1, len(closes)):
@@ -176,52 +182,14 @@ def analyze_technical_indicators(fund_code: str) -> Dict:
 
 
 def generate_100_score(fund_code: str, daily_change: float = 0.0) -> Dict:
-    """Generate 100-point score"""
-    from ..scoring import calculate_total_score
-    
+    """Generate 100-point score - 使用统一评分服务"""
     try:
-        fund_data = fetch_fund_data(fund_code)
-        detail_data = fetch_fund_detail(fund_code)
-        risk_metrics = calculate_risk_metrics(
-            float(detail_data.get("syl_1y", 0) or 0),
-            float(detail_data.get("syl_3y", 0) or 0),
-            float(detail_data.get("syl_1n", 0) or 0),
-            fund_data.get("name", ""),
-        )
+        from src.services.score_service import get_score_service
         
-        market = get_market_sentiment()
-        commodity = get_commodity_sentiment()
+        service = get_score_service()
+        scoring = service.calculate_score(fund_code, use_cache=True)
         
-        from ..fetcher import fetch_hot_sectors, fetch_market_news, fetch_fund_manager, fetch_fund_scale
-        hot_sectors = fetch_hot_sectors(5)
-        news = fetch_market_news(10)
-        fund_manager = fetch_fund_manager(fund_code)
-        fund_scale = fetch_fund_scale(fund_code)
-        
-        fund_data_dict = {
-            "return_1m": float(detail_data.get("syl_1y", 0) or 0),
-            "return_3m": float(detail_data.get("syl_3y", 0) or 0),
-            "return_6m": float(detail_data.get("syl_6y", 0) or 0),
-            "return_1y": float(detail_data.get("syl_1n", 0) or 0),
-            "daily_change": float(daily_change) if daily_change else 0,
-        }
-        
-        scoring = calculate_total_score(
-            fund_detail=detail_data,
-            risk_metrics=risk_metrics,
-            market_sentiment=market.get("sentiment", "平稳"),
-            market_score=market.get("score", 0),
-            news=news,
-            hot_sectors=hot_sectors,
-            commodity_sentiment=commodity.get("sentiment", "平稳"),
-            fund_manager=fund_manager,
-            fund_type=fund_data.get("name", ""),
-            fund_scale=fund_scale,
-            daily_change=daily_change,
-            fund_data=fund_data_dict,
-            fund_code=fund_code,  # 传入fund_code用于缓存
-        )
-        
+        # 保持向后兼容，确保返回格式一致
         return scoring
     except Exception as e:
         logger.error(f"Generate 100 score error: {e}")
@@ -233,12 +201,12 @@ def format_100_score_report(fund_code: str) -> str:
     fund_data = fetch_fund_data(fund_code)
     fund_name = fund_data.get("name", fund_code)
     daily_change = float(fund_data.get("gszzl", 0) or 0)
-    
+
     scoring = generate_100_score(fund_code, daily_change)
-    
+
     if "error" in scoring:
         return f"获取评分失败: {scoring['error']}"
-    
+
     details = scoring["details"]
     return f"📊 {fund_name} 评分: {scoring['total_score']}/100 ({scoring['grade']}级)"
 
@@ -247,7 +215,7 @@ __all__ = [
     "analyze_fund",
     "generate_daily_report",
     "format_report_for_share",
-    "generate_advice", 
+    "generate_advice",
     "get_fund_detail_info",
     "analyze_technical_indicators",
     "generate_100_score",
@@ -256,6 +224,6 @@ __all__ = [
     "calculate_macd",
     "calculate_rsi",
     "SCORE_THRESHOLDS",
-    "ALLOCATION_RATIOS", 
+    "ALLOCATION_RATIOS",
     "WEIGHT_CONFIG",
 ]

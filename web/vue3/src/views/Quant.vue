@@ -2,6 +2,32 @@
   <div class="quant">
     <h1>📊 量化分析</h1>
     
+    <!-- 市场择时 -->
+    <section class="section">
+      <h2>🎯 市场择时</h2>
+      <div v-if="loading" class="loading">加载中...</div>
+      <div v-else class="timing-cards">
+        <!-- 综合信号 & 信心指数 -->
+        <div class="timing-main">
+          <span class="label">综合信号</span>
+          <span class="value" :class="getSignalClass(timingSignals.overall_signal)">
+            {{ timingSignals.overall_signal || '--' }}
+          </span>
+        </div>
+        <div class="timing-main">
+          <span class="label">信心指数</span>
+          <span class="value">{{ timingSignals.score || 0 }}</span>
+        </div>
+        
+        <!-- 细分信号 -->
+        <div v-for="(sig, idx) in timingSignals.signals" :key="idx" class="timing-main">
+          <span class="label">{{ sig.type }}</span>
+          <span class="value" :class="getSignalClass(sig.signal)">{{ sig.signal }}</span>
+          <span class="reason">{{ sig.reason }}</span>
+        </div>
+      </div>
+    </section>
+    
     <!-- 动态权重 -->
     <section class="section" v-if="dynamicWeights">
       <h2>⚙️ 动态权重 (当前: {{ dynamicWeights.market_cycle }})</h2>
@@ -13,113 +39,46 @@
       </div>
     </section>
     
-    <!-- 市场择时 -->
+    <!-- 量化评分 -->
     <section class="section">
-      <h2>🎯 市场择时</h2>
-      <div v-if="loading" class="loading">加载中...</div>
-      <div v-else>
-        <div class="timing-summary">
-          <div class="timing-main">
-            <span class="label">综合信号</span>
-            <span class="value" :class="getSignalClass(timingSignals.overall_signal)">
-              {{ timingSignals.overall_signal || '--' }}
+      <h2>📊 量化评分</h2>
+      
+      <!-- 排序控制 -->
+      <div class="sort-controls" v-if="store.funds?.length">
+        <button class="sort-btn" @click="toggleSortOrder">
+          {{ sortOrder === 'desc' ? '🔽 分数排序（高分优先）' : '🔼 分数排序（低分优先）' }}
+        </button>
+      </div>
+      
+      <div v-if="store.funds?.length" class="score-cards">
+        <div v-for="fund in sortedFunds" :key="fund.fund_code" class="score-card">
+          <div class="score-header">
+            <span class="name">{{ fund.fund_name?.substring(0, 10) }}</span>
+            <span class="score" :class="getScoreClass(fund.score_100?.total_score)">
+              {{ fund.score_100?.total_score || '--' }}分
             </span>
           </div>
-          <div class="timing-main">
-            <span class="label">信心指数</span>
-            <span class="value">{{ timingSignals.score || 0 }}</span>
-          </div>
-        </div>
-        
-        <div class="timing-signals" v-if="timingSignals.signals?.length">
-          <h3>细分信号</h3>
-          <div class="signal-list">
-            <div v-for="(sig, idx) in timingSignals.signals" :key="idx" class="signal-item">
-              <div class="signal-type">{{ sig.type }}</div>
-              <div class="signal-value" :class="getSignalClass(sig.signal)">{{ sig.signal }}</div>
-              <div class="signal-reason">{{ sig.reason }}</div>
-              <div class="signal-weight">权重: {{ (sig.weight * 100).toFixed(0) }}%</div>
+          <div class="score-details">
+            <div class="detail">
+              <span>估值</span>
+              <span>{{ fund.score_100?.details?.details?.valuation?.score || 0 }}/25</span>
+            </div>
+            <div class="detail">
+              <span>业绩</span>
+              <span>{{ fund.score_100?.details?.details?.performance?.score || 0 }}/20</span>
+            </div>
+            <div class="detail">
+              <span>风险</span>
+              <span>{{ fund.score_100?.details?.details?.risk_control?.score || 0 }}/15</span>
+            </div>
+            <div class="detail">
+              <span>动量</span>
+              <span>{{ fund.score_100?.details?.details?.momentum?.score || 0 }}/15</span>
             </div>
           </div>
         </div>
       </div>
-    </section>
-    
-    <!-- 组合优化 -->
-    <section class="section">
-      <h2>📈 组合优化</h2>
-      <div v-if="optimizeLoading" class="loading">加载中...</div>
-      <div v-else-if="portfolioOptimize.allocations?.length">
-        <div class="optimize-summary">
-          <div class="opt-stat">
-            <span class="label">基金数量</span>
-            <span class="value">{{ portfolioOptimize.allocations.length }}</span>
-          </div>
-          <div class="opt-stat">
-            <span class="label">策略</span>
-            <span class="value">评分加权</span>
-          </div>
-          <div class="opt-stat">
-            <span class="label">最高权重</span>
-            <span class="value">{{ maxWeight }}%</span>
-          </div>
-        </div>
-        
-        <h3>持仓建议</h3>
-        <div class="allocation-list">
-          <div v-for="item in portfolioOptimize.allocations" :key="item.fund_code" 
-               class="allocation-item">
-            <div class="fund-info">
-              <span class="fund-code">{{ item.fund_code }}</span>
-              <span class="fund-name">{{ item.fund_name }}</span>
-            </div>
-            <div class="fund-stats">
-              <span class="score" :class="getScoreClass(item.score)">{{ item.score }}分</span>
-              <span class="weight">{{ item.weight?.toFixed(1) }}%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div v-else class="empty">暂无优化建议</div>
-    </section>
-    
-    <!-- 调仓建议 -->
-    <section class="section">
-      <h2>⚖️ 调仓建议</h2>
-      <div v-if="rebalancingLoading" class="loading">加载中...</div>
-      <div v-else-if="rebalancing.trades?.length">
-        <div class="rebalance-summary">
-          <div class="rb-stat">
-            <span class="label">持有</span>
-            <span class="value keep">{{ rebalancing.summary?.hold_count || 0 }}</span>
-          </div>
-          <div class="rb-stat">
-            <span class="label">卖出</span>
-            <span class="value sell">{{ rebalancing.summary?.sell_count || 0 }}</span>
-          </div>
-          <div class="rb-stat">
-            <span class="label">买入</span>
-            <span class="value buy">{{ rebalancing.summary?.buy_count || 0 }}</span>
-          </div>
-        </div>
-        
-        <h3>调整明细</h3>
-        <div class="trade-list">
-          <div v-for="trade in rebalancing.trades" :key="trade.fund_code" 
-               class="trade-item" :class="trade.action">
-            <div class="trade-info">
-              <span class="fund-code">{{ trade.fund_code }}</span>
-              <span class="fund-name">{{ trade.fund_name }}</span>
-            </div>
-            <div class="trade-action" :class="trade.action">{{ trade.action }}</div>
-            <div class="trade-detail">
-              当前 {{ trade.current_pct?.toFixed(1) }}% → 目标 {{ trade.target_pct?.toFixed(1) }}%
-            </div>
-            <div class="trade-reason">{{ trade.reason }}</div>
-          </div>
-        </div>
-      </div>
-      <div v-else class="empty">暂无调仓建议</div>
+      <div v-else class="empty">暂无评分数据</div>
     </section>
   </div>
 </template>
@@ -137,6 +96,27 @@ const loading = computed(() => store.loading.timing)
 const optimizeLoading = computed(() => store.loading.optimize)
 const rebalancingLoading = computed(() => store.loading.rebalancing)
 
+// 排序相关
+const sortOrder = ref('desc') // desc: 高分优先, asc: 低分优先
+
+// 排序后的基金列表
+const sortedFunds = computed(() => {
+  if (!store.funds?.length) return []
+  
+  const funds = [...store.funds]
+  
+  return funds.sort((a, b) => {
+    const scoreA = a.score_100?.total_score || 0
+    const scoreB = b.score_100?.total_score || 0
+    
+    if (sortOrder.value === 'desc') {
+      return scoreB - scoreA // 高分优先
+    } else {
+      return scoreA - scoreB // 低分优先
+    }
+  })
+})
+
 // 动态权重数据
 const dynamicWeights = ref(null)
 const weightsLoading = ref(false)
@@ -144,6 +124,19 @@ const weightsLoading = ref(false)
 store.fetchTimingSignals()
 store.fetchPortfolioOptimize()
 store.fetchRebalancing()
+
+const getScoreClass = (score) => {
+  if (!score) return ''
+  if (score >= 70) return 'excellent'
+  if (score >= 50) return 'good'
+  if (score >= 30) return 'fair'
+  return 'poor'
+}
+
+// 排序函数
+const toggleSortOrder = () => {
+  sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc'
+}
 
 // 获取动态权重
 async function fetchDynamicWeights() {
@@ -169,12 +162,6 @@ function getSignalClass(signal) {
   if (signal === '卖出') return 'sell'
   if (signal === '持有') return 'keep'
   return ''
-}
-
-function getScoreClass(score) {
-  if (score >= 70) return 'high'
-  if (score >= 50) return 'medium'
-  return 'low'
 }
 
 // 权重项名称映射
@@ -229,30 +216,51 @@ h3 {
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-.timing-summary {
+.timing-cards {
   display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 8px;
 }
 
 .timing-main {
   flex: 1;
+  min-width: 0;
   text-align: center;
-  padding: 16px;
+  padding: 12px;
   background: #f8f9fa;
   border-radius: 8px;
+  flex-shrink: 0;
 }
 
 .timing-main .label {
   display: block;
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .timing-main .value {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: bold;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timing-main .reason {
+  display: block;
+  font-size: 10px;
+  color: #999;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .timing-main .value.buy { color: #ef4444; }
@@ -284,30 +292,6 @@ h3 {
   font-weight: bold;
   color: #333;
 }
-
-.signal-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.signal-item {
-  display: grid;
-  grid-template-columns: 80px 60px 1fr 50px;
-  align-items: center;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 6px;
-  font-size: 12px;
-}
-
-.signal-type { font-weight: bold; color: #333; }
-.signal-value { font-weight: bold; }
-.signal-value.buy { color: #ef4444; }
-.signal-value.sell { color: #22c55e; }
-.signal-value.keep { color: #f59e0b; }
-.signal-reason { color: #666; }
-.signal-weight { color: #999; text-align: right; }
 
 .optimize-summary, .rebalance-summary {
   display: flex;
@@ -379,17 +363,86 @@ h3 {
   align-items: center;
 }
 
-.score {
-  padding: 2px 6px;
-  border-radius: 4px;
+/* 排序控制 */
+.sort-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sort-btn {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sort-btn:hover {
+  background: #f5f5f5;
+}
+
+.sort-btn.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.score-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.score-card {
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.score-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.score-header .name {
+  font-weight: 500;
+}
+
+.score-header .score {
+  font-size: 20px;
   font-weight: bold;
 }
 
-.score.high { background: #dcfce7; color: #16a34a; }
-.score.medium { background: #fef3c7; color: #d97706; }
-.score.low { background: #fee2e2; color: #dc2626; }
+.score.excellent { color: #22c55e; }
+.score.good { color: #667eea; }
+.score.fair { color: #f59e0b; }
+.score.poor { color: #ef4444; }
 
-.weight { color: #666; }
+.score-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.score-details .detail {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #666;
+}
+
+.score-details .detail span:first-child {
+  color: #333;
+}
+
+.score-details .detail span:last-child {
+  font-weight: 500;
+}
 
 .trade-action {
   padding: 2px 8px;
@@ -414,8 +467,19 @@ h3 {
 @media (max-width: 480px) {
   .quant { padding: 8px; }
   .section { padding: 12px; }
-  .timing-summary { flex-direction: column; }
-  .signal-item { grid-template-columns: 1fr 60px; }
-  .signal-reason, .signal-weight { display: none; }
+  .timing-cards {
+    flex-direction: row;
+    gap: 6px;
+  }
+  .timing-main {
+    padding: 8px;
+    min-width: 80px;
+  }
+  .timing-main .value {
+    font-size: 16px;
+  }
+  .timing-main .reason {
+    font-size: 9px;
+  }
 }
 </style>

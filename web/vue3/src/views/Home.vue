@@ -77,10 +77,8 @@ const openUrl = (url) => {
 }
 
 onMounted(() => {
-  // 首页加载市场数据（如果缓存过期则刷新）
-  if (store.sectors.length === 0) {
-    store.loadAll()
-  }
+  // 首页加载市场数据
+  store.loadAll()
 })
 </script>
 

@@ -21,18 +21,19 @@ logger = logging.getLogger(__name__)
 from src.constants import CACHE_DURATION
 REQUEST_INTERVAL = float(os.environ.get("FUND_DAILY_REQUEST_INTERVAL", 0.5))
 
-# 内存缓存（备用）
-_cache = {}
+# 内存缓存（备用）- 使用LRU缓存防止内存泄漏
+from src.cache.lru_cache import get_lru_cache
+_cache = get_lru_cache(max_size=500, default_ttl=CACHE_DURATION)
 _last_request_time = 0.0
 
 # Redis 缓存优先，内存作为备用
 try:
     from src.cache.redis_cache import redis_get, redis_set, redis_clear as redis_clear
     HAS_REDIS = True
-    logger.info("✅ 使用 Redis 缓存")
+    logger.info("✅ 使用 Redis 缓存 + LRU内存缓存")
 except ImportError:
     HAS_REDIS = False
-    logger.info("⚠️ 使用内存缓存")
+    logger.info("⚠️ 使用LRU内存缓存（无Redis）")
 
 
 def get_cache(key: str) -> Optional[Any]:
@@ -43,25 +44,23 @@ def get_cache(key: str) -> Optional[Any]:
         if value is not None:
             logger.debug(f"Redis cache hit: {key}")
             # 回填内存缓存
-            _cache[key] = (value, time.time())
+            _cache.set(key, value)
             return value
     
-    # Redis 未命中，尝试内存缓存
-    if key in _cache:
-        value, timestamp = _cache[key]
-        if time.time() - timestamp < CACHE_DURATION:
-            logger.debug(f"Memory cache hit: {key}")
-            return value
-        else:
-            del _cache[key]
-            logger.debug(f"Cache expired: {key}")
+    # Redis 未命中，尝试LRU内存缓存
+    value = _cache.get(key)
+    if value is not None:
+        logger.debug(f"LRU Memory cache hit: {key}")
+        return value
+    
+    logger.debug(f"Cache miss: {key}")
     return None
 
 
 def set_cache(key: str, value: Any) -> None:
-    """Set value in cache (同时写入 Redis 和内存)"""
-    # 写入内存
-    _cache[key] = (value, time.time())
+    """Set value in cache (同时写入 Redis 和LRU内存)"""
+    # 写入LRU内存缓存
+    _cache.set(key, value)
     
     # 尝试写入 Redis
     if HAS_REDIS:
@@ -72,13 +71,22 @@ def set_cache(key: str, value: Any) -> None:
 
 def clear_cache() -> None:
     """Clear all cache"""
-    global _cache
-    _cache = {}
+    # 清空LRU内存缓存
+    _cache.clear()
     
     if HAS_REDIS:
         redis_clear()
     
-    logger.info("Cache cleared")
+    logger.info("Cache cleared (including LRU cache)")
+
+
+def get_cache_stats() -> dict:
+    """获取缓存统计信息"""
+    stats = {
+        "lru_cache": _cache.stats(),
+        "has_redis": HAS_REDIS
+    }
+    return stats
 
 
 # ============== SSL ==============
@@ -128,12 +136,13 @@ def _make_request(url: str, timeout: int = 10) -> Optional[str]:
 
 
 # ============== Fund Data ==============
-def fetch_fund_data(fund_code: str) -> Dict:
+def fetch_fund_data(fund_code: str, use_cache: bool = True) -> Dict:
     """
     Fetch fund data from East Money
 
     Args:
         fund_code: 6-digit fund code
+        use_cache: 是否使用缓存，默认 True
 
     Returns:
         dict: 成功返回基金数据，失败返回 {"error": "错误信息"}
@@ -142,11 +151,14 @@ def fetch_fund_data(fund_code: str) -> Dict:
         调用方应检查返回字典中是否存在 "error" 键
     """
     cache_key = f"fund:{fund_code}"
-    cached = get_cache(cache_key)
-    if cached is not None:
-        return cached
+    
+    # 如果启用缓存，先检查缓存
+    if use_cache:
+        cached = get_cache(cache_key)
+        if cached is not None:
+            return cached
 
-    logger.info(f"Fetching fund data: {fund_code}")
+    logger.info(f"Fetching fund data (cache={'hit' if use_cache else 'bypass'}): {fund_code}")
 
     # East Money web API
     url = f"https://fundgz.1234567.com.cn/js/{fund_code}.js?rt=1463558676006"
@@ -198,24 +210,26 @@ def fetch_fund_data(fund_code: str) -> Dict:
     return {"error": "Failed to fetch data"}
 
 
-def fetch_fund_detail(fund_code: str) -> Dict:
+def fetch_fund_detail(fund_code: str, use_cache: bool = True) -> Dict:
     """
     Fetch detailed fund information from East Money
 
     Args:
         fund_code: 6-digit fund code
+        use_cache: Whether to use cache, default True
 
     Returns:
         dict: Detailed fund data or error
     """
     # Check cache first
     cache_key = f"fund_detail:{fund_code}"
-    cached = get_cache(cache_key)
-    if cached is not None:
-        return cached
+    if use_cache:
+        cached = get_cache(cache_key)
+        if cached is not None:
+            return cached
     
     # First get basic data
-    basic_data = fetch_fund_data(fund_code)
+    basic_data = fetch_fund_data(fund_code, use_cache=use_cache)
     if "error" in basic_data:
         return basic_data
 
@@ -586,3 +600,22 @@ def fetch_fund_scale(fund_code: str) -> float:
         logger.warning(f"Parse scale error: {e}")
 
     return 0.0
+
+# 增强版fetcher导入
+try:
+    from .enhanced_fetcher import (
+        get_enhanced_fetcher,
+        EnhancedFetcher,
+        fetch_fund_data_enhanced,
+        fetch_fund_detail_enhanced,
+        get_fund_history_enhanced
+    )
+    HAS_ENHANCED_FETCHER = True
+except ImportError as e:
+    logger.warning(f"增强版fetcher导入失败: {e}")
+    HAS_ENHANCED_FETCHER = False
+    get_enhanced_fetcher = None
+    EnhancedFetcher = None
+    fetch_fund_data_enhanced = None
+    fetch_fund_detail_enhanced = None
+    get_fund_history_enhanced = None
