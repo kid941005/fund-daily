@@ -41,7 +41,7 @@ def health_check():
             "status": "healthy",
             "database": db_status,
             "redis": redis_status,
-            "version": "2.5.1"
+            "version": "2.6.0"
         })
     except Exception as e:
         logger.error(f"Health check failed: {e}")

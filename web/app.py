@@ -33,8 +33,8 @@ def get_version():
     )
     if os.path.exists(VERSION_FILE):
         with open(VERSION_FILE, "r") as f:
-            return f.read().strip() or "2.5.0"
-    return "2.5.0"
+            return f.read().strip() or "2.6.0"
+    return "2.6.0"
 
 
 VERSION = get_version()

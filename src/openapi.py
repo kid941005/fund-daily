@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class OpenAPIGenerator:
     """OpenAPI文档生成器"""
     
-    def __init__(self, title: str = "Fund Daily API", version: str = "2.5.1"):
+    def __init__(self, title: str = "Fund Daily API", version: str = "2.6.0"):
         self.title = title
         self.version = version
         self.openapi_spec = {

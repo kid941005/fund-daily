@@ -184,7 +184,7 @@ class ServerConfig:
 class AppConfig:
     """应用配置"""
     env: str = "development"  # development, production, testing
-    version: str = "2.5.0"
+    version: str = "2.6.0"
     default_funds: List[str] = field(default_factory=lambda: ["000001", "110022", "161725"])
     
     @classmethod
@@ -192,7 +192,7 @@ class AppConfig:
         """从环境变量创建配置"""
         return cls(
             env=os.getenv("FUND_DAILY_ENV", "development"),
-            version=os.getenv("FUND_DAILY_VERSION", "2.5.0"),
+            version=os.getenv("FUND_DAILY_VERSION", "2.6.0"),
             default_funds=os.getenv("FUND_DAILY_DEFAULT_FUNDS", "000001,110022,161725").split(","),
         )
     
