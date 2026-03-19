@@ -4,6 +4,13 @@ flask-cors==4.0.0
 requests==2.31.0
 numpy>=1.24.0  # For accurate risk calculations
 
+# Database
+psycopg2-binary
+redis>=4.5.0
+
+# Monitoring and metrics (optional but recommended)
+prometheus-client>=0.19.0  # For metrics collection
+psutil>=5.9.0  # For system metrics in health checks
+
 # Optional: OCR functionality
 # pip install easyocr  # ~2GB, includes PyTorch
-psycopg2-binary

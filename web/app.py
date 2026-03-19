@@ -106,6 +106,21 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ 安全HTTP头中间件初始化失败: {e}")
 
+# Initialize monitoring and health checks
+try:
+    # 初始化指标收集器
+    from web.monitoring import get_metrics_collector
+    collector = get_metrics_collector()
+    logger.info("✅ 指标收集器已初始化")
+    
+    # 初始化健康检查器
+    from web.health import get_health_checker
+    health_checker = get_health_checker()
+    logger.info("✅ 健康检查器已初始化")
+    
+except Exception as e:
+    logger.warning(f"⚠️ 监控和健康检查初始化失败: {e}")
+
 # Config paths
 DATA_DIR = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/data")
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "config.json")
@@ -163,31 +178,39 @@ def after_request(response):
         duration = (datetime.now() - g.start_time).total_seconds()
         response.headers['X-Process-Time'] = f"{duration:.3f}"
         
-        # 记录性能指标（排除/metrics端点自身以避免循环）
-        if request.path != '/api/metrics' and request.path != '/api/metrics/enhanced':
+        # 记录性能指标（排除监控端点自身以避免循环）
+        excluded_paths = ['/api/metrics', '/api/metrics/simple', '/api/health/enhanced']
+        if request.path not in excluded_paths:
             try:
-                # 记录到标准指标服务
-                from src.services.metrics_service import get_metrics_service
-                metrics_service = get_metrics_service()
-                metrics_service.record_request(
-                    method=request.method,
-                    path=request.path,
-                    status_code=response.status_code,
-                    duration=duration
-                )
-                
-                # 记录到增强版指标服务（P2优化）
+                # 使用新的监控系统
                 try:
-                    from src.services.enhanced_metrics_service import get_enhanced_metrics_service
-                    enhanced_metrics_service = get_enhanced_metrics_service()
-                    enhanced_metrics_service.record_request(
+                    from web.monitoring import get_metrics_collector
+                    collector = get_metrics_collector()
+                    collector.record_http_request(
+                        method=request.method,
+                        endpoint=request.endpoint or request.path,
+                        status_code=response.status_code,
+                        duration=duration
+                    )
+                    
+                    # 记录HTTP错误（4xx和5xx）
+                    if response.status_code >= 400:
+                        error_type = "client_error" if response.status_code < 500 else "server_error"
+                        collector.record_http_error(
+                            method=request.method,
+                            endpoint=request.endpoint or request.path,
+                            error_type=error_type
+                        )
+                except ImportError:
+                    # 监控系统不可用，使用旧的指标服务
+                    from src.services.metrics_service import get_metrics_service
+                    metrics_service = get_metrics_service()
+                    metrics_service.record_request(
                         method=request.method,
                         path=request.path,
                         status_code=response.status_code,
                         duration=duration
                     )
-                except Exception as e2:
-                    logger.debug(f"Enhanced metrics recording failed (non-critical): {e2}")
                     
             except Exception as e:
                 logger.error(f"Failed to record request metrics: {e}")
@@ -352,7 +375,7 @@ def serve_vue(path):
 # ============== Health Check ==============
 @app.route("/health")
 def health_check():
-    """Health check endpoint"""
+    """基础健康检查端点（保持向后兼容）"""
     import psycopg2
     import redis
     
@@ -403,6 +426,55 @@ def health_check():
             "cache_enabled": config.cache.duration > 0,
         }
     }
+
+
+# ============== 增强版健康检查和监控 ==============
+try:
+    from web.health import create_health_response
+    from web.monitoring import get_metrics_collector
+    
+    @app.route("/api/health/enhanced")
+    def enhanced_health_check():
+        """增强版健康检查端点"""
+        return create_health_response()
+    
+    @app.route("/api/metrics")
+    def metrics_endpoint():
+        """Prometheus格式指标端点"""
+        from web.monitoring import HAS_PROMETHEUS, CONTENT_TYPE_LATEST
+        
+        collector = get_metrics_collector()
+        
+        if HAS_PROMETHEUS:
+            from prometheus_client import generate_latest
+            metrics_data = generate_latest()
+            return metrics_data, 200, {'Content-Type': CONTENT_TYPE_LATEST}
+        else:
+            # 返回JSON格式的简单指标
+            metrics = collector.get_metrics()
+            return {
+                "metrics": metrics,
+                "timestamp": datetime.now().isoformat(),
+                "version": VERSION,
+            }
+    
+    @app.route("/api/metrics/simple")
+    def simple_metrics():
+        """简单指标端点（JSON格式）"""
+        collector = get_metrics_collector()
+        metrics = collector.get_metrics()
+        
+        return {
+            "status": "ok",
+            "metrics": metrics,
+            "timestamp": datetime.now().isoformat(),
+            "version": VERSION,
+        }
+    
+    logger.info("✅ 增强版健康检查和监控端点已注册")
+    
+except Exception as e:
+    logger.warning(f"⚠️ 增强版健康检查和监控初始化失败: {e}")
 
 
 # ============== Main ==============
