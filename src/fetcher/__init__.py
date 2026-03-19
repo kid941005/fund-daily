@@ -20,74 +20,73 @@ logger = logging.getLogger(__name__)
 from src.config import get_config
 
 # 内存缓存（备用）- 使用LRU缓存防止内存泄漏
+from src.cache.manager import get_cache_manager
 from src.cache.lru_cache import get_lru_cache
+from src.config import get_config
 
-# 初始化缓存
+# 初始化缓存管理器（支持多级缓存和防护机制）
 config = get_config()
-_cache = get_lru_cache(max_size=500, default_ttl=config.cache.duration)
+_cache_manager = get_cache_manager()
 _last_request_time = 0.0
 
-# Redis 缓存优先，内存作为备用
+# 为了向后兼容
 try:
     from src.cache.redis_cache import redis_get, redis_set, redis_clear as redis_clear
     HAS_REDIS = True
-    logger.info("✅ 使用 Redis 缓存 + LRU内存缓存")
 except ImportError:
     HAS_REDIS = False
-    logger.info("⚠️ 使用LRU内存缓存（无Redis）")
+
+# 旧版LRU缓存（为了向后兼容，不再直接使用）
+_legacy_lru_cache = get_lru_cache(max_size=500, default_ttl=config.cache.duration)
+
+logger.info(f"✅ 使用缓存管理器: {_cache_manager.__class__.__name__}")
 
 
 def get_cache(key: str) -> Optional[Any]:
-    """Get value from cache (Redis 优先，内存备用)"""
-    # 先尝试 Redis
-    if HAS_REDIS:
-        value = redis_get(key)
-        if value is not None:
-            logger.debug(f"Redis cache hit: {key}")
-            # 回填内存缓存
-            _cache.set(key, value)
-            return value
+    """Get value from cache (使用缓存管理器)"""
+    value = _cache_manager.get(key)
     
-    # Redis 未命中，尝试LRU内存缓存
-    value = _cache.get(key)
     if value is not None:
-        logger.debug(f"LRU Memory cache hit: {key}")
-        return value
+        # 检查是否是特殊标记（空值或错误）
+        if value == "__NULL__":
+            logger.debug(f"Cache penetration protected (null): {key}")
+            return None
+        elif value == "__ERROR__":
+            logger.debug(f"Cache penetration protected (error): {key}")
+            return None
+        else:
+            logger.debug(f"Cache hit: {key}")
+            return value
     
     logger.debug(f"Cache miss: {key}")
     return None
 
 
-def set_cache(key: str, value: Any) -> None:
-    """Set value in cache (同时写入 Redis 和LRU内存)"""
-    # 写入LRU内存缓存
-    _cache.set(key, value)
-    
-    # 尝试写入 Redis
-    if HAS_REDIS:
+def set_cache(key: str, value: Any, ttl: Optional[int] = None) -> None:
+    """Set value in cache (使用缓存管理器)"""
+    if ttl is None:
         config = get_config()
-        redis_set(key, value, config.cache.duration)
+        ttl = config.cache.duration
     
-    logger.debug(f"Cache set: {key}")
+    success = _cache_manager.set(key, value, ttl)
+    
+    if success:
+        logger.debug(f"Cache set: {key} (ttl={ttl}s)")
+    else:
+        logger.warning(f"Cache set failed: {key}")
 
 
 def clear_cache() -> None:
     """Clear all cache"""
-    # 清空LRU内存缓存
-    _cache.clear()
-    
-    if HAS_REDIS:
-        redis_clear()
-    
-    logger.info("Cache cleared (including LRU cache)")
+    _cache_manager.clear()
+    logger.info("Cache cleared (using cache manager)")
 
 
 def get_cache_stats() -> dict:
     """获取缓存统计信息"""
-    stats = {
-        "lru_cache": _cache.stats(),
-        "has_redis": HAS_REDIS
-    }
+    stats = _cache_manager.get_stats()
+    stats["has_redis"] = HAS_REDIS
+    stats["cache_manager"] = _cache_manager.__class__.__name__
     return stats
 
 

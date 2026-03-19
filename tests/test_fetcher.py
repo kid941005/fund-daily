@@ -53,10 +53,17 @@ class TestCache:
         set_cache("key1", "value1")
         set_cache("key2", "value2")
         
+        # Get value before clearing
+        value1 = get_cache("key1")
+        assert value1 == "value1"
+        
         clear_cache()
         
-        from src.fetcher import _cache
-        assert len(_cache) == 0
+        # After clearing, cache should be empty
+        value1_after = get_cache("key1")
+        value2_after = get_cache("key2")
+        assert value1_after is None
+        assert value2_after is None
 
 
 class TestFetchFundData:
