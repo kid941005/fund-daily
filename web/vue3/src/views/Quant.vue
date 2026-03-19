@@ -30,11 +30,11 @@
     
     <!-- 动态权重 -->
     <section class="section" v-if="dynamicWeights">
-      <h2>⚙️ 动态权重 (当前: {{ dynamicWeights.market_cycle }})</h2>
+      <h2>⚙️ 动态权重 (当前: {{ dynamicWeights.cycle || dynamicWeights.name }})</h2>
       <div class="weights-grid">
         <div v-for="(label, key) in weightLabels" :key="key" class="weight-item">
           <span class="weight-label">{{ label }}</span>
-          <span class="weight-value">{{ dynamicWeights.weights[key] }}分</span>
+          <span class="weight-value">{{ (dynamicWeights.weights || dynamicWeights)[key] }}分</span>
         </div>
       </div>
     </section>
