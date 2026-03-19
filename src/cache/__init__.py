@@ -9,3 +9,9 @@ from .redis_cache import (
     redis_clear,
     get_redis_client,
 )
+
+from .manager import (
+    CacheManager,
+    get_cache_manager,
+    cached,
+)

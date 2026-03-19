@@ -177,6 +177,16 @@ class LRUCache:
             "total_requests": total
         }
     
+    def get_stats(self) -> Dict[str, int]:
+        """获取统计信息"""
+        return {
+            'hits': self._hits,
+            'misses': self._misses,
+            'evictions': self._evictions,
+            'size': len(self._cache),
+            'max_size': self.max_size,
+        }
+    
     def reset_stats(self) -> None:
         """重置统计信息"""
         self._hits = 0
