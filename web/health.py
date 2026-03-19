@@ -106,7 +106,7 @@ class DatabaseHealthCheck(HealthCheck):
                 return {
                     "status": HealthStatus.UNHEALTHY,
                     "details": {
-                        "error": "数据库查询返回异常结果",
+                        "error": f"数据库查询返回异常结果: {result}",
                         "latency_seconds": latency
                     }
                 }
@@ -251,7 +251,7 @@ class ExternalServiceHealthCheck(HealthCheck):
     def check(self) -> Dict[str, Any]:
         """检查外部API可用性"""
         try:
-            from src.fetcher import fetch_fund_basic
+            from src.fetcher import fetch_fund_data
             
             start_time = time.time()
             
@@ -259,7 +259,7 @@ class ExternalServiceHealthCheck(HealthCheck):
             # 使用一个常见的基金代码
             test_fund_code = "000001"  # 华夏成长
             
-            result = fetch_fund_basic(test_fund_code)
+            result = fetch_fund_data(test_fund_code)
             latency = time.time() - start_time
             
             if result and isinstance(result, dict):
@@ -268,7 +268,7 @@ class ExternalServiceHealthCheck(HealthCheck):
                     "details": {
                         "latency_seconds": latency,
                         "test_fund_code": test_fund_code,
-                        "has_data": bool(result.get('data'))
+                        "has_data": bool(result.get('data') or result.get('name'))
                     }
                 }
             else:

@@ -3,8 +3,9 @@
 为 Flask 应用添加安全相关的 HTTP 头
 """
 
-from flask import request, g
+import uuid
 import re
+from flask import request, g
 
 
 class SecurityHeaders:
@@ -49,7 +50,9 @@ class SecurityHeaders:
             response.headers['X-Request-ID'] = g.request_id
         
         # 根据环境配置不同的安全策略
-        env = self.app.config.get('ENV', 'development')
+        env = 'development'  # 默认值
+        if self.app and hasattr(self.app, 'config'):
+            env = self.app.config.get('ENV', 'development')
         
         if env == 'production':
             # 生产环境：严格策略

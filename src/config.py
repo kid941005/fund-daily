@@ -218,7 +218,7 @@ class ServerConfig:
     def from_env(cls) -> "ServerConfig":
         """从环境变量创建配置"""
         return cls(
-            port=int(os.getenv("PORT", "5000")),
+            port=int(os.getenv("FUND_DAILY_SERVER_PORT", os.getenv("PORT", "5000"))),
             debug=os.getenv("FLASK_DEBUG", "false").lower() == "true",
             host=os.getenv("FLASK_HOST", "0.0.0.0"),
         )
