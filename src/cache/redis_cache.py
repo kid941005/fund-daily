@@ -1,17 +1,12 @@
 # Redis 缓存层
-import os
 import json
 import logging
 from typing import Optional, Any
 
 logger = logging.getLogger(__name__)
 
-# Redis 配置
-REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
-REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
-REDIS_DB = int(os.environ.get("REDIS_DB", 0))
-REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", None)
-REDIS_TTL = int(os.environ.get("REDIS_TTL", 1800))  # 默认30分钟
+# 导入配置管理器
+from src.config import get_config
 
 _redis_client = None
 
@@ -22,11 +17,13 @@ def get_redis_client():
     if _redis_client is None:
         try:
             import redis
+            config = get_config().redis
+            
             _redis_client = redis.Redis(
-                host=REDIS_HOST,
-                port=REDIS_PORT,
-                db=REDIS_DB,
-                password=REDIS_PASSWORD,
+                host=config.host,
+                port=config.port,
+                db=config.db,
+                password=config.password,
                 decode_responses=True,
                 socket_connect_timeout=3,
                 socket_timeout=3,
@@ -63,7 +60,9 @@ def redis_set(key: str, value: Any, ttl: int = None) -> bool:
     if client is None:
         return False
     try:
-        ttl = ttl or REDIS_TTL
+        if ttl is None:
+            config = get_config().redis
+            ttl = config.ttl
         client.setex(key, ttl, json.dumps(value))
         return True
     except Exception as e:

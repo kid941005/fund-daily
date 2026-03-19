@@ -3,8 +3,6 @@ Constants module for Fund Daily
 统一管理项目中的常量定义
 """
 
-import os
-
 # 评分阈值
 SCORE_THRESHOLDS = {
     "BUY": 60,
@@ -36,9 +34,6 @@ ALLOCATION_RATIOS = {
     "MEDIUM": 0.20,
     "LOW": 0.10
 }
-
-# 缓存配置
-CACHE_DURATION = int(os.environ.get('FUND_DAILY_CACHE_DURATION', 600))
 
 # 缓存键前缀（统一版本控制）
 CACHE_PREFIXES = {

@@ -17,7 +17,8 @@ from src.config import (
     ServerConfig,
     AppConfig,
     ConfigManager,
-    get_config
+    get_config,
+    JwtConfig
 )
 
 
@@ -180,23 +181,24 @@ class TestSecurityConfig:
     
     def test_validate_production_missing_key(self):
         """Test validation in production with missing secret key"""
-        config = SecurityConfig(secret_key=None)
+        config = SecurityConfig(secret_key=None, jwt=JwtConfig(secret="test-jwt-secret"))
         errors = config.validate(is_production=True)
-        assert len(errors) == 1
-        assert "必须设置 FUND_DAILY_SECRET_KEY" in errors[0]
+        assert len(errors) == 2  # 缺少Flask密钥 + JWT密钥太短
+        assert any("必须设置 FUND_DAILY_SECRET_KEY" in error for error in errors)
+        assert any("JWT密钥长度至少32字符" in error for error in errors)
     
     def test_validate_short_key(self):
         """Test validation with short secret key"""
-        config = SecurityConfig(secret_key="short")
+        config = SecurityConfig(secret_key="short", jwt=JwtConfig(secret="test-jwt-secret"))
         errors = config.validate(is_production=True)
-        assert len(errors) == 1
-        assert "至少32字符" in errors[0]
+        assert len(errors) == 2  # Flask密钥短 + JWT密钥短（生产环境要求≥32字符）
+        assert any("至少32字符" in error for error in errors)
     
     def test_validate_development(self):
         """Test validation in development (no secret key required)"""
-        config = SecurityConfig(secret_key=None)
+        config = SecurityConfig(secret_key=None, jwt=JwtConfig(secret="dev-jwt-secret"))
         errors = config.validate(is_production=False)
-        assert errors == []
+        assert errors == []  # 开发环境允许无Flask密钥，但JWT密钥必须有值
 
 
 class TestConfigManager:

@@ -4,7 +4,6 @@ Fetches fund data from East Money with caching support
 """
 
 import re
-import os
 import json
 import time
 import ssl
@@ -17,13 +16,15 @@ from typing import Optional, List, Dict, Any
 logger = logging.getLogger(__name__)
 
 # ============== Cache Configuration ==============
-# 缓存时间：默认30分钟
-from src.constants import CACHE_DURATION
-REQUEST_INTERVAL = float(os.environ.get("FUND_DAILY_REQUEST_INTERVAL", 0.5))
+# 导入配置管理器
+from src.config import get_config
 
 # 内存缓存（备用）- 使用LRU缓存防止内存泄漏
 from src.cache.lru_cache import get_lru_cache
-_cache = get_lru_cache(max_size=500, default_ttl=CACHE_DURATION)
+
+# 初始化缓存
+config = get_config()
+_cache = get_lru_cache(max_size=500, default_ttl=config.cache.duration)
 _last_request_time = 0.0
 
 # Redis 缓存优先，内存作为备用
@@ -64,7 +65,8 @@ def set_cache(key: str, value: Any) -> None:
     
     # 尝试写入 Redis
     if HAS_REDIS:
-        redis_set(key, value, CACHE_DURATION)
+        config = get_config()
+        redis_set(key, value, config.cache.duration)
     
     logger.debug(f"Cache set: {key}")
 
@@ -92,7 +94,8 @@ def get_cache_stats() -> dict:
 # ============== SSL ==============
 def _get_ssl_context() -> ssl.SSLContext:
     """Get SSL context based on configuration"""
-    if os.environ.get("FUND_DAILY_SSL_VERIFY", "1") == "0":
+    config = get_config()
+    if not config.security.ssl_verify:
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
@@ -110,9 +113,10 @@ def _make_request(url: str, timeout: int = 10) -> Optional[str]:
     global _last_request_time
 
     # Rate limiting: wait if needed
+    config = get_config()
     elapsed = time.time() - _last_request_time
-    if elapsed < REQUEST_INTERVAL:
-        sleep_time = REQUEST_INTERVAL - elapsed
+    if elapsed < config.cache.request_interval:
+        sleep_time = config.cache.request_interval - elapsed
         logger.debug(f"Rate limiting: sleeping {sleep_time:.2f}s")
         time.sleep(sleep_time)
 
