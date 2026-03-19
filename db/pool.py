@@ -187,6 +187,32 @@ def init_db():
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_fund_nav_date ON fund_nav(nav_date)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_fund_scores_fund_code ON fund_scores(fund_code)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_fund_scores_date ON fund_scores(score_date)")
+
+            # 高频查询优化索引
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_funds_updated_at
+                ON funds(updated_at DESC)
+            """)
+
+            # 基金名称全文搜索索引（支持 LIKE '%xxx%' 加速）
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_funds_fund_name_trgm
+                ON funds USING gin (fund_name gin_trgm_ops)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_funds_fund_code_trgm
+                ON funds USING gin (fund_code gin_trgm_ops)
+            """)
+
+            # fund_nav / fund_scores 按基金和时间范围快速查询
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_fund_nav_code_date
+                ON fund_nav(fund_code, nav_date DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_fund_scores_code_date
+                ON fund_scores(fund_code, score_date DESC)
+            """)
             
             conn.commit()
             logger.info("Database tables initialized")

@@ -235,35 +235,26 @@ class OpenAPIGenerator:
     def generate_from_flask_app(self, app):
         """
         从Flask应用生成OpenAPI文档
-        
+
         Args:
             app: Flask应用实例
         """
         logger.info("开始生成OpenAPI文档...")
-        
-        # 这里可以自动扫描Flask路由
-        # 由于时间限制，我们手动添加主要端点
-        
-        # 认证端点
-        self._add_auth_endpoints()
-        
-        # 基金数据端点
-        self._add_fund_endpoints()
-        
-        # 市场数据端点
-        self._add_market_endpoints()
-        
-        # 系统管理端点
-        self._add_system_endpoints()
-        
-        logger.info(f"OpenAPI文档生成完成，包含 {len(self.openapi_spec['paths'])} 个端点")
-    
 
-        # Endpoint modules
+        spec = self.openapi_spec
+        tags = [t["name"] for t in spec["tags"]]
+
         from .endpoints.auth import add_auth_endpoints
         from .endpoints.funds import add_fund_endpoints
         from .endpoints.market import add_market_endpoints
         from .endpoints.system import add_system_endpoints
+
+        add_auth_endpoints(spec, tags)
+        add_fund_endpoints(spec, tags)
+        add_market_endpoints(spec, tags)
+        add_system_endpoints(spec, tags)
+
+        logger.info(f"OpenAPI文档生成完成，包含 {len(self.openapi_spec['paths'])} 个端点")
 
     def to_dict(self) -> Dict[str, Any]:
         """返回OpenAPI规范字典"""

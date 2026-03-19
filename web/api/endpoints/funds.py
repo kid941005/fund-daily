@@ -21,7 +21,8 @@ def _get_user_id():
         is_valid, payload, _ = verify_access_token(token)
         if is_valid:
             return payload.get("sub")
-    return _get_user_id()
+    # 回退到 session
+    return session.get("user_id")
 
 
 @funds_bp.route("/funds")

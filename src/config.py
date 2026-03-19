@@ -30,7 +30,7 @@ class DatabaseConfig:
             port=int(os.getenv("FUND_DAILY_DB_PORT", "5432")),
             name=os.getenv("FUND_DAILY_DB_NAME", "fund_daily"),
             user=os.getenv("FUND_DAILY_DB_USER", "kid"),
-            password=os.getenv("FUND_DAILY_DB_PASSWORD", ""),
+            password=os.getenv("FUND_DAILY_DB_PASSWORD", os.getenv("DB_PASSWORD", "")),
         )
     
     def validate(self) -> List[str]:

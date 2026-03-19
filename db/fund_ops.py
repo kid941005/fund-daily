@@ -121,20 +121,28 @@ def get_fund_score(fund_code, score_date=None):
             return dict(row) if row else None
 
 def get_recent_funds(days=7):
-    """获取最近有更新的基金"""
+    """获取最近有更新的基金（优化：使用窗口函数替代相关子查询）"""
     with get_db() as conn:
         with get_cursor(conn) as cursor:
             cursor.execute("""
-                SELECT DISTINCT f.*, 
-                       fn.nav_date as last_nav_date,
-                       fn.net_value as last_net_value,
-                       fs.score_date as last_score_date,
-                       fs.total_score as last_total_score
+                WITH latest_nav AS (
+                    SELECT fund_code, nav_date, net_value,
+                           ROW_NUMBER() OVER (PARTITION BY fund_code ORDER BY nav_date DESC) as rn
+                    FROM fund_nav
+                ),
+                latest_score AS (
+                    SELECT fund_code, score_date, total_score,
+                           ROW_NUMBER() OVER (PARTITION BY fund_code ORDER BY score_date DESC) as rn
+                    FROM fund_scores
+                )
+                SELECT f.*,
+                       ln.nav_date as last_nav_date,
+                       ln.net_value as last_net_value,
+                       ls.score_date as last_score_date,
+                       ls.total_score as last_total_score
                 FROM funds f
-                LEFT JOIN fund_nav fn ON f.fund_code = fn.fund_code 
-                    AND fn.nav_date = (SELECT MAX(nav_date) FROM fund_nav WHERE fund_code = f.fund_code)
-                LEFT JOIN fund_scores fs ON f.fund_code = fs.fund_code 
-                    AND fs.score_date = (SELECT MAX(score_date) FROM fund_scores WHERE fund_code = f.fund_code)
+                LEFT JOIN latest_nav ln ON f.fund_code = ln.fund_code AND ln.rn = 1
+                LEFT JOIN latest_score ls ON f.fund_code = ls.fund_code AND ls.rn = 1
                 WHERE f.updated_at >= CURRENT_DATE - INTERVAL '%s days'
                 ORDER BY f.updated_at DESC
             """, (days,))
@@ -153,27 +161,65 @@ def search_funds(query):
             return [dict(row) for row in cursor.fetchall()]
 
 def get_fund_history(fund_code, days=30):
-    """获取基金历史数据"""
+    """获取基金历史数据（优化：单次 JOIN 查询替代多次独立查询）"""
     with get_db() as conn:
         with get_cursor(conn) as cursor:
-            # 获取净值历史
             cursor.execute("""
-                SELECT * FROM fund_nav 
-                WHERE fund_code = %s AND nav_date >= CURRENT_DATE - INTERVAL '%s days'
-                ORDER BY nav_date DESC
-            """, (fund_code, days))
-            nav_history = [dict(row) for row in cursor.fetchall()]
-            
-            # 获取评分历史
-            cursor.execute("""
-                SELECT * FROM fund_scores 
-                WHERE fund_code = %s AND score_date >= CURRENT_DATE - INTERVAL '%s days'
-                ORDER BY score_date DESC
-            """, (fund_code, days))
-            score_history = [dict(row) for row in cursor.fetchall()]
-            
+                SELECT
+                    f.fund_code, f.fund_name, f.fund_type, f.fund_company,
+                    f.manager, f.risk_level, f.rating,
+                    fn.nav_date, fn.net_value, fn.accumulated_value,
+                    fn.daily_return, fn.weekly_return, fn.monthly_return,
+                    fn.quarterly_return, fn.yearly_return,
+                    fs.score_date, fs.total_score,
+                    fs.valuation_score, fs.sector_score, fs.risk_score
+                FROM funds f
+                LEFT JOIN fund_nav fn ON f.fund_code = fn.fund_code
+                    AND fn.nav_date >= CURRENT_DATE - INTERVAL '%s days'
+                LEFT JOIN fund_scores fs ON f.fund_code = fs.fund_code
+                    AND fs.score_date >= CURRENT_DATE - INTERVAL '%s days'
+                WHERE f.fund_code = %s
+                ORDER BY fn.nav_date DESC, fs.score_date DESC
+            """, (days, days, fund_code))
+
+            rows = cursor.fetchall()
+            if not rows:
+                return {'fund_info': None, 'nav_history': [], 'score_history': []}
+
+            # 第一行包含基金基本信息
+            first = dict(rows[0])
+            fund_info = {
+                k: v for k, v in first.items()
+                if k not in ('nav_date', 'net_value', 'accumulated_value',
+                             'daily_return', 'weekly_return', 'monthly_return',
+                             'quarterly_return', 'yearly_return',
+                             'score_date', 'total_score',
+                             'valuation_score', 'sector_score', 'risk_score')
+            }
+
+            nav_history = [
+                {k: v for k, v in dict(r).items()
+                 if k in ('nav_date', 'net_value', 'accumulated_value',
+                          'daily_return', 'weekly_return', 'monthly_return',
+                          'quarterly_return', 'yearly_return')}
+                for r in rows if r['nav_date']
+            ]
+
+            seen_scores = set()
+            score_history = []
+            for r in rows:
+                if r['score_date'] and r['score_date'] not in seen_scores:
+                    seen_scores.add(r['score_date'])
+                    score_history.append({
+                        'score_date': r['score_date'],
+                        'total_score': r['total_score'],
+                        'valuation_score': r['valuation_score'],
+                        'sector_score': r['sector_score'],
+                        'risk_score': r['risk_score'],
+                    })
+
             return {
-                'fund_info': get_fund_info(fund_code),
+                'fund_info': fund_info,
                 'nav_history': nav_history,
                 'score_history': score_history
             }

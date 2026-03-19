@@ -14,7 +14,7 @@ from datetime import datetime
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flask import Flask, render_template, request, g
+from flask import Flask, render_template, request, g, make_response, send_file
 from flask_cors import CORS
 
 # Configure logging
@@ -44,7 +44,7 @@ from src.config import get_config
 config = get_config()
 
 # Flask app
-app = Flask(__name__, static_folder='../dist/assets', template_folder='../dist')
+app = Flask(__name__, static_folder=None, template_folder='../dist')
 
 # CORS
 CORS(app, supports_credentials=True)
@@ -279,8 +279,12 @@ def export_holdings():
 # ============== Vue App Routes ==============
 @app.route('/')
 def vue_app():
-    """Serve Vue app"""
-    return render_template('index.html')
+    """Serve Vue app (no-cache to avoid stale chunk references after rebuild)"""
+    resp = make_response(render_template('index.html'))
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 
 @app.route('/<path:path>')
@@ -289,13 +293,51 @@ def serve_vue(path):
     if path.startswith('api/'):
         from flask import jsonify
         return jsonify({'error': 'Not found'}), 404
-    
-    # 对于静态资源请求，直接由Flask处理
+
+    # 对于静态资源请求，优先返回压缩版本（长期缓存）
     if path.startswith('assets/'):
-        return app.send_static_file(path[len('assets/'):])
-    
-    # 其他路径返回Vue应用
-    return render_template('index.html')
+        rel_path = path[len('assets/'):]
+        # 手动计算静态文件目录（相对于 app.py 的 ../dist/assets）
+        import os
+        static_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../dist/assets'))
+
+        # 优先级：Brotli (.br) > Gzip (.gz) > 原始
+        for ext, algo in [('.br', 'br'), ('.gz', 'gzip'), ('', None)]:
+            file_path = os.path.join(static_dir, rel_path + ext)
+            if os.path.isfile(file_path):
+                # 使用 make_response 包裹，手动控制所有 header
+                with open(file_path, 'rb') as f:
+                    data = f.read()
+                resp = make_response(data)
+                if algo:
+                    resp.headers['Content-Encoding'] = algo
+                    resp.headers['Vary'] = 'Accept-Encoding'
+                    # 移除 Content-Length，因为压缩后大小会变
+                    resp.headers.pop('Content-Length', None)
+                # 设置正确的 Content-Type
+                import mimetypes
+                mime_type, _ = mimetypes.guess_type(file_path)
+                if mime_type:
+                    resp.headers['Content-Type'] = mime_type
+                else:
+                    # 后备方案
+                    if rel_path.endswith('.js'):
+                        resp.headers['Content-Type'] = 'text/javascript'
+                    elif rel_path.endswith('.css'):
+                        resp.headers['Content-Type'] = 'text/css'
+                resp.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+                resp.headers['Content-Length'] = len(data)
+                return resp
+
+        # 文件不存在
+        return jsonify({'error': 'Not found'}), 404
+
+    # SPA fallback — 其他路径返回 index.html（禁用缓存）
+    resp = make_response(render_template('index.html'))
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 
 # ============== Health Check ==============
