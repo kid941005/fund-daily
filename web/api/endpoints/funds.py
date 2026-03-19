@@ -8,18 +8,31 @@ from db import database_pg as db
 from src.fetcher import fetch_fund_data, fetch_market_news, fetch_hot_sectors
 from src.advice import analyze_fund, get_fund_detail_info, generate_100_score
 from src.validation import validate_fund_code_param, validate_query_params, validate_limit
+from src.jwt_auth import verify_access_token, get_token_from_header
+from web.api.rate_limiter import funds_limit
 
 funds_bp = Blueprint("funds", __name__)
 
 
+def _get_user_id():
+    """从 JWT token 或 session 获取用户ID"""
+    token = get_token_from_header()
+    if token:
+        is_valid, payload, _ = verify_access_token(token)
+        if is_valid:
+            return payload.get("sub")
+    return _get_user_id()
+
+
 @funds_bp.route("/funds")
+@funds_limit()
 def get_funds():
     """Get all funds for user
     
     Query params:
         force: if 'true', bypass cache and fetch fresh data
     """
-    user_id = session.get("user_id")
+    user_id = _get_user_id()
     holdings = db.get_holdings(user_id) if user_id else []
     
     # 检查是否强制刷新
@@ -53,6 +66,7 @@ def get_funds():
 
 
 @funds_bp.route("/fund-detail/<code>")
+@funds_limit()
 @validate_fund_code_param("code")
 def get_fund_detail(code):
     """Get fund detail
@@ -67,6 +81,7 @@ def get_fund_detail(code):
 
 
 @funds_bp.route("/score/<code>")
+@funds_limit()
 @validate_fund_code_param("code")
 def get_fund_score(code):
     """Get fund score report (100-point system)

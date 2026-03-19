@@ -10,10 +10,21 @@ from flask import Blueprint, jsonify, request, session
 from db import database_pg as db
 from src.fetcher import fetch_market_news, fetch_hot_sectors
 from src.advice import analyze_fund, generate_advice
+from src.jwt_auth import verify_access_token, get_token_from_header
 
 logger = logging.getLogger(__name__)
 
 system_bp = Blueprint("system", __name__)
+
+
+def _get_user_id():
+    """从 JWT token 或 session 获取用户ID"""
+    token = get_token_from_header()
+    if token:
+        is_valid, payload, _ = verify_access_token(token)
+        if is_valid:
+            return payload.get("sub")
+    return _get_user_id()
 
 
 @system_bp.route("/health")
@@ -63,7 +74,7 @@ def metrics():
         memory = psutil.virtual_memory()
         
         # 持仓数量
-        user_id = session.get("user_id")
+        user_id = _get_user_id()
         holdings_count = 0
         if user_id:
             try:
@@ -135,7 +146,7 @@ def sectors():
 def get_advice():
     """获取投资建议"""
     try:
-        user_id = session.get("user_id")
+        user_id = _get_user_id()
         if not user_id:
             return jsonify({
                 "success": False,

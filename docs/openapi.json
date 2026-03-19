@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Fund Daily API",
-    "version": "2.5.1",
+    "version": "2.6.0",
     "description": "基金每日分析系统 API 文档",
     "contact": {
       "name": "API Support",

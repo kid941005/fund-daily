@@ -89,6 +89,14 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ OpenAPI文档初始化失败: {e}")
 
+# Initialize rate limiter
+try:
+    from web.api.rate_limiter import init_rate_limiter
+    init_rate_limiter(app)
+    logger.info("✅ 速率限制器已初始化")
+except Exception as e:
+    logger.warning(f"⚠️ 速率限制器初始化失败: {e}")
+
 # Config paths
 DATA_DIR = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/data")
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "config.json")

@@ -44,6 +44,7 @@ class ErrorCode(Enum):
     INVALID_INPUT = 6001
     OPERATION_NOT_ALLOWED = 6002
     RESOURCE_NOT_AVAILABLE = 6003
+    RATE_LIMIT_EXCEEDED = 6004
     
     # 系统错误 (9000-9999)
     INTERNAL_ERROR = 9001
@@ -190,4 +191,19 @@ def cache_operation_failed(operation: str, key: str, cause: Exception = None) ->
         f"缓存操作失败: {operation}",
         {"operation": operation, "key": key},
         cause
+    )
+
+
+def rate_limit_exceeded(limit: int, remaining: int, reset: int, retry_after: int) -> ServiceError:
+    """速率限制超出错误"""
+    return ServiceError(
+        ErrorCode.RATE_LIMIT_EXCEEDED,
+        f"请求过于频繁，请等待{retry_after}秒后重试",
+        {
+            "limit": limit,
+            "remaining": remaining,
+            "reset": reset,
+            "retry_after": retry_after,
+            "window_seconds": retry_after
+        }
     )

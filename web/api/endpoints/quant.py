@@ -12,10 +12,23 @@ from src.quant import (
     calculate_rebalancing,
     generate_trade_orders,
 )
+from web.api.rate_limiter import quant_limit
+from src.jwt_auth import verify_access_token, get_token_from_header
 
 quant_bp = Blueprint("quant", __name__)
 
 
+def _get_user_id():
+    """从 JWT token 或 session 获取用户ID"""
+    token = get_token_from_header()
+    if token:
+        is_valid, payload, _ = verify_access_token(token)
+        if is_valid:
+            return payload.get("sub")
+    return session.get("user_id")
+
+
+@quant_limit()
 @quant_bp.route("/timing-signals")
 def get_timing():
     """获取市场择时信号"""
@@ -26,10 +39,11 @@ def get_timing():
         return jsonify({"success": False, "error": str(e)})
 
 
+@quant_limit()
 @quant_bp.route("/portfolio-optimize")
 def get_optimize():
     """获取组合优化建议"""
-    user_id = session.get("user_id")
+    user_id = _get_user_id()
     
     # 获取持仓
     if user_id:
@@ -60,22 +74,17 @@ def get_optimize():
                 "error": "评分数据缺失"
             }
     
-    total_amount = sum(h.get("amount", 0) for h in holdings)
-    
     # 组合优化
     result = optimize_portfolio(funds)
     
     return jsonify({"success": True, "data": result})
 
 
+@quant_limit()
 @quant_bp.route("/rebalancing")
 def get_rebalancing():
     """获取调仓建议"""
-    from flask import session
-    from db import database_pg as db
-    from src.services.fund_service import FundService
-    
-    user_id = session.get("user_id")
+    user_id = _get_user_id()
     
     # 如果没有用户ID，尝试获取所有持仓
     if not user_id:
@@ -106,19 +115,19 @@ def get_rebalancing():
     
     try:
         # 生成建议
+        from src.services.fund_service import FundService
         fund_service = FundService()
         result = fund_service.calculate_holdings_advice(holdings)
         
         funds = result.get("funds", [])
         if not funds:
-            # 如果没有基金数据，使用持仓数据
             funds = []
             for holding in holdings:
                 funds.append({
                     "fund_code": holding.get("code"),
                     "fund_name": holding.get("name", f"基金{holding.get('code')}"),
                     "amount": holding.get("amount", 0),
-                    "score_100": {"total_score": 50}  # 默认评分
+                    "score_100": {"total_score": 50}
                 })
         
         # 计算总金额
@@ -133,6 +142,8 @@ def get_rebalancing():
         logging.error(f"Rebalancing error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+@quant_limit()
 @quant_bp.route("/dynamic-weights", methods=["GET"])
 def get_dynamic_weights_api():
     """获取动态权重信息"""

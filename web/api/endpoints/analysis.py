@@ -3,6 +3,7 @@ Analysis API endpoints
 """
 
 from flask import Blueprint, jsonify, request, session
+from src.jwt_auth import verify_access_token, get_token_from_header
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from src.services.fund_service import get_fund_service
 from src.analyzer import calculate_expected_return
@@ -11,11 +12,21 @@ from db import database_pg as db
 analysis_bp = Blueprint("analysis", __name__)
 
 
+def _get_user_id():
+    """从 JWT token 或 session 获取用户ID"""
+    token = get_token_from_header()
+    if token:
+        is_valid, payload, _ = verify_access_token(token)
+        if is_valid:
+            return payload.get("sub")
+    return session.get("user_id")
+
+
 @analysis_bp.route("/portfolio-analysis")
 @analysis_bp.route("/analysis/portfolio")  # 兼容前端调用
 def get_portfolio_analysis():
     """Get portfolio analysis using new service layer"""
-    user_id = session.get("user_id")
+    user_id = _get_user_id()
     
     # 如果没有用户ID，使用默认用户或获取所有持仓
     if not user_id:
@@ -172,7 +183,7 @@ def get_expected_return():
     from src.fetcher import fetch_fund_data
     from src.analyzer import calculate_expected_return
     
-    user_id = session.get("user_id")
+    user_id = _get_user_id()
 
     if user_id:
         holdings = db.get_holdings(user_id)

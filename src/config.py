@@ -95,11 +95,28 @@ class RedisConfig:
 
 
 @dataclass
+class JwtConfig:
+    secret: str = "fund-daily-jwt-secret-change-in-production"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60
+    refresh_token_expire_days: int = 7
+
+    @classmethod
+    def from_env(cls) -> "JwtConfig":
+        return cls(
+            secret=os.getenv("FUND_DAILY_JWT_SECRET", "fund-daily-jwt-secret-change-in-production"),
+            access_token_expire_minutes=int(os.getenv("FUND_DAILY_JWT_EXPIRE_MINUTES", "60")),
+            refresh_token_expire_days=int(os.getenv("FUND_DAILY_JWT_REFRESH_DAYS", "7")),
+        )
+
+
+@dataclass
 class SecurityConfig:
     """安全配置"""
     secret_key: Optional[str] = None
     secure_cookies: bool = False
     ssl_verify: bool = True
+    jwt: JwtConfig = field(default_factory=JwtConfig)
     
     @classmethod
     def from_env(cls) -> "SecurityConfig":
@@ -112,6 +129,7 @@ class SecurityConfig:
             secret_key=secret_key,
             secure_cookies=secure_cookies,
             ssl_verify=ssl_verify,
+            jwt=JwtConfig.from_env(),
         )
     
     def validate(self, is_production: bool = False) -> List[str]:

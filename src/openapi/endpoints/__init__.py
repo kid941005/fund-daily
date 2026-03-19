@@ -1,0 +1,1 @@
+"""OpenAPI endpoint definitions"""

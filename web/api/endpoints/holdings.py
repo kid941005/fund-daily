@@ -1,33 +1,63 @@
 """
 Holdings API endpoints
+支持 Session 和 JWT Token 两种认证方式
 """
 
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request, session, g
 from db import database_pg as db
 from web.api.validation import validate_request, ValidationError
 from src.error import create_error_response, ErrorCode
+from web.api.rate_limiter import holdings_limit
+from src.jwt_auth import verify_access_token, get_token_from_header
 
 holdings_bp = Blueprint("holdings", __name__)
 
 
+def _get_user_id():
+    """从 JWT token 或 session 获取当前用户ID"""
+    token = get_token_from_header()
+    if token:
+        is_valid, payload, _ = verify_access_token(token)
+        if is_valid:
+            return payload.get("sub")
+    return session.get("user_id")
+
+
+def _auth_required():
+    """验证用户是否已登录"""
+    user_id = _get_user_id()
+    if not user_id:
+        return jsonify({
+            "success": False,
+            "error": "请先登录",
+            "need_login": True,
+            "error_code": "UNAUTHORIZED"
+        }), 401
+    return user_id
+
+
 @holdings_bp.route("/holdings")
+@holdings_limit()
 def get_holdings():
     """Get user holdings"""
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"success": False, "error": "请先登录", "need_login": True})
+    result = _auth_required()
+    if isinstance(result, tuple):
+        return result
+    user_id = result
     
     holdings = db.get_holdings(user_id)
     return jsonify({"success": True, "holdings": holdings})
 
 
 @holdings_bp.route("/holdings", methods=["POST"])
+@holdings_limit()
 @validate_request('batch_holdings')
 def manage_holdings():
     """Add/update holdings"""
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"success": False, "error": "请先登录", "need_login": True})
+    result = _auth_required()
+    if isinstance(result, tuple):
+        return result
+    user_id = result
     
     data = request.json or {}
     action = data.get("action", "add")
@@ -66,12 +96,14 @@ def manage_holdings():
 
 
 @holdings_bp.route("/holdings", methods=["DELETE"])
+@holdings_limit()
 @validate_request('holding')
 def delete_holding():
     """Delete a single holding"""
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"success": False, "error": "请先登录", "need_login": True}), 401
+    result = _auth_required()
+    if isinstance(result, tuple):
+        return result
+    user_id = result
     
     # 使用验证后的数据
     validated_data = request.validated_data
@@ -91,12 +123,13 @@ def delete_holding():
 
 
 @holdings_bp.route("/holdings/clear", methods=["POST"])
+@holdings_limit()
 def clear_all_holdings():
     """Clear all holdings"""
-    user_id = session.get("user_id")
-    if not user_id:
-        # 未登录用户：尝试从 localStorage 清除
-        return jsonify({"success": False, "error": "请先登录", "need_login": True}), 401
+    result = _auth_required()
+    if isinstance(result, tuple):
+        return result
+    user_id = result
     
     # 验证用户是否有持仓（可选，但可以防止误操作）
     holdings = db.get_holdings(user_id)
@@ -119,9 +152,10 @@ def import_screenshot():
     import os
     import tempfile
     
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"success": False, "error": "请先登录", "need_login": True}), 401
+    result = _auth_required()
+    if isinstance(result, tuple):
+        return result
+    user_id = result
     
     if 'file' not in request.files:
         return jsonify({"success": False, "error": "没有上传文件"})
