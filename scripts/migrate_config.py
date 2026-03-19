@@ -30,7 +30,7 @@ CONFIG_MAPPING = {
     "FUND_DAILY_SSL_VERIFY": "config.security.ssl_verify",
     
     # 数据库配置（已在 config.py 中）
-    "FUND_DAILY_DB_TYPE": "config.database.type",
+    # "FUND_DAILY_DB_TYPE": "config.database.type",  # 已移除，仅支持PostgreSQL
     "FUND_DAILY_DB_HOST": "config.database.host",
     "FUND_DAILY_DB_PORT": "config.database.port",
     "FUND_DAILY_DB_NAME": "config.database.name",

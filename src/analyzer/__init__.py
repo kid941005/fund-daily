@@ -6,6 +6,8 @@ Analysis module for Fund Daily
 import logging
 from typing import Dict, List
 
+from src.utils.error_handling import handle_errors
+
 # 统一从risk.py导入风险计算
 from .risk import calculate_risk_metrics
 
@@ -22,6 +24,7 @@ from ..fetcher import (
 logger = logging.getLogger(__name__)
 
 
+@handle_errors(default_return={"sentiment": "平稳", "score": 3, "error": True}, log_level="warning")
 def get_market_sentiment() -> Dict:
     """Get market sentiment (兼容旧接口，内部调用enhanced版本)"""
     return get_enhanced_market_sentiment()
@@ -45,7 +48,8 @@ def get_commodity_sentiment() -> Dict:
     score = 3
     
     if prices:
-        changes = [p.get("change", 0) or 0 for p in prices.values()]
+        # fetch_commodity_prices 返回 Dict[str, float]，值为价格变化百分比
+        changes = [float(v) for v in prices.values() if v is not None]
         avg_change = sum(changes) / len(changes) if changes else 0
         
         if avg_change > 2:
@@ -68,6 +72,7 @@ def get_commodity_sentiment() -> Dict:
     }
 
 
+@handle_errors(default_return={"expected_return": 0, "error": True}, log_level="warning")
 def calculate_expected_return(holdings: List[Dict], funds_data: List[Dict]) -> Dict:
     """
     Calculate expected return for holdings

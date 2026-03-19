@@ -1,6 +1,8 @@
 """持仓、监控列表、配置管理模块"""
 from .pool import get_db, get_cursor
+from src.utils.error_handling import handle_db_errors
 
+@handle_db_errors
 def get_holdings(user_id):
     with get_db() as conn:
         with get_cursor(conn) as cursor:
@@ -25,12 +27,14 @@ def save_holding(user_id, code, amount, name="", buy_nav=None, buy_date=None):
             """, (user_id, code, name, amount, buy_nav, buy_date))
             conn.commit()
 
+@handle_db_errors
 def delete_holding(user_id, code):
     with get_db() as conn:
         with get_cursor(conn) as cursor:
             cursor.execute("DELETE FROM holdings WHERE user_id = %s AND code = %s", (user_id, code))
             conn.commit()
 
+@handle_db_errors
 def clear_holdings(user_id):
     """清空用户的所有持仓"""
     with get_db() as conn:

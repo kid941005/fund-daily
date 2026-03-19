@@ -11,6 +11,7 @@ from db import database_pg as db
 from src.fetcher import fetch_market_news, fetch_hot_sectors
 from src.advice import analyze_fund, generate_advice
 from src.jwt_auth import verify_access_token, get_token_from_header
+from src.error import ErrorCode, create_error_response
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +92,12 @@ def metrics():
         })
     except Exception as e:
         logger.error(f"Metrics error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        return create_error_response(
+            ErrorCode.DB_OPERATION_FAILED,
+            f"获取系统指标失败: {str(e)}",
+            details={"endpoint": "metrics"},
+            http_status=500
+        )
 
 
 @system_bp.route("/metrics/enhanced")
@@ -109,7 +115,12 @@ def enhanced_metrics():
         })
     except Exception as e:
         logger.error(f"Enhanced metrics error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return create_error_response(
+            ErrorCode.DB_OPERATION_FAILED,
+            f"获取增强指标失败: {str(e)}",
+            details={"endpoint": "enhanced_metrics"},
+            http_status=500
+        )
 
 
 @system_bp.route("/news")
@@ -124,7 +135,7 @@ def news():
         })
     except Exception as e:
         logger.error(f"News error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        return create_error_response(ErrorCode.INTERNAL_ERROR, f"内部服务器错误: {str(e)}", http_status=500)
 
 
 @system_bp.route("/sectors")
@@ -139,7 +150,7 @@ def sectors():
         })
     except Exception as e:
         logger.error(f"Sectors error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        return create_error_response(ErrorCode.INTERNAL_ERROR, f"内部服务器错误: {str(e)}", http_status=500)
 
 
 @system_bp.route("/advice")
@@ -203,7 +214,7 @@ def get_advice():
         })
     except Exception as e:
         logger.error(f"Advice error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        return create_error_response(ErrorCode.INTERNAL_ERROR, f"内部服务器错误: {str(e)}", http_status=500)
 
 
 # 导入 datetime

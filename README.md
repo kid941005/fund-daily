@@ -47,8 +47,12 @@ fund-daily/
 │   └── static/               # 静态资源
 │
 ├── db/                         # 数据层
-│   ├── database.py           # SQLite 操作
-│   └── dingtalk.py           # 钉钉推送
+│   ├── pool.py              # PostgreSQL 连接池管理
+│   ├── users.py             # 用户数据操作
+│   ├── holdings.py          # 持仓数据操作
+│   ├── fund_ops.py          # 基金数据操作
+│   ├── database_pg.py       # PostgreSQL 操作（向后兼容）
+│   └── dingtalk.py          # 钉钉推送
 │
 ├── tests/                      # 单元测试 (63+)
 │   ├── test_fetcher.py
@@ -92,8 +96,9 @@ pip install -r web/requirements.txt
 # 可选：安装 OCR 依赖
 pip install easyocr
 
-# 运行
-export FUND_DAILY_DB_PATH=/path/to/fund-daily.db
+# 运行（使用PostgreSQL）
+export FUND_DAILY_DB_HOST=localhost
+export FUND_DAILY_DB_PASSWORD=your_password
 python -m flask run --host=0.0.0.0 --port=5000
 ```
 
@@ -142,7 +147,7 @@ pytest tests/ --cov=src --cov-report=html
 
 ## 🛠️ 技术栈
 
-- **后端**: Flask + SQLite
+- **后端**: Flask + PostgreSQL
 - **数据分析**: NumPy
 - **OCR**: EasyOCR (可选)
 - **测试**: pytest + pytest-cov
@@ -165,8 +170,6 @@ MIT License
 
 | 变量名 | 默认值 | 说明 |
 |--------|--------|------|
-| FUND_DAILY_DB_TYPE | sqlite | 数据库类型 (sqlite/postgres) |
-| FUND_DAILY_DB_PATH | /app/data/fund-daily.db | SQLite 数据库路径 |
 | FUND_DAILY_DB_HOST | localhost | PostgreSQL 主机 |
 | FUND_DAILY_DB_PORT | 5432 | PostgreSQL 端口 |
 | FUND_DAILY_DB_NAME | fund_daily | PostgreSQL 数据库名 |
@@ -178,11 +181,7 @@ MIT License
 ## 快速启动
 
 ```bash
-# SQLite 模式
-cd web && python3 app.py
-
-# PostgreSQL + Redis 模式
-export FUND_DAILY_DB_TYPE=postgres
+# PostgreSQL 模式（默认）
 export FUND_DAILY_DB_NAME=fund_daily
 export FUND_DAILY_DB_USER=kid
 export FUND_DAILY_DB_PASSWORD=your_password

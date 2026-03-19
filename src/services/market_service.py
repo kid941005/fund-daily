@@ -15,8 +15,9 @@ from datetime import datetime, timedelta
 
 from src.analyzer import get_market_sentiment, get_commodity_sentiment
 from src.fetcher import fetch_hot_sectors, fetch_market_news
-from src.services.metrics_service import get_metrics_service, timed_metric
-from src.cache.redis_cache import redis_get, redis_set, get_redis_client
+from src.services.metrics_service import
+from src.utils.cache_keys import cache_keys get_metrics_service, timed_metric
+from src.cache.manager import get_cache_manager
 from src.error import (
     MarketServiceError, ErrorCode,
     market_data_fetch_failed, cache_operation_failed
@@ -37,6 +38,8 @@ class MarketService:
         """
         self.cache_enabled = cache_enabled
         self.metrics_service = get_metrics_service()
+        self.cache_manager = get_cache_manager()
+        self.cache_manager = get_cache_manager()
         
         # 缓存配置 - 使用统一的常量配置
         from src.constants import CACHE_PREFIXES, CACHE_TTL
@@ -65,10 +68,10 @@ class MarketService:
             市场情绪数据
         """
         try:
-            cache_key = f"{self.cache_prefix}sentiment"
+            cache_key = cache_keys.market_sentiment()
             
             if use_cache and self.cache_enabled:
-                cached = redis_get(cache_key)
+                cached = self.cache_manager.get(cache_key)
                 if cached:
                     # 记录缓存命中
                     self.metrics_service.record_cache_hit("market_sentiment", hit=True)
@@ -106,10 +109,10 @@ class MarketService:
             商品情绪数据
         """
         try:
-            cache_key = f"{self.cache_prefix}commodity"
+            cache_key = cache_keys.custom("market", "commodity")
             
             if use_cache and self.cache_enabled:
-                cached = redis_get(cache_key)
+                cached = self.cache_manager.get(cache_key)
                 if cached:
                     return cached
             
@@ -146,7 +149,7 @@ class MarketService:
             cache_key = f"{self.sectors_key}:{limit}"
             
             if use_cache and self.cache_enabled:
-                cached = redis_get(cache_key)
+                cached = self.cache_manager.get(cache_key)
                 if cached:
                     return cached
             
@@ -182,7 +185,7 @@ class MarketService:
             cache_key = f"{self.news_key}:{limit}"
             
             if use_cache and self.cache_enabled:
-                cached = redis_get(cache_key)
+                cached = self.cache_manager.get(cache_key)
                 if cached:
                     return cached
             

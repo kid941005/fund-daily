@@ -395,20 +395,17 @@ def health_check():
     
     # Check PostgreSQL
     pg_status = "ok"
-    if config.database.type == "postgres":
-        try:
-            conn = psycopg2.connect(
-                host=config.database.host,
-                port=config.database.port,
-                database=config.database.name,
-                user=config.database.user,
-                password=config.database.password,
-            )
-            conn.close()
-        except Exception as e:
-            pg_status = str(e)
-    else:
-        pg_status = "sqlite (not checked)"
+    try:
+        conn = psycopg2.connect(
+            host=config.database.host,
+            port=config.database.port,
+            database=config.database.name,
+            user=config.database.user,
+            password=config.database.password,
+        )
+        conn.close()
+    except Exception as e:
+        pg_status = str(e)
     
     # Check Redis
     redis_status = "ok"
@@ -432,7 +429,7 @@ def health_check():
         "redis": redis_status,
         "config": {
             "env": config.app.env,
-            "database_type": config.database.type,
+            "database_type": "postgres",  # 固定为PostgreSQL
             "cache_enabled": config.cache.duration > 0,
         }
     }

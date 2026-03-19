@@ -752,4 +752,138 @@ const clearError = () => {
 .auth-switch a:hover {
   text-decoration: underline;
 }
+
+/* ==================== 响应式设计 ==================== */
+
+/* 平板设备 (768px 及以下) */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 16px;
+  }
+  
+  .header-content {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+  
+  .user-bar {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .nav {
+    flex-wrap: wrap;
+  }
+  
+  .nav a {
+    flex: 1 0 50%;
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  .main {
+    padding: 16px;
+  }
+  
+  .modal-content {
+    width: 90%;
+    max-width: 400px;
+    padding: 20px;
+  }
+  
+  .settings-modal {
+    width: 90%;
+    max-width: 500px;
+  }
+}
+
+/* 手机设备 (480px 及以下) */
+@media (max-width: 480px) {
+  .header {
+    padding: 10px 12px;
+  }
+  
+  .header-content h1 {
+    font-size: 20px;
+  }
+  
+  .header-content .date {
+    font-size: 12px;
+  }
+  
+  .nav a {
+    flex: 1 0 100%;
+    padding: 8px;
+    font-size: 13px;
+  }
+  
+  .main {
+    padding: 12px;
+  }
+  
+  .modal-content {
+    width: 95%;
+    padding: 16px;
+  }
+  
+  .auth-modal {
+    max-width: 100%;
+  }
+  
+  .auth-tabs {
+    flex-direction: column;
+  }
+  
+  .auth-tabs button {
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .modal-actions button {
+    width: 100%;
+  }
+}
+
+/* 超大屏幕 (1200px 及以上) */
+@media (min-width: 1200px) {
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+
+/* 防止表格和内容溢出 */
+.table-container,
+.card,
+.chart-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 确保图片和图表响应式 */
+img,
+canvas,
+.chart-container {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 改善小屏幕上的表单输入 */
+@media (max-width: 480px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px; /* 防止iOS缩放 */
+  }
+  
+  button {
+    min-height: 44px; /* 提高触摸目标大小 */
+  }
+}
 </style>

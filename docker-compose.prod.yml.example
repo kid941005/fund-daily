@@ -1,0 +1,76 @@
+# Docker Compose 生产环境配置示例
+# 复制此文件为 docker-compose.prod.yml 用于生产环境
+
+version: '3.8'
+
+services:
+  # 生产环境后端配置
+  backend:
+    environment:
+      - FUND_DAILY_ENV=production
+      - FUND_DAILY_SERVER_DEBUG=false
+      - FUND_DAILY_SECURE_COOKIES=true
+      - FUND_DAILY_SSL_VERIFY=true
+      - LOG_LEVEL=WARNING
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # 生产环境 Nginx 配置
+  nginx:
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    deploy:
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+
+  # 生产数据库配置
+  postgres:
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+
+  # 生产 Redis 配置
+  redis:
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --maxmemory 256mb --maxmemory-policy allkeys-lru
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+secrets:
+  postgres_password:
+    external: true
+  redis_password:
+    external: true
+  jwt_secret:
+    external: true
+  flask_secret:
+    external: true

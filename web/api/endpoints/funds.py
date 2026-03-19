@@ -7,8 +7,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from db import database_pg as db
 from src.fetcher import fetch_fund_data, fetch_market_news, fetch_hot_sectors
 from src.advice import analyze_fund, get_fund_detail_info, generate_100_score
-from src.validation import validate_fund_code_param, validate_query_params, validate_limit
+from web.api.validation import validate_fund_code_param, validate_query_params, validate_limit
 from src.jwt_auth import verify_access_token, get_token_from_header
+from src.error import ErrorCode, create_error_response
 from web.api.rate_limiter import funds_limit
 
 funds_bp = Blueprint("funds", __name__)
@@ -42,18 +43,18 @@ def get_funds():
     
     codes = [h["code"] for h in holdings if h.get("amount", 0) > 0]
     if not codes:
-        codes = ["000001", "110022", "161725"]
+        fund_codes = ["000001", "110022", "161725"]
     
     # 并行获取基金数据
-    def process_fund(code):
-        data = fetch_fund_data(code, use_cache=use_cache)
+    def process_fund(fund_code):
+        data = fetch_fund_data(fund_code, use_cache=use_cache)
         if not data.get("error"):
             return analyze_fund(data)
         return None
     
     funds_data = []
     with ThreadPoolExecutor(max_workers=5) as executor:
-        futures = {executor.submit(process_fund, code): code for code in codes}
+        futures = {executor.submit(process_fund, fund_code): fund_code for fund_code in fund_codes}
         for future in as_completed(futures):
             result = future.result()
             if result:
@@ -66,10 +67,10 @@ def get_funds():
     })
 
 
-@funds_bp.route("/fund-detail/<code>")
+@funds_bp.route("/fund-detail/<fund_code>")
 @funds_limit()
-@validate_fund_code_param("code")
-def get_fund_detail(code):
+@validate_fund_code_param("fund_code")
+def get_fund_detail(fund_code):
     """Get fund detail
     
     Query params:
@@ -77,14 +78,14 @@ def get_fund_detail(code):
     """
     force_refresh = request.args.get("force", "false").lower() == "true"
     use_cache = not force_refresh
-    detail = get_fund_detail_info(code, use_cache=use_cache)
+    detail = get_fund_detail_info(fund_code, use_cache=use_cache)
     return jsonify({"success": True, "detail": detail})
 
 
-@funds_bp.route("/score/<code>")
+@funds_bp.route("/score/<fund_code>")
 @funds_limit()
-@validate_fund_code_param("code")
-def get_fund_score(code):
+@validate_fund_code_param("fund_code")
+def get_fund_score(fund_code):
     """Get fund score report (100-point system)
     
     Query params:
@@ -94,22 +95,37 @@ def get_fund_score(code):
     use_cache = not force_refresh
     
     try:
-        fund_data = fetch_fund_data(code, use_cache=use_cache)
+        fund_data = fetch_fund_data(fund_code, use_cache=use_cache)
         if fund_data.get("error"):
-            return jsonify({"success": False, "error": fund_data.get("error", "获取数据失败")})
+            return create_error_response(
+                ErrorCode.FUND_DATA_FETCH_FAILED,
+                fund_data.get("error", "获取基金数据失败"),
+                details={"fund_code": fund_code},
+                http_status=500
+            )
         
         daily_change = float(fund_data.get("gszzl", 0) or 0)
-        scoring = generate_100_score(code, daily_change)
+        scoring = generate_100_score(fund_code, daily_change)
         
         if "error" in scoring:
-            return jsonify({"success": False, "error": scoring.get("error", "计算评分失败")})
+            return create_error_response(
+                ErrorCode.FUND_SCORE_CALCULATION_FAILED,
+                scoring.get("error", "计算基金评分失败"),
+                details={"fund_code": fund_code},
+                http_status=500
+            )
         
         return jsonify({
             "success": True,
-            "fund_code": code,
+            "fund_code": fund_code,
             "fund_name": fund_data.get("name", ""),
             "daily_change": daily_change,
             "scoring": scoring
         })
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
+        return create_error_response(
+            ErrorCode.FUND_SCORE_CALCULATION_FAILED,
+            f"基金评分计算异常: {str(e)}",
+            details={"fund_code": fund_code},
+            http_status=500
+        )

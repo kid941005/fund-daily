@@ -404,16 +404,83 @@ th {
 <style>
 /* 移动端适配 */
 @media (max-width: 768px) {
+  .analysis {
+    padding: 12px;
+    gap: 16px;
+  }
+  
+  .section {
+    padding: 20px;
+    border-radius: 14px;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
   .score-cards {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .score-card {
+    padding: 16px;
+  }
+  
+  .score-details {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .chart-container {
+    height: 300px;
+  }
+  
+  .fund-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .fund-item {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .analysis {
+    padding: 8px;
+  }
+  
+  .section {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  .section-header h2 {
+    font-size: 18px;
   }
   
   .score-card {
     padding: 12px;
   }
   
-  .score-details {
-    grid-template-columns: 1fr;
+  .score-value {
+    font-size: 28px;
+  }
+  
+  .chart-container {
+    height: 250px;
+  }
+  
+  .fund-item {
+    padding: 12px;
+  }
+  
+  .fund-rank {
+    font-size: 18px;
+    width: 36px;
+    height: 36px;
   }
 }
 

@@ -10,15 +10,17 @@ import psycopg2
 from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 from contextlib import contextmanager
+from src.config import get_config
 
 logger = logging.getLogger(__name__)
 
-# PostgreSQL 配置
-DB_HOST = os.environ.get("FUND_DAILY_DB_HOST", "localhost")
-DB_PORT = os.environ.get("FUND_DAILY_DB_PORT", "5432")
-DB_NAME = os.environ.get("FUND_DAILY_DB_NAME", "fund_daily")
-DB_USER = os.environ.get("FUND_DAILY_DB_USER", "kid")
-DB_PASSWORD = os.environ.get("FUND_DAILY_DB_PASSWORD", "")
+# PostgreSQL 配置 - 使用统一配置管理器
+config = get_config()
+DB_HOST = config.database.host
+DB_PORT = config.database.port
+DB_NAME = config.database.name
+DB_USER = config.database.user
+DB_PASSWORD = config.database.password
 
 # 连接池
 _connection_pool = None
@@ -102,6 +104,8 @@ def init_db():
                     fund_company VARCHAR(100),
                     establish_date DATE,
                     fund_size DECIMAL(15,2),
+
+from src.config import get_config
                     manager VARCHAR(100),
                     risk_level VARCHAR(20),
                     rating DECIMAL(3,1),

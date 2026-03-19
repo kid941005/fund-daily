@@ -1,0 +1,2791 @@
+{
+  "project": "/home/kid/fund-daily",
+  "total_functions": 851,
+  "api_endpoints": 53,
+  "duplicate_functions": [
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_validation.py::test_invalid_amount"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_validation.py::test_batch_validation"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_validation.py::test_delete_validation"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_validation.py::test_validation_module_direct"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_validation.py::main"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_fund_db.py::test_database_connection"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_fund_db.py::test_enhanced_fetcher"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_fund_db.py::test_fund_service"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_fund_db.py::test_api_endpoints"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_fund_db.py::test_data_consistency"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_fund_db.py::main"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_rate_limit.py::test_rate_limit_info"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_rate_limit.py::test_auth_rate_limit"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_rate_limit.py::test_funds_rate_limit"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_rate_limit.py::test_different_endpoints"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_rate_limit.py::test_rate_limit_reset"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_rate_limit.py::test_error_handling"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_rate_limit.py::main"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "test_clear_holdings.py::test_clear_holdings"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/interfaces.py::create_fetcher"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/interfaces.py::create_analyzer"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/interfaces.py::create_scorer"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/interfaces.py::create_cache"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_fund_data",
+      "function2": "src/interfaces.py::fetch_fund_detail"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_fund_data",
+      "function2": "src/interfaces.py::fetch_fund_manager"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_fund_data",
+      "function2": "src/interfaces.py::fetch_fund_scale"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/interfaces.py::fetch_market_news"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/interfaces.py::get_market_sentiment"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/interfaces.py::get_commodity_sentiment"
+    },
+    {
+      "function1": "src/interfaces.py::get",
+      "function2": "src/interfaces.py::delete"
+    },
+    {
+      "function1": "src/interfaces.py::get",
+      "function2": "src/interfaces.py::exists"
+    },
+    {
+      "function1": "src/interfaces.py::get",
+      "function2": "src/cache_impl.py::get"
+    },
+    {
+      "function1": "src/interfaces.py::set",
+      "function2": "src/cache_impl.py::set"
+    },
+    {
+      "function1": "src/interfaces.py::get",
+      "function2": "src/cache_impl.py::delete"
+    },
+    {
+      "function1": "src/interfaces.py::get",
+      "function2": "src/cache_impl.py::exists"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/validation.py::validate_query_params"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/validation.py::validate_json_body"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/validation.py::wrapper"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/auth.py::generate_salt"
+    },
+    {
+      "function1": "src/interfaces.py::calculate_risk_metrics",
+      "function2": "src/analyzer_impl.py::calculate_risk_metrics"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/analyzer_impl.py::get_market_sentiment"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/analyzer_impl.py::get_commodity_sentiment"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/config.py::get_config"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/config.py::get_database_config"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/config.py::get_redis_config"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/config.py::validate"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/config.py::__init__"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/config.py::_validate_all"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/config.py::get_database_url"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/config.py::is_production"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/config.py::to_dict"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/jwt_auth.py::_get_utc_now"
+    },
+    {
+      "function1": "src/jwt_auth.py::create_access_token",
+      "function2": "src/jwt_auth.py::create_refresh_token"
+    },
+    {
+      "function1": "src/jwt_auth.py::create_access_token",
+      "function2": "src/jwt_auth.py::create_token_pair"
+    },
+    {
+      "function1": "src/jwt_auth.py::verify_access_token",
+      "function2": "src/jwt_auth.py::verify_refresh_token"
+    },
+    {
+      "function1": "src/jwt_auth.py::verify_access_token",
+      "function2": "src/jwt_auth.py::decode_token_unsafe"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/jwt_auth.py::get_token_from_header"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/jwt_auth.py::get_token_from_cookie"
+    },
+    {
+      "function1": "src/jwt_auth.py::verify_access_token",
+      "function2": "src/jwt_auth.py::get_user_from_token"
+    },
+    {
+      "function1": "src/jwt_auth.py::jwt_required",
+      "function2": "src/jwt_auth.py::jwt_optional"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/jwt_auth.py::decorated"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_fund_data",
+      "function2": "src/fetcher_adapter.py::fetch_fund_data"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_fund_data",
+      "function2": "src/fetcher_adapter.py::fetch_fund_detail"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_fund_data",
+      "function2": "src/fetcher_adapter.py::fetch_fund_manager"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_fund_data",
+      "function2": "src/fetcher_adapter.py::fetch_fund_scale"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/fetcher_adapter.py::fetch_hot_sectors"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/fetcher_adapter.py::fetch_market_news"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/error.py::to_dict"
+    },
+    {
+      "function1": "src/interfaces.py::normalize_returns",
+      "function2": "src/scorer_impl.py::normalize_returns"
+    },
+    {
+      "function1": "src/validation.py::validate_fund_code",
+      "function2": "src/ocr.py::validate_fund_code"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/ocr.py::_get_easyocr_reader"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/ocr.py::__init__"
+    },
+    {
+      "function1": "src/ocr.py::_extract_amount",
+      "function2": "src/ocr.py::_extract_all_amounts"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/ocr.py::_deduplicate"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "tests/test_quant_service.py::fund_service_minimal"
+    },
+    {
+      "function1": "tests/test_quant_service.py::test_optimize_portfolio_success",
+      "function2": "tests/test_quant_service.py::test_optimize_portfolio_no_holdings"
+    },
+    {
+      "function1": "tests/test_quant_service.py::test_optimize_portfolio_success",
+      "function2": "tests/test_quant_service.py::test_dynamic_weights_simple"
+    },
+    {
+      "function1": "tests/test_quant_service.py::test_optimize_portfolio_success",
+      "function2": "tests/test_quant_service.py::test_timing_signals_returns_structure"
+    },
+    {
+      "function1": "tests/test_quant_service.py::test_optimize_portfolio_success",
+      "function2": "tests/test_quant_service.py::test_portfolio_analysis_requires_holdings"
+    },
+    {
+      "function1": "tests/test_quant_service.py::test_rebalancing_global_when_not_logged",
+      "function2": "tests/test_quant_service.py::test_rebalancing_no_amount"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_quant_service.py::execute"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_quant_service.py::fetchall"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_quant_service.py::__enter__"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_quant_service.py::cursor"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_validation.py::test_valid_fund_code"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_validation.py::test_invalid_length"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_validation.py::test_non_numeric"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_validation.py::test_empty_string"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_validation.py::test_none_value"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_validation.py::test_valid_limit"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_validation.py::test_invalid_limit"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_validation.py::test_custom_range"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_validation.py::test_valid_page"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_validation.py::test_invalid_page"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_validation.py::test_custom_min"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_validation.py::test_valid_username"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_validation.py::test_invalid_username"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_validation.py::test_valid_password"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_validation.py::test_invalid_password"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_analyzer.py::test_high_risk_fund"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_analyzer.py::test_low_risk_fund"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_analyzer.py::test_positive_sharpe_ratio"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_analyzer.py::test_negative_sharpe_ratio"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_analyzer.py::test_max_drawdown_estimation"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_analyzer.py::test_risk_suggestion"
+    },
+    {
+      "function1": "tests/test_analyzer.py::test_bullish_sentiment",
+      "function2": "tests/test_analyzer.py::test_bearish_sentiment"
+    },
+    {
+      "function1": "tests/test_analyzer.py::test_bullish_sentiment",
+      "function2": "tests/test_analyzer.py::test_neutral_sentiment"
+    },
+    {
+      "function1": "tests/test_analyzer.py::test_bullish_sentiment",
+      "function2": "tests/test_analyzer.py::test_score_bounds"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_analyzer.py::test_empty_holdings"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_analyzer.py::test_empty_funds_data"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_config.py::test_from_env_postgres"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_config.py::test_from_env_defaults"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_config.py::test_validate_postgres_valid"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_config.py::test_validate_postgres_invalid"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_config.py::test_from_env"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_config.py::test_validate_valid"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_config.py::test_validate_invalid"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_config.py::test_validate_production_missing_key"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_config.py::test_validate_short_key"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_config.py::test_validate_development"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_config.py::test_config_manager_initialization"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_config.py::test_is_production"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_config.py::test_get_database_url"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_config.py::test_get_config_singleton"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_advice.py::test_analyze_fund_error"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_advice.py::test_analyze_fund_no_data"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_advice.py::test_generate_summary_positive"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_advice.py::test_generate_summary_negative"
+    },
+    {
+      "function1": "tests/test_advice.py::test_generate_report",
+      "function2": "tests/test_advice.py::test_report_summary_counts"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_advice.py::test_format_report"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_advice.py::test_advice_with_empty_funds"
+    },
+    {
+      "function1": "tests/test_advice.py::test_advice_bullish_market",
+      "function2": "tests/test_advice.py::test_advice_bearish_market"
+    },
+    {
+      "function1": "tests/test_advice.py::test_advice_bullish_market",
+      "function2": "tests/test_advice.py::test_advice_high_position"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_ocr.py::test_valid_codes"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_ocr.py::test_invalid_codes"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_ocr.py::test_edge_cases"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_ocr.py::test_keyword_based_parsing"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_ocr.py::test_pattern_based_parsing"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_ocr.py::test_sequential_parsing"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_ocr.py::test_deduplication"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_ocr.py::test_amount_validation"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_ocr.py::test_empty_text"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_ocr.py::test_valid_funds"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_ocr.py::test_invalid_codes_filtered"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_ocr.py::test_no_funds_found"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_database.py::test_database_connection"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_database.py::test_funds_table_exists"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_database.py::test_fund_nav_table_exists"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_database.py::test_fund_scores_table_exists"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_database.py::test_fund_code"
+    },
+    {
+      "function1": "tests/test_fund_database.py::test_save_fund_info",
+      "function2": "tests/test_fund_database.py::test_save_fund_nav"
+    },
+    {
+      "function1": "tests/test_fund_database.py::test_save_fund_info",
+      "function2": "tests/test_fund_database.py::test_save_fund_score"
+    },
+    {
+      "function1": "tests/test_fund_database.py::test_save_fund_info",
+      "function2": "tests/test_fund_database.py::test_save_fund_data_comprehensive"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_database.py::test_enhanced_fetcher_available"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_database.py::test_fetch_fund_data_enhanced"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_database.py::test_enhanced_fetcher_fallback"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_database.py::fund_service"
+    },
+    {
+      "function1": "tests/test_fund_database.py::test_service_uses_enhanced_fetcher",
+      "function2": "tests/test_fund_database.py::test_service_cache_behavior"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_database.py::test_batch_operations"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_database.py::test_database_api_consistency"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "tests/conftest.py::mock_fund_data"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "tests/conftest.py::mock_fund_data_positive"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "tests/conftest.py::mock_holdings"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "tests/conftest.py::mock_sectors"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "tests/conftest.py::mock_news"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "tests/conftest.py::clear_cache"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_score_input_creation"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_score_input_from_dict"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_validate_weights_valid"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_get_weight_existing"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_get_weight_missing"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_get_all_weights"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_get_total_weight"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_validate_weights_compat_valid"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_valuation_score_positive"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_valuation_score_zero"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_valuation_score_no_data"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_performance_score_positive"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_performance_score_negative"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_performance_score_no_data"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_risk_control_score_good"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_risk_control_score_poor"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_momentum_score_up"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_momentum_score_down"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_momentum_score_no_data"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_sentiment_score_bullish"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_sentiment_score_bearish"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_sentiment_score_neutral"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_sentiment_score_unknown"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_sector_score_match"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_sector_score_no_match"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_manager_score_top"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_manager_score_mid"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_manager_score_low"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_manager_score_none"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_liquidity_score_normal"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_calculate_liquidity_score_high_volatility"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_grade_boundaries"
+    },
+    {
+      "function1": "tests/test_scoring.py::test_calculate_total_score_mocked",
+      "function2": "tests/test_scoring.py::test_calculate_total_score_with_cache"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_format_score_report_basic"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_format_score_report_with_ranking_bonus"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_apply_ranking_bonus_empty"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_apply_ranking_bonus_single"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_scoring.py::test_apply_ranking_bonus_multiple"
+    },
+    {
+      "function1": "tests/test_scoring.py::test_calculate_total_score_mocked",
+      "function2": "tests/test_scoring.py::test_calculate_score_v2"
+    },
+    {
+      "function1": "src/validation.py::validate_fund_code",
+      "function2": "tests/test_scoring.py::mock_get_cached"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "tests/test_scoring.py::mock_total_score"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_services.py::test_init"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_services.py::test_get_fund_service"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_services.py::test_service_has_required_methods"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_services.py::test_max_workers_default"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_services.py::test_cache_prefix"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_services.py::test_cache_enabled"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "tests/test_rate_limiter.py::test_wait_if_needed"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_rate_limiter.py::test_basic_rate_limiting"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_rate_limiter.py::test_different_keys"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_rate_limiter.py::test_custom_limit_and_window"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_rate_limiter.py::test_get_remaining"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_rate_limiter.py::test_get_reset_time"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_rate_limiter.py::test_clear"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_rate_limiter.py::test_thread_safety"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_rate_limiter.py::test_get_stats"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "tests/test_rate_limiter.py::make_requests"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_jwt_auth.py::test_create_and_verify_token"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_jwt_auth.py::test_verify_refresh_token"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_jwt_auth.py::test_verify_wrong_type_token"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_jwt_auth.py::test_verify_invalid_token"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_jwt_auth.py::test_expired_token"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_jwt_auth.py::test_get_token_from_header"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_jwt_auth.py::test_get_user_from_token"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_jwt_auth.py::test_decode_unsafe"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_jwt_auth.py::test_jwt_required_valid"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_jwt_auth.py::test_jwt_required_missing"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_jwt_auth.py::test_jwt_required_invalid"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_jwt_auth.py::test_jwt_optional_with_token"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_jwt_auth.py::test_jwt_optional_no_token"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "tests/test_jwt_auth.py::test_endpoint"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fetcher.py::test_set_and_get_cache"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fetcher.py::test_cache_expiry"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fetcher.py::test_clear_cache"
+    },
+    {
+      "function1": "tests/test_fetcher.py::test_fetch_fund_data_success",
+      "function2": "tests/test_fetcher.py::test_fetch_fund_data_error"
+    },
+    {
+      "function1": "tests/test_fetcher.py::test_fetch_fund_data_success",
+      "function2": "tests/test_fetcher.py::test_fetch_fund_data_invalid_format"
+    },
+    {
+      "function1": "tests/test_fetcher.py::test_fetch_fund_data_success",
+      "function2": "tests/test_fetcher.py::test_fetch_uses_cache"
+    },
+    {
+      "function1": "tests/test_fetcher.py::test_fetch_fund_data_success",
+      "function2": "tests/test_fetcher.py::test_fetch_market_news_success"
+    },
+    {
+      "function1": "tests/test_fetcher.py::test_fetch_fund_data_success",
+      "function2": "tests/test_fetcher.py::test_fetch_hot_sectors_success"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_db_layer.py::rowcount"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_db_layer.py::fetchall"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_db_layer.py::fetchone"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_db_layer.py::__enter__"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_db_layer.py::__exit__"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_db_layer.py::cursor"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_db_layer.py::commit"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "tests/test_db_layer.py::mock_get_db"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_returns_user",
+      "function2": "tests/test_db_layer.py::test_returns_none_when_not_found"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_verify_user_success",
+      "function2": "tests/test_db_layer.py::test_verify_user_wrong_password"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_verify_user_success",
+      "function2": "tests/test_db_layer.py::test_verify_user_not_found"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_returns_user",
+      "function2": "tests/test_db_layer.py::test_create_user_executes"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_returns_user",
+      "function2": "tests/test_db_layer.py::test_update_password_executes"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_returns_user",
+      "function2": "tests/test_db_layer.py::test_get_holdings_returns_list"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_returns_user",
+      "function2": "tests/test_db_layer.py::test_get_holdings_empty"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_returns_user",
+      "function2": "tests/test_db_layer.py::test_save_holding_inserts"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_returns_user",
+      "function2": "tests/test_db_layer.py::test_delete_holding_executes"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_returns_user",
+      "function2": "tests/test_db_layer.py::test_clear_holdings_executes"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_returns_user",
+      "function2": "tests/test_db_layer.py::test_get_watchlist_returns_codes"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_returns_user",
+      "function2": "tests/test_db_layer.py::test_get_watchlist_empty"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_returns_user",
+      "function2": "tests/test_db_layer.py::test_add_to_watchlist_executes"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_returns_user",
+      "function2": "tests/test_db_layer.py::test_remove_from_watchlist_executes"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_returns_user",
+      "function2": "tests/test_db_layer.py::test_get_config_returns_config"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_returns_user",
+      "function2": "tests/test_db_layer.py::test_get_config_returns_none"
+    },
+    {
+      "function1": "tests/test_db_layer.py::test_returns_user",
+      "function2": "tests/test_db_layer.py::test_save_config_executes"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "tests/test_cache_manager.py::test_get_cache_manager_singleton"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_cache_manager.py::test_init"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_cache_manager.py::test_get_set_memory_only"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_cache_manager.py::test_get_miss"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_cache_manager.py::test_delete"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_cache_manager.py::test_clear"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_cache_manager.py::test_get_with_penetration_protection_valid"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_cache_manager.py::test_get_with_penetration_protection_empty"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_cache_manager.py::test_get_with_penetration_protection_error"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_cache_manager.py::test_stats_reset"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_cache_manager.py::test_warm_up"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_cache_manager.py::test_cached_basic"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_cache_manager.py::test_cached_with_key_prefix"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_cache_manager.py::test_cached_with_penetration_protection"
+    },
+    {
+      "function1": "tests/test_cache_manager.py::prefixed_function",
+      "function2": "tests/test_cache_manager.py::sometimes_empty"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "tests/test_fund_db_e2e.py::run_all_tests"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_db_e2e.py::test_fund_data_crud"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_db_e2e.py::test_historical_data"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_db_e2e.py::test_concurrent_reads"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_db_e2e.py::test_concurrent_writes"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_db_e2e.py::test_invalid_data"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_db_e2e.py::test_duplicate_data"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_db_e2e.py::test_batch_performance"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_db_e2e.py::test_large_data_performance"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "tests/test_fund_db_e2e.py::test_enhanced_fetcher_consistency"
+    },
+    {
+      "function1": "tests/test_fund_db_e2e.py::read_fund_data",
+      "function2": "tests/test_fund_db_e2e.py::write_fund_data"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/app.py::get_version"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/app.py::load_config"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/app.py::before_request"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/app.py::get_config"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/app.py::update_config"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/app.py::export_holdings"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/app.py::vue_app"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/app.py::health_check"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/app.py::enhanced_health_check"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/app.py::metrics_endpoint"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/app.py::simple_metrics"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/monitoring.py::get_metrics_collector"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "web/monitoring.py::_init_metrics"
+    },
+    {
+      "function1": "web/monitoring.py::record_cache_hit",
+      "function2": "web/monitoring.py::record_cache_miss"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "web/monitoring.py::get_metrics"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "web/monitoring.py::get_prometheus_metrics"
+    },
+    {
+      "function1": "src/validation.py::decorator",
+      "function2": "web/monitoring.py::decorator"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/monitoring.py::wrapper"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/security.py::get_security_headers"
+    },
+    {
+      "function1": "web/security.py::__init__",
+      "function2": "web/security.py::init_app"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "web/security.py::_before_request"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/health.py::get_health_checker"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/health.py::create_health_response"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "web/health.py::__init__"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "web/health.py::check"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "web/health.py::run_checks"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "web/health.py::get_health_status"
+    },
+    {
+      "function1": "db/holdings.py::get_holdings",
+      "function2": "db/holdings.py::clear_holdings"
+    },
+    {
+      "function1": "db/holdings.py::get_holdings",
+      "function2": "db/holdings.py::get_watchlist"
+    },
+    {
+      "function1": "db/holdings.py::delete_holding",
+      "function2": "db/holdings.py::add_to_watchlist"
+    },
+    {
+      "function1": "db/holdings.py::delete_holding",
+      "function2": "db/holdings.py::remove_from_watchlist"
+    },
+    {
+      "function1": "db/holdings.py::get_holdings",
+      "function2": "db/holdings.py::get_config"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "db/pool.py::get_pool"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "db/pool.py::get_db"
+    },
+    {
+      "function1": "tests/test_db_layer.py::mock_get_cursor",
+      "function2": "db/pool.py::get_cursor"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "db/pool.py::init_db"
+    },
+    {
+      "function1": "src/error.py::fund_not_found",
+      "function2": "db/fund_ops.py::get_fund_info"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "db/fund_ops.py::get_all_holdings"
+    },
+    {
+      "function1": "db/holdings.py::get_holdings",
+      "function2": "db/users.py::get_user_by_id"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "db/dingtalk.py::get_webhook"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "db/dingtalk.py::is_configured"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "scripts/check_params.py::main"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "scripts/check_params.py::analyze_python_files"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "scripts/check_params.py::find_duplicate_functions"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "scripts/check_params.py::check_parameter_usage"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "scripts/check_params.py::generate_report"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "scripts/fund-daily-cli.py::main"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "scripts/check_security.py::check_hardcoded_passwords"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "scripts/check_security.py::check_environment_variables"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "scripts/check_security.py::check_file_permissions"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "scripts/check_security.py::check_security_headers"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "scripts/check_security.py::generate_secure_secrets"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "scripts/check_security.py::main"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "scripts/migrate_config.py::main"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "scripts/check_environment.py::main"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "scripts/check_environment.py::__init__"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "scripts/check_environment.py::check_python_version"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "scripts/check_environment.py::check_required_modules"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "scripts/check_environment.py::check_environment_variables"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "scripts/check_environment.py::check_database_connection"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "scripts/check_environment.py::check_redis_connection"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "scripts/check_environment.py::check_config_file"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "scripts/check_environment.py::check_directory_permissions"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "scripts/check_environment.py::check_security"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "scripts/check_environment.py::run_all_checks"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/models/__init__.py::trend"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/models/__init__.py::up_count"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/models/__init__.py::down_count"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/models/__init__.py::flat_count"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/cache/__init__.py::clear_cache"
+    },
+    {
+      "function1": "src/cache/lru_cache.py::get_lru_cache",
+      "function2": "src/cache/lru_cache.py::create_lru_cache"
+    },
+    {
+      "function1": "src/cache/__init__.py::get_cache",
+      "function2": "src/cache/lru_cache.py::lru_get"
+    },
+    {
+      "function1": "src/cache/__init__.py::set_cache",
+      "function2": "src/cache/lru_cache.py::lru_set"
+    },
+    {
+      "function1": "src/cache/__init__.py::get_cache",
+      "function2": "src/cache/lru_cache.py::lru_delete"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/cache/lru_cache.py::lru_clear"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/cache/lru_cache.py::lru_stats"
+    },
+    {
+      "function1": "src/interfaces.py::get",
+      "function2": "src/cache/lru_cache.py::get"
+    },
+    {
+      "function1": "src/interfaces.py::set",
+      "function2": "src/cache/lru_cache.py::set"
+    },
+    {
+      "function1": "src/interfaces.py::get",
+      "function2": "src/cache/lru_cache.py::delete"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/cache/lru_cache.py::clear"
+    },
+    {
+      "function1": "src/interfaces.py::get",
+      "function2": "src/cache/lru_cache.py::_remove"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/cache/lru_cache.py::_evict_oldest"
+    },
+    {
+      "function1": "src/interfaces.py::get",
+      "function2": "src/cache/lru_cache.py::exists"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/cache/lru_cache.py::size"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/cache/lru_cache.py::stats"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/cache/lru_cache.py::get_stats"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/cache/lru_cache.py::reset_stats"
+    },
+    {
+      "function1": "src/interfaces.py::get",
+      "function2": "src/cache/lru_cache.py::__contains__"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/cache/lru_cache.py::__len__"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/cache/lru_cache.py::__repr__"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/cache/manager.py::get_cache_manager"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/cache/manager.py::__init__"
+    },
+    {
+      "function1": "src/interfaces.py::set",
+      "function2": "src/cache/manager.py::set"
+    },
+    {
+      "function1": "src/interfaces.py::get",
+      "function2": "src/cache/manager.py::delete"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/cache/manager.py::clear"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/cache/manager.py::get_stats"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/cache/manager.py::reset_stats"
+    },
+    {
+      "function1": "src/validation.py::decorator",
+      "function2": "src/cache/manager.py::decorator"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/cache/manager.py::wrapper"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/cache/manager.py::loader"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/cache/redis_cache.py::get_redis_client"
+    },
+    {
+      "function1": "src/cache/__init__.py::get_cache",
+      "function2": "src/cache/redis_cache.py::redis_get"
+    },
+    {
+      "function1": "src/cache/__init__.py::set_cache",
+      "function2": "src/cache/redis_cache.py::redis_set"
+    },
+    {
+      "function1": "src/cache/__init__.py::get_cache",
+      "function2": "src/cache/redis_cache.py::redis_delete"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/cache/redis_cache.py::redis_clear"
+    },
+    {
+      "function1": "src/cache/__init__.py::get_cache",
+      "function2": "src/cache/redis_cache.py::get_cache"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/cache/redis_cache.py::clear_cache"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/quant/dynamic_weights.py::detect_market_cycle"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/quant/dynamic_weights.py::get_dynamic_weights"
+    },
+    {
+      "function1": "src/quant/optimizer.py::calculate_returns_volatility",
+      "function2": "src/scoring/calculator.py::apply_ranking_bonus"
+    },
+    {
+      "function1": "src/scoring/momentum.py::calculate_momentum_score",
+      "function2": "src/scoring/utils.py::normalize_returns"
+    },
+    {
+      "function1": "src/scoring/utils.py::get_cache_key",
+      "function2": "src/scoring/utils.py::get_cached_score"
+    },
+    {
+      "function1": "src/scoring/calculator.py::_get_grade",
+      "function2": "src/scoring/utils.py::get_grade"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/scoring/config.py::validate_weights_compat"
+    },
+    {
+      "function1": "src/error.py::fund_not_found",
+      "function2": "src/scoring/config.py::_get_cache_key"
+    },
+    {
+      "function1": "src/error.py::fund_not_found",
+      "function2": "src/scoring/config.py::_get_cached_score"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/scoring/weights.py::validate_weights"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/scoring/weights.py::get_all_weights"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/scoring/weights.py::get_total_weight"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/scoring/models.py::to_dict"
+    },
+    {
+      "function1": "src/scoring/momentum.py::calculate_momentum_score",
+      "function2": "src/scoring/performance.py::calculate_performance_score"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/utils/rate_limiter.py::wait_if_needed"
+    },
+    {
+      "function1": "src/utils/rate_limiter.py::is_allowed",
+      "function2": "src/utils/rate_limiter.py::get_remaining"
+    },
+    {
+      "function1": "src/interfaces.py::get",
+      "function2": "src/utils/rate_limiter.py::clear"
+    },
+    {
+      "function1": "src/interfaces.py::get",
+      "function2": "src/utils/rate_limiter.py::get_stats"
+    },
+    {
+      "function1": "src/cache/__init__.py::get_cache",
+      "function2": "src/fetcher/__init__.py::get_cache"
+    },
+    {
+      "function1": "src/cache/__init__.py::set_cache",
+      "function2": "src/fetcher/__init__.py::set_cache"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/fetcher/__init__.py::clear_cache"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/fetcher/__init__.py::get_cache_stats"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/fetcher/__init__.py::_get_ssl_context"
+    },
+    {
+      "function1": "src/fetcher/__init__.py::fetch_fund_data",
+      "function2": "src/fetcher/__init__.py::fetch_fund_detail"
+    },
+    {
+      "function1": "src/fetcher/__init__.py::fetch_market_news",
+      "function2": "src/fetcher/__init__.py::fetch_hot_sectors"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/fetcher/__init__.py::fetch_commodity_prices"
+    },
+    {
+      "function1": "db/fund_ops.py::get_fund_history",
+      "function2": "src/fetcher/__init__.py::fetch_fund_nav_history"
+    },
+    {
+      "function1": "src/error.py::fund_not_found",
+      "function2": "src/fetcher/__init__.py::fetch_fund_manager"
+    },
+    {
+      "function1": "src/error.py::fund_not_found",
+      "function2": "src/fetcher/__init__.py::fetch_fund_scale"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/fetcher/enhanced_fetcher.py::get_enhanced_fetcher"
+    },
+    {
+      "function1": "db/fund_ops.py::get_fund_history",
+      "function2": "src/fetcher/enhanced_fetcher.py::get_fund_history_enhanced"
+    },
+    {
+      "function1": "web/monitoring.py::record_scoring_calculation",
+      "function2": "src/fetcher/enhanced_fetcher.py::_get_fund_data_from_db"
+    },
+    {
+      "function1": "web/monitoring.py::record_scoring_calculation",
+      "function2": "src/fetcher/enhanced_fetcher.py::_fetch_from_api_and_save"
+    },
+    {
+      "function1": "web/monitoring.py::record_scoring_calculation",
+      "function2": "src/fetcher/enhanced_fetcher.py::update_fund_data"
+    },
+    {
+      "function1": "src/fetcher/__init__.py::fetch_market_news",
+      "function2": "src/fetcher/xueqiu.py::get_fund_hot_rank"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/fetcher/xueqiu.py::_get_fallback_hot"
+    },
+    {
+      "function1": "src/error.py::fund_not_found",
+      "function2": "src/fetcher/xueqiu.py::fetch_fund_hot"
+    },
+    {
+      "function1": "src/error.py::fund_not_found",
+      "function2": "src/fetcher/alipay.py::fetch_fund_detail_alipay"
+    },
+    {
+      "function1": "src/quant/signals.py::get_timing_signals",
+      "function2": "src/fetcher/alipay.py::get_fund_compare"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/fetcher/qianman.py::fetch_portfolio_list"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/fetcher/qianman.py::fetch_fund_advisor"
+    },
+    {
+      "function1": "db/fund_ops.py::get_fund_history",
+      "function2": "src/analyzer/risk.py::fetch_historical_nav"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/analyzer/__init__.py::get_market_sentiment"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/analyzer/__init__.py::get_commodity_sentiment"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/analyzer/sentiment.py::get_enhanced_market_sentiment"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/services/score_service.py::get_score_service"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/services/score_service.py::test_score_service"
+    },
+    {
+      "function1": "src/interfaces.py::calculate_score",
+      "function2": "src/services/score_service.py::calculate_score"
+    },
+    {
+      "function1": "src/interfaces.py::batch_calculate_scores",
+      "function2": "src/services/score_service.py::batch_calculate_scores"
+    },
+    {
+      "function1": "src/interfaces.py::calculate_score",
+      "function2": "src/services/score_service_impl.py::calculate_score"
+    },
+    {
+      "function1": "src/interfaces.py::batch_calculate_scores",
+      "function2": "src/services/score_service_impl.py::batch_calculate_scores"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/services/score_service_impl.py::_get_market_data"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/services/metrics_service.py::get_metrics_service"
+    },
+    {
+      "function1": "web/monitoring.py::record_database_query",
+      "function2": "src/services/metrics_service.py::record_database_query"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/services/metrics_service.py::_reset_metrics"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/services/metrics_service.py::get_current_metrics"
+    },
+    {
+      "function1": "src/validation.py::decorator",
+      "function2": "src/services/metrics_service.py::decorator"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/services/metrics_service.py::wrapper"
+    },
+    {
+      "function1": "src/services/metrics_service.py::record_request",
+      "function2": "src/services/enhanced_metrics_service.py::record_request"
+    },
+    {
+      "function1": "web/monitoring.py::record_database_query",
+      "function2": "src/services/enhanced_metrics_service.py::record_database_query"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/services/enhanced_metrics_service.py::_check_alerts"
+    },
+    {
+      "function1": "src/services/enhanced_metrics_service.py::_check_error_rate_alert",
+      "function2": "src/services/enhanced_metrics_service.py::_check_slow_response_alert"
+    },
+    {
+      "function1": "src/services/enhanced_metrics_service.py::_check_error_rate_alert",
+      "function2": "src/services/enhanced_metrics_service.py::_check_cache_miss_alert"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/services/enhanced_metrics_service.py::get_enhanced_metrics"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/services/enhanced_metrics_service.py::reset_history"
+    },
+    {
+      "function1": "src/services/score_service.py::__init__",
+      "function2": "src/services/market_service.py::__init__"
+    },
+    {
+      "function1": "src/services/market_service.py::get_market_sentiment",
+      "function2": "src/services/market_service.py::get_commodity_sentiment"
+    },
+    {
+      "function1": "src/services/market_service.py::get_hot_sectors",
+      "function2": "src/services/market_service.py::get_market_news"
+    },
+    {
+      "function1": "src/services/market_service.py::get_market_sentiment",
+      "function2": "src/services/market_service.py::get_full_market_data"
+    },
+    {
+      "function1": "src/services/market_service.py::get_market_service",
+      "function2": "src/services/fund_service.py::get_fund_service"
+    },
+    {
+      "function1": "src/services/score_service.py::__init__",
+      "function2": "src/services/fund_service.py::__init__"
+    },
+    {
+      "function1": "src/interfaces.py::calculate_score",
+      "function2": "src/services/fund_service.py::get_fund_data"
+    },
+    {
+      "function1": "src/interfaces.py::calculate_score",
+      "function2": "src/services/fund_service.py::get_fund_score"
+    },
+    {
+      "function1": "src/services/market_service.py::get_market_sentiment",
+      "function2": "src/services/fund_service.py::get_market_data"
+    },
+    {
+      "function1": "tests/test_quant_service.py::calculate_holdings_advice",
+      "function2": "src/services/fund_service.py::calculate_holdings_advice"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/services/quant_service.py::get_quant_service"
+    },
+    {
+      "function1": "tests/test_fund_database.py::test_service_uses_enhanced_fetcher",
+      "function2": "src/services/quant_service.py::__init__"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/services/quant_service.py::_fetch_all_holdings"
+    },
+    {
+      "function1": "tests/test_quant_service.py::calculate_holdings_advice",
+      "function2": "src/services/quant_service.py::_require_holdings"
+    },
+    {
+      "function1": "src/interfaces.py::batch_calculate_scores",
+      "function2": "src/services/quant_service.py::timing_signals"
+    },
+    {
+      "function1": "src/services/quant_service.py::_fetch_user_holdings",
+      "function2": "src/services/quant_service.py::optimize_portfolio"
+    },
+    {
+      "function1": "src/services/quant_service.py::_fetch_user_holdings",
+      "function2": "src/services/quant_service.py::rebalancing"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/services/quant_service.py::dynamic_weights"
+    },
+    {
+      "function1": "src/services/quant_service.py::_fetch_user_holdings",
+      "function2": "src/services/quant_service.py::portfolio_analysis"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/openapi/routes.py::get_openapi_spec"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/openapi/routes.py::get_docs_ui"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/openapi/routes.py::test_openapi_generator"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/openapi/generator.py::get_openapi_spec"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/openapi/generator.py::get_docs_ui"
+    },
+    {
+      "function1": "src/openapi/routes.py::init_openapi_docs",
+      "function2": "src/openapi/generator.py::init_openapi_docs"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/openapi/generator.py::test_openapi_generator"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/openapi/generator.py::_init_tags"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/openapi/generator.py::_init_schemas"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/openapi/generator.py::_get_default_responses"
+    },
+    {
+      "function1": "web/security.py::__init__",
+      "function2": "src/openapi/generator.py::generate_from_flask_app"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/openapi/generator.py::to_dict"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/api_gateway/routes.py::create_gateway_blueprint"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/api_gateway/routes.py::gateway_status"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/api_gateway/routes.py::reset_limits"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/api_gateway/routes.py::list_services"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/api_gateway/models.py::__str__"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/api_gateway/models.py::_cleanup_expired"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/api_gateway/models.py::get_stats"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "src/api_gateway/core.py::get_api_gateway"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/api_gateway/core.py::__init__"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/api_gateway/core.py::_init_default_services"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/api_gateway/core.py::get_gateway_status"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "src/api_gateway/core.py::reset_rate_limits"
+    },
+    {
+      "function1": "src/scoring/momentum.py::calculate_momentum_score",
+      "function2": "src/advice/__init__.py::analyze_fund"
+    },
+    {
+      "function1": "src/fetcher/__init__.py::calculate_technical_from_history",
+      "function2": "src/advice/__init__.py::calculate_macd"
+    },
+    {
+      "function1": "src/advice/__init__.py::calculate_ma",
+      "function2": "src/advice/__init__.py::calculate_rsi"
+    },
+    {
+      "function1": "src/error.py::fund_not_found",
+      "function2": "src/advice/__init__.py::analyze_technical_indicators"
+    },
+    {
+      "function1": "src/error.py::fund_not_found",
+      "function2": "src/advice/__init__.py::format_100_score_report"
+    },
+    {
+      "function1": "src/quant/optimizer.py::calculate_returns_volatility",
+      "function2": "src/advice/generate.py::generate_advice"
+    },
+    {
+      "function1": "src/quant/signals.py::get_timing_signals",
+      "function2": "src/advice/generate.py::generate_daily_report"
+    },
+    {
+      "function1": "src/quant/signals.py::get_timing_signals",
+      "function2": "src/advice/generate.py::_generate_daily_report_internal"
+    },
+    {
+      "function1": "src/validation.py::validate_fund_code",
+      "function2": "src/advice/generate.py::fetch_risk"
+    },
+    {
+      "function1": "src/openapi/endpoints/market.py::add_endpoint",
+      "function2": "src/openapi/endpoints/system.py::add_endpoint"
+    },
+    {
+      "function1": "src/openapi/endpoints/market.py::add_market_endpoints",
+      "function2": "src/openapi/endpoints/system.py::add_system_endpoints"
+    },
+    {
+      "function1": "src/openapi/endpoints/market.py::add_endpoint",
+      "function2": "src/openapi/endpoints/auth.py::add_endpoint"
+    },
+    {
+      "function1": "src/openapi/endpoints/market.py::add_market_endpoints",
+      "function2": "src/openapi/endpoints/auth.py::add_auth_endpoints"
+    },
+    {
+      "function1": "src/openapi/endpoints/market.py::add_endpoint",
+      "function2": "src/openapi/endpoints/funds.py::add_endpoint"
+    },
+    {
+      "function1": "src/openapi/endpoints/market.py::add_market_endpoints",
+      "function2": "src/openapi/endpoints/funds.py::add_fund_endpoints"
+    },
+    {
+      "function1": "web/api/validation.py::validate_holding_data",
+      "function2": "web/api/validation.py::validate_fund_request"
+    },
+    {
+      "function1": "web/api/validation.py::validate_holding_data",
+      "function2": "web/api/validation.py::validate_login_data"
+    },
+    {
+      "function1": "web/api/validation.py::validate_holding_data",
+      "function2": "web/api/validation.py::validate_registration_data"
+    },
+    {
+      "function1": "web/api/validation.py::validate_holding_data",
+      "function2": "web/api/validation.py::validate_batch_holdings"
+    },
+    {
+      "function1": "web/api/validation.py::validate_number",
+      "function2": "web/api/validation.py::validate_integer"
+    },
+    {
+      "function1": "src/validation.py::decorator",
+      "function2": "web/api/validation.py::decorator"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/validation.py::wrapper"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/rate_limiter.py::get_rate_limiter"
+    },
+    {
+      "function1": "web/api/rate_limiter.py::check_rate_limit",
+      "function2": "web/api/rate_limiter.py::get_rate_limit_info"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "web/api/rate_limiter.py::get_all_limits"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/rate_limiter.py::default_limit"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/rate_limiter.py::auth_limit"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/rate_limiter.py::funds_limit"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/rate_limiter.py::holdings_limit"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/rate_limiter.py::quant_limit"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/rate_limiter.py::import_limit"
+    },
+    {
+      "function1": "src/openapi/routes.py::init_openapi_docs",
+      "function2": "web/api/rate_limiter.py::init_rate_limiter"
+    },
+    {
+      "function1": "src/services/metrics_service.py::__init__",
+      "function2": "web/api/rate_limiter.py::__init__"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "web/api/rate_limiter.py::_create_redis_client"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "web/api/rate_limiter.py::get_client_ip"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "web/api/rate_limiter.py::get_user_id"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "web/api/rate_limiter.py::get_endpoint_key"
+    },
+    {
+      "function1": "web/api/rate_limiter.py::check_rate_limit",
+      "function2": "web/api/rate_limiter.py::get_limit_key"
+    },
+    {
+      "function1": "web/api/rate_limiter.py::check_rate_limit",
+      "function2": "web/api/rate_limiter.py::get_limit_description"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/rate_limiter.py::rate_limit_info"
+    },
+    {
+      "function1": "src/jwt_auth.py::jwt_required",
+      "function2": "web/api/rate_limiter.py::decorator"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/rate_limiter.py::wrapper"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/middleware/error_handler.py::get_error_handler"
+    },
+    {
+      "function1": "src/openapi/routes.py::init_openapi_docs",
+      "function2": "web/middleware/error_handler.py::init_error_handler"
+    },
+    {
+      "function1": "web/security.py::__init__",
+      "function2": "web/middleware/error_handler.py::__init__"
+    },
+    {
+      "function1": "web/security.py::__init__",
+      "function2": "web/middleware/error_handler.py::init_app"
+    },
+    {
+      "function1": "src/interfaces.py::fetch_hot_sectors",
+      "function2": "web/middleware/error_handler.py::_get_request_context"
+    },
+    {
+      "function1": "web/middleware/error_handler.py::handle_bad_request",
+      "function2": "web/middleware/error_handler.py::handle_unauthorized"
+    },
+    {
+      "function1": "web/middleware/error_handler.py::handle_bad_request",
+      "function2": "web/middleware/error_handler.py::handle_forbidden"
+    },
+    {
+      "function1": "web/middleware/error_handler.py::handle_bad_request",
+      "function2": "web/middleware/error_handler.py::handle_not_found"
+    },
+    {
+      "function1": "web/middleware/error_handler.py::handle_bad_request",
+      "function2": "web/middleware/error_handler.py::handle_method_not_allowed"
+    },
+    {
+      "function1": "web/middleware/error_handler.py::handle_bad_request",
+      "function2": "web/middleware/error_handler.py::handle_rate_limit"
+    },
+    {
+      "function1": "web/middleware/error_handler.py::handle_bad_request",
+      "function2": "web/middleware/error_handler.py::handle_service_error"
+    },
+    {
+      "function1": "web/middleware/error_handler.py::handle_bad_request",
+      "function2": "web/middleware/error_handler.py::handle_internal_error"
+    },
+    {
+      "function1": "web/middleware/error_handler.py::handle_bad_request",
+      "function2": "web/middleware/error_handler.py::handle_generic_error"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/holdings.py::_get_user_id"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/holdings.py::_auth_required"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/holdings.py::get_holdings"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/holdings.py::manage_holdings"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/holdings.py::delete_holding"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/holdings.py::clear_all_holdings"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/holdings.py::import_holdings"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/holdings.py::import_screenshot"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/system.py::_get_user_id"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/system.py::health_check"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/system.py::metrics"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/system.py::enhanced_metrics"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/system.py::news"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/system.py::sectors"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/system.py::get_advice"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/auth.py::_generate_user_id"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/auth.py::register"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/auth.py::login"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/auth.py::logout"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/auth.py::check_login"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/auth.py::refresh_token"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/auth.py::change_password"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/external.py::get_hot_rank"
+    },
+    {
+      "function1": "src/error.py::fund_not_found",
+      "function2": "web/api/endpoints/external.py::get_fund_hot"
+    },
+    {
+      "function1": "src/error.py::fund_not_found",
+      "function2": "web/api/endpoints/external.py::get_fund_discussion"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/external.py::compare_funds"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/external.py::get_portfolios"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/external.py::get_advisors"
+    },
+    {
+      "function1": "src/fetcher/qianman.py::fetch_portfolio_detail",
+      "function2": "web/api/endpoints/external.py::get_portfolio_detail"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/quant.py::_get_user_id"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/quant.py::get_timing_signals"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/quant.py::get_portfolio_optimize"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/quant.py::get_rebalancing"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/quant.py::get_dynamic_weights_api"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/funds.py::_get_user_id"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/funds.py::get_funds"
+    },
+    {
+      "function1": "src/validation.py::validate_fund_code",
+      "function2": "web/api/endpoints/funds.py::get_fund_detail"
+    },
+    {
+      "function1": "src/validation.py::validate_fund_code",
+      "function2": "web/api/endpoints/funds.py::get_fund_score"
+    },
+    {
+      "function1": "src/validation.py::validate_fund_code",
+      "function2": "web/api/endpoints/funds.py::process_fund"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/analysis.py::_get_user_id"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/analysis.py::get_portfolio_analysis"
+    },
+    {
+      "function1": "test_validation.py::test_invalid_fund_code",
+      "function2": "web/api/endpoints/analysis.py::get_expected_return"
+    }
+  ],
+  "unused_parameters": [],
+  "parameter_analysis": {},
+  "api_endpoints_analysis": {
+    "tests/test_jwt_auth.py::test_endpoint": {
+      "endpoint": "'/test'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/app.py::get_config": {
+      "endpoint": "'/api/config'",
+      "methods": [
+        "'GET'"
+      ],
+      "parameters": []
+    },
+    "web/app.py::update_config": {
+      "endpoint": "'/api/config'",
+      "methods": [
+        "'POST'"
+      ],
+      "parameters": []
+    },
+    "web/app.py::export_holdings": {
+      "endpoint": "'/api/export'",
+      "methods": [
+        "'GET'"
+      ],
+      "parameters": []
+    },
+    "web/app.py::vue_app": {
+      "endpoint": "'/'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/app.py::serve_vue": {
+      "endpoint": "'/<path:path>'",
+      "methods": [],
+      "parameters": [
+        {
+          "name": "path",
+          "required": true,
+          "type": "positional"
+        }
+      ]
+    },
+    "web/app.py::health_check": {
+      "endpoint": "'/health'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/app.py::enhanced_health_check": {
+      "endpoint": "'/api/health/enhanced'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/app.py::metrics_endpoint": {
+      "endpoint": "'/api/metrics'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/app.py::simple_metrics": {
+      "endpoint": "'/api/metrics/simple'",
+      "methods": [],
+      "parameters": []
+    },
+    "src/openapi/routes.py::get_openapi_spec": {
+      "endpoint": "'/openapi.json'",
+      "methods": [],
+      "parameters": []
+    },
+    "src/openapi/routes.py::get_docs_ui": {
+      "endpoint": "'/'",
+      "methods": [],
+      "parameters": []
+    },
+    "src/openapi/generator.py::get_openapi_spec": {
+      "endpoint": "'/openapi.json'",
+      "methods": [],
+      "parameters": []
+    },
+    "src/openapi/generator.py::get_docs_ui": {
+      "endpoint": "'/'",
+      "methods": [],
+      "parameters": []
+    },
+    "src/api_gateway/routes.py::gateway_status": {
+      "endpoint": "'/status'",
+      "methods": [
+        "'GET'"
+      ],
+      "parameters": []
+    },
+    "src/api_gateway/routes.py::reset_limits": {
+      "endpoint": "'/reset'",
+      "methods": [
+        "'POST'"
+      ],
+      "parameters": []
+    },
+    "src/api_gateway/routes.py::proxy_request": {
+      "endpoint": "'/proxy/<path:service_path>'",
+      "methods": [
+        "'GET'",
+        "'POST'",
+        "'PUT'",
+        "'DELETE'"
+      ],
+      "parameters": [
+        {
+          "name": "service_path",
+          "required": true,
+          "type": "positional"
+        }
+      ]
+    },
+    "src/api_gateway/routes.py::list_services": {
+      "endpoint": "'/services'",
+      "methods": [
+        "'GET'"
+      ],
+      "parameters": []
+    },
+    "web/api/rate_limiter.py::rate_limit_info": {
+      "endpoint": "'/rate-limit/info'",
+      "methods": [
+        "'GET'"
+      ],
+      "parameters": []
+    },
+    "web/api/endpoints/holdings.py::get_holdings": {
+      "endpoint": "'/holdings'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/holdings.py::manage_holdings": {
+      "endpoint": "'/holdings'",
+      "methods": [
+        "'POST'"
+      ],
+      "parameters": []
+    },
+    "web/api/endpoints/holdings.py::delete_holding": {
+      "endpoint": "'/holdings'",
+      "methods": [
+        "'DELETE'"
+      ],
+      "parameters": []
+    },
+    "web/api/endpoints/holdings.py::clear_all_holdings": {
+      "endpoint": "'/holdings/clear'",
+      "methods": [
+        "'POST'"
+      ],
+      "parameters": []
+    },
+    "web/api/endpoints/holdings.py::import_holdings": {
+      "endpoint": "'/import'",
+      "methods": [
+        "'POST'"
+      ],
+      "parameters": []
+    },
+    "web/api/endpoints/holdings.py::import_screenshot": {
+      "endpoint": "'/import-screenshot'",
+      "methods": [
+        "'POST'"
+      ],
+      "parameters": []
+    },
+    "web/api/endpoints/system.py::health_check": {
+      "endpoint": "'/health'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/system.py::metrics": {
+      "endpoint": "'/metrics'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/system.py::enhanced_metrics": {
+      "endpoint": "'/metrics/enhanced'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/system.py::news": {
+      "endpoint": "'/news'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/system.py::sectors": {
+      "endpoint": "'/sectors'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/system.py::get_advice": {
+      "endpoint": "'/advice'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/auth.py::register": {
+      "endpoint": "'/register'",
+      "methods": [
+        "'POST'"
+      ],
+      "parameters": []
+    },
+    "web/api/endpoints/auth.py::login": {
+      "endpoint": "'/login'",
+      "methods": [
+        "'POST'"
+      ],
+      "parameters": []
+    },
+    "web/api/endpoints/auth.py::logout": {
+      "endpoint": "'/logout'",
+      "methods": [
+        "'POST'"
+      ],
+      "parameters": []
+    },
+    "web/api/endpoints/auth.py::check_login": {
+      "endpoint": "'/check-login'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/auth.py::refresh_token": {
+      "endpoint": "'/refresh'",
+      "methods": [
+        "'POST'"
+      ],
+      "parameters": []
+    },
+    "web/api/endpoints/auth.py::change_password": {
+      "endpoint": "'/password'",
+      "methods": [
+        "'POST'"
+      ],
+      "parameters": []
+    },
+    "web/api/endpoints/external.py::get_hot_rank": {
+      "endpoint": "'/external/hot-rank'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/external.py::get_fund_hot": {
+      "endpoint": "'/external/fund-hot/<fund_code>'",
+      "methods": [],
+      "parameters": [
+        {
+          "name": "fund_code",
+          "required": true,
+          "type": "positional"
+        }
+      ]
+    },
+    "web/api/endpoints/external.py::get_fund_discussion": {
+      "endpoint": "'/external/fund-discussion/<fund_code>'",
+      "methods": [],
+      "parameters": [
+        {
+          "name": "fund_code",
+          "required": true,
+          "type": "positional"
+        }
+      ]
+    },
+    "web/api/endpoints/external.py::compare_funds": {
+      "endpoint": "'/external/fund-compare'",
+      "methods": [
+        "'POST'"
+      ],
+      "parameters": []
+    },
+    "web/api/endpoints/external.py::get_portfolios": {
+      "endpoint": "'/external/portfolios'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/external.py::get_advisors": {
+      "endpoint": "'/external/advisors'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/external.py::get_portfolio_detail": {
+      "endpoint": "'/external/portfolio/<portfolio_id>'",
+      "methods": [],
+      "parameters": [
+        {
+          "name": "portfolio_id",
+          "required": true,
+          "type": "positional"
+        }
+      ]
+    },
+    "web/api/endpoints/quant.py::get_timing_signals": {
+      "endpoint": "'/timing-signals'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/quant.py::get_portfolio_optimize": {
+      "endpoint": "'/portfolio-optimize'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/quant.py::get_rebalancing": {
+      "endpoint": "'/rebalancing'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/quant.py::get_dynamic_weights_api": {
+      "endpoint": "'/dynamic-weights'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/funds.py::get_funds": {
+      "endpoint": "'/funds'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/funds.py::get_fund_detail": {
+      "endpoint": "'/fund-detail/<code>'",
+      "methods": [],
+      "parameters": [
+        {
+          "name": "code",
+          "required": true,
+          "type": "positional"
+        }
+      ]
+    },
+    "web/api/endpoints/funds.py::get_fund_score": {
+      "endpoint": "'/score/<code>'",
+      "methods": [],
+      "parameters": [
+        {
+          "name": "code",
+          "required": true,
+          "type": "positional"
+        }
+      ]
+    },
+    "web/api/endpoints/analysis.py::get_portfolio_analysis": {
+      "endpoint": "'/analysis/portfolio'",
+      "methods": [],
+      "parameters": []
+    },
+    "web/api/endpoints/analysis.py::get_expected_return": {
+      "endpoint": "'/expected-return'",
+      "methods": [],
+      "parameters": []
+    }
+  }
+}

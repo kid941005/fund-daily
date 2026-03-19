@@ -263,7 +263,7 @@ class TestEnhancedFetcher:
         # 但增强版fetcher应该尽量添加source字段
         # 我们只检查如果存在source字段，它应该是有效的
         if 'source' in result:
-            assert result['source'] in ['database', 'api', 'cache']
+            assert result['source'] in ['database', 'api', 'cache', 'eastmoney']
     
     def test_enhanced_fetcher_fallback(self):
         """Test enhanced fetcher fallback mechanism"""

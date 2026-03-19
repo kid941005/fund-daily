@@ -464,22 +464,118 @@ h3 {
   color: #999;
 }
 
-@media (max-width: 480px) {
-  .quant { padding: 8px; }
-  .section { padding: 12px; }
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .quant {
+    padding: 12px;
+    gap: 16px;
+  }
+  
+  .section {
+    padding: 20px;
+    border-radius: 14px;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
   .timing-cards {
-    flex-direction: row;
-    gap: 6px;
+    flex-direction: column;
+    gap: 12px;
   }
+  
   .timing-main {
-    padding: 8px;
-    min-width: 80px;
+    min-width: 100%;
+    padding: 16px;
   }
+  
   .timing-main .value {
-    font-size: 16px;
+    font-size: 24px;
   }
+  
   .timing-main .reason {
-    font-size: 9px;
+    font-size: 12px;
+  }
+  
+  .timing-signals {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .timing-signal {
+    padding: 16px;
+  }
+  
+  .portfolio-table {
+    overflow-x: auto;
+  }
+  
+  .portfolio-table table {
+    min-width: 600px;
+  }
+  
+  .rebalancing-table {
+    overflow-x: auto;
+  }
+  
+  .rebalancing-table table {
+    min-width: 500px;
+  }
+}
+
+@media (max-width: 480px) {
+  .quant {
+    padding: 8px;
+  }
+  
+  .section {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  .section-header h2 {
+    font-size: 18px;
+  }
+  
+  .timing-main {
+    padding: 12px;
+  }
+  
+  .timing-main .value {
+    font-size: 20px;
+  }
+  
+  .timing-main .reason {
+    font-size: 11px;
+  }
+  
+  .timing-signal {
+    padding: 12px;
+  }
+  
+  .signal-type {
+    font-size: 12px;
+  }
+  
+  .signal-weight {
+    font-size: 14px;
+  }
+  
+  .portfolio-table table {
+    min-width: 400px;
+    font-size: 12px;
+  }
+  
+  .rebalancing-table table {
+    min-width: 350px;
+    font-size: 12px;
+  }
+  
+  th, td {
+    padding: 6px 8px;
   }
 }
 </style>

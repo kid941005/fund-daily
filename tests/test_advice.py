@@ -67,7 +67,7 @@ class TestAnalyzeFund:
 class TestGenerateDailyReport:
     """Tests for daily report generation"""
     
-    @patch('src.advice.generate.fetch_fund_data')
+    @patch('src.fetcher.fetch_fund_data')
     def test_generate_report(self, mock_fetch):
         """Test report generation"""
         mock_fetch.return_value = {
@@ -77,15 +77,15 @@ class TestGenerateDailyReport:
             "gsz": "1.01",
             "gszzl": "1.0"
         }
-        
+
         result = generate_daily_report(["000001"])
-        
+
         assert "date" in result
         assert "funds" in result
         assert "advice" in result
         assert len(result["funds"]) > 0
-    
-    @patch('src.advice.generate.fetch_fund_data')
+
+    @patch('src.fetcher.fetch_fund_data')
     def test_report_summary_counts(self, mock_fetch):
         """Test report summary counts"""
         mock_fetch.return_value = {

@@ -20,7 +20,7 @@ from src.analyzer import get_market_sentiment, get_commodity_sentiment
 from src.fetcher import fetch_hot_sectors, fetch_market_news
 from src.services.score_service import get_score_service
 from src.services.metrics_service import get_metrics_service, timed_metric
-from src.cache.redis_cache import redis_get, redis_set, get_redis_client
+from src.cache.manager import get_cache_manager
 from src.error import (
     FundServiceError, MarketServiceError, ErrorCode,
     fund_not_found, fund_data_fetch_failed, market_data_fetch_failed,
@@ -41,6 +41,7 @@ class FundService:
             cache_enabled: 是否启用缓存
         """
         self.cache_enabled = cache_enabled
+        self.cache_manager = get_cache_manager()
         self.score_service = get_score_service()
         self.metrics_service = get_metrics_service()
         
@@ -72,7 +73,7 @@ class FundService:
             # 尝试从缓存获取
             if use_cache and self.cache_enabled:
                 cache_key = f"{self.cache_prefix}fund:{fund_code}"
-                cached = redis_get(cache_key)
+                cached = self.cache_manager.get(cache_key)
                 if cached:
                     logger.debug(f"Using cached data for {fund_code}")
                     # 记录缓存命中
@@ -106,7 +107,7 @@ class FundService:
             # 设置缓存
             if use_cache and self.cache_enabled:
                 try:
-                    redis_set(cache_key, analyzed, ttl=600)  # 10分钟
+                    self.cache_manager.set(cache_key, analyzed, ttl=600)  # 10分钟
                 except Exception as e:
                     logger.warning(f"Failed to cache fund data: {e}")
             

@@ -216,9 +216,83 @@ onMounted(() => {
   color: #999;
 }
 
+/* 响应式设计 */
 @media (max-width: 768px) {
+  .home {
+    padding: 12px;
+    gap: 16px;
+  }
+  
   .overview-cards {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .overview-card {
+    padding: 16px;
+  }
+  
+  .overview-card .value {
+    font-size: 24px;
+  }
+  
+  .fund-list {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .fund-item {
+    padding: 16px;
+  }
+  
+  .fund-rank {
+    font-size: 18px;
+    width: 36px;
+    height: 36px;
+  }
+  
+  .fund-name {
+    font-size: 14px;
+  }
+  
+  .fund-score {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .home {
+    padding: 8px;
+  }
+  
+  .overview-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .overview-card {
+    padding: 12px;
+  }
+  
+  .overview-card .value {
+    font-size: 22px;
+  }
+  
+  .fund-item {
+    padding: 12px;
+  }
+  
+  .fund-rank {
+    font-size: 16px;
+    width: 32px;
+    height: 32px;
+  }
+  
+  .fund-name {
+    font-size: 13px;
+  }
+  
+  .fund-score {
+    font-size: 18px;
   }
 }
 </style>

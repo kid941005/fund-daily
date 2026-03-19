@@ -26,7 +26,6 @@ class TestDatabaseConfig:
     """Tests for database configuration"""
     
     @patch.dict(os.environ, {
-        "FUND_DAILY_DB_TYPE": "postgres",
         "FUND_DAILY_DB_HOST": "testhost",
         "FUND_DAILY_DB_PORT": "5433",
         "FUND_DAILY_DB_NAME": "testdb",
@@ -36,7 +35,6 @@ class TestDatabaseConfig:
     def test_from_env_postgres(self):
         """Test PostgreSQL config from environment"""
         config = DatabaseConfig.from_env()
-        assert config.type == "postgres"
         assert config.host == "testhost"
         assert config.port == 5433
         assert config.name == "testdb"
@@ -51,7 +49,6 @@ class TestDatabaseConfig:
                 os.environ.pop(key)
         
         config = DatabaseConfig.from_env()
-        assert config.type == "postgres"
         assert config.host == "localhost"
         assert config.port == 5432
         assert config.name == "fund_daily"
@@ -61,7 +58,6 @@ class TestDatabaseConfig:
     def test_validate_postgres_valid(self):
         """Test PostgreSQL validation with valid config"""
         config = DatabaseConfig(
-            type="postgres",
             host="localhost",
             port=5432,
             name="testdb",
@@ -74,7 +70,6 @@ class TestDatabaseConfig:
     def test_validate_postgres_invalid(self):
         """Test PostgreSQL validation with invalid config"""
         config = DatabaseConfig(
-            type="postgres",
             host="",  # Empty host
             port=5432,
             name="",  # Empty name
@@ -83,16 +78,12 @@ class TestDatabaseConfig:
         )
         errors = config.validate()
         assert len(errors) == 3
-        assert "主机地址不能为空" in errors[0]
-        assert "数据库名称不能为空" in errors[1]
-        assert "数据库用户不能为空" in errors[2]
+        assert "PostgreSQL 主机地址不能为空" in errors
+        assert "数据库名称不能为空" in errors
+        assert "数据库用户不能为空" in errors
     
-    def test_validate_invalid_type(self):
-        """Test validation with invalid database type"""
-        config = DatabaseConfig(type="mysql")  # Invalid type
-        errors = config.validate()
-        assert len(errors) == 1
-        assert "'postgres'" in errors[0]
+    # 注意：DatabaseConfig 不再有 type 参数，仅支持 PostgreSQL
+    # test_validate_invalid_type 测试已移除
 
 
 class TestRedisConfig:
@@ -226,7 +217,7 @@ class TestConfigManager:
         assert config.app.default_funds == ["000001", "000002"]
         
         # Test database config
-        assert config.database.type == "postgres"
+        # Database type is fixed to PostgreSQL, no longer a configurable field
         
         # Test Redis config
         assert config.redis.host == "localhost"

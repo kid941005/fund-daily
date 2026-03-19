@@ -7,7 +7,8 @@ API 速率限制模块
 
 import time
 from typing import Dict, List, Optional, Tuple
-from flask import request, current_app
+from flask import
+from src.config import get_config request, current_app
 from functools import wraps
 import redis
 import logging
@@ -38,10 +39,10 @@ class RateLimiter:
     def _create_redis_client(self):
         """创建Redis客户端"""
         try:
-            import os
-            redis_host = os.getenv("FUND_DAILY_REDIS_HOST", "localhost")
-            redis_port = int(os.getenv("FUND_DAILY_REDIS_PORT", "6379"))
-            redis_db = int(os.getenv("FUND_DAILY_REDIS_DB", "0"))
+            config = get_config()
+            redis_host = config.redis.host
+            redis_port = config.redis.port
+            redis_db = config.redis.db
             
             return redis.Redis(
                 host=redis_host,

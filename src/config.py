@@ -13,8 +13,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class DatabaseConfig:
-    """数据库配置"""
-    type: str = "postgres"  # postgres
+    """数据库配置（仅支持PostgreSQL）"""
     host: str = "localhost"
     port: int = 5432
     name: str = "fund_daily"
@@ -25,7 +24,6 @@ class DatabaseConfig:
     def from_env(cls) -> "DatabaseConfig":
         """从环境变量创建配置"""
         return cls(
-            type=os.getenv("FUND_DAILY_DB_TYPE", "postgres"),
             host=os.getenv("FUND_DAILY_DB_HOST", "localhost"),
             port=int(os.getenv("FUND_DAILY_DB_PORT", "5432")),
             name=os.getenv("FUND_DAILY_DB_NAME", "fund_daily"),
@@ -37,20 +35,12 @@ class DatabaseConfig:
         """验证配置，返回错误列表"""
         errors = []
         
-        if self.type not in ["postgres"]:
-            errors.append(f"数据库类型必须为 'postgres'，当前为: {self.type}")
-        
-        if self.type == "postgres":
-            if not self.host:
-                errors.append("PostgreSQL 主机地址不能为空")
-            if not self.name:
-                errors.append("数据库名称不能为空")
-            if not self.user:
-                errors.append("数据库用户不能为空")
-        
-        if self.type == "sqlite":
-            if not self.path:
-                errors.append("SQLite 数据库路径不能为空")
+        if not self.host:
+            errors.append("PostgreSQL 主机地址不能为空")
+        if not self.name:
+            errors.append("数据库名称不能为空")
+        if not self.user:
+            errors.append("数据库用户不能为空")
         
         return errors
 
@@ -239,6 +229,9 @@ class AppConfig:
     env: str = "development"  # development, production, testing
     version: str = "2.6.0"
     default_funds: List[str] = field(default_factory=lambda: ["000001", "110022", "161725"])
+    admin_token: Optional[str] = None  # API网关管理员令牌
+    user_token: Optional[str] = None   # API网关用户令牌
+    readonly_token: Optional[str] = None  # API网关只读令牌
     
     @classmethod
     def from_env(cls) -> "AppConfig":
@@ -247,6 +240,9 @@ class AppConfig:
             env=os.getenv("FUND_DAILY_ENV", "development"),
             version=os.getenv("FUND_DAILY_VERSION", "2.6.0"),
             default_funds=os.getenv("FUND_DAILY_DEFAULT_FUNDS", "000001,110022,161725").split(","),
+            admin_token=os.getenv("FUND_DAILY_ADMIN_TOKEN"),
+            user_token=os.getenv("FUND_DAILY_USER_TOKEN"),
+            readonly_token=os.getenv("FUND_DAILY_READONLY_TOKEN"),
         )
     
     def validate(self) -> List[str]:
@@ -259,6 +255,15 @@ class AppConfig:
         for fund_code in self.default_funds:
             if not fund_code or not fund_code.isdigit() or len(fund_code) != 6:
                 errors.append(f"默认基金代码无效: {fund_code}")
+        
+        # 生产环境必须设置API网关令牌
+        if self.env == "production":
+            if not self.admin_token:
+                errors.append("生产环境必须设置 FUND_DAILY_ADMIN_TOKEN")
+            if not self.user_token:
+                errors.append("生产环境必须设置 FUND_DAILY_USER_TOKEN")
+            if not self.readonly_token:
+                errors.append("生产环境必须设置 FUND_DAILY_READONLY_TOKEN")
         
         return errors
 
@@ -312,13 +317,12 @@ class ConfigManager:
         """转换为字典（用于调试）"""
         return {
             "database": {
-                "type": self.database.type,
+                "type": "postgres",  # 固定为PostgreSQL
                 "host": self.database.host,
                 "port": self.database.port,
                 "name": self.database.name,
                 "user": self.database.user,
                 "has_password": bool(self.database.password),
-                "path": self.database.path,
             },
             "redis": {
                 "host": self.redis.host,
@@ -365,7 +369,7 @@ def get_config() -> ConfigManager:
                 _config_instance = ConfigManager()
                 logger.info("配置管理器初始化完成")
                 logger.info(f"环境: {_config_instance.app.env}")
-                logger.info(f"数据库类型: {_config_instance.database.type}")
+                logger.info(f"数据库: PostgreSQL ({_config_instance.database.host}:{_config_instance.database.port})")
     
     return _config_instance
 
@@ -375,13 +379,12 @@ def get_database_config() -> Dict[str, Any]:
     """获取数据库配置（兼容旧代码）"""
     config = get_config().database
     return {
-        "type": config.type,
+        "type": "postgres",  # 固定为PostgreSQL
         "host": config.host,
         "port": config.port,
         "name": config.name,
         "user": config.user,
         "password": config.password,
-        "path": config.path,
     }
 
 

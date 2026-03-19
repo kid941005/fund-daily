@@ -63,13 +63,13 @@ def manage_holdings():
     action = data.get("action", "add")
     
     if action == "delete":
-        code = data.get("code")
-        if code:
+        fund_code = data.get("code") or data.get("fund_code")
+        if fund_code:
             # 验证基金代码
             try:
                 from web.api.validation import validator
-                validated_code = validator.validate_fund_code(code, 'code')
-                db.delete_holding(user_id, validated_code)
+                validated_fund_code = validator.validate_fund_code(fund_code, 'fund_code')
+                db.delete_holding(user_id, validated_fund_code)
             except ValidationError as e:
                 return create_error_response(
                     code=ErrorCode.INVALID_INPUT,
@@ -83,14 +83,14 @@ def manage_holdings():
     validated_funds = request.validated_data
     
     for fund in validated_funds:
-        code = fund.get("code")
+        fund_code = fund.get("code") or fund.get("fund_code")
         amount = fund.get("amount", 0)
         
         if amount <= 0:
-            if code:
-                db.delete_holding(user_id, code)
+            if fund_code:
+                db.delete_holding(user_id, fund_code)
         else:
-            db.save_holding(user_id, code, amount)
+            db.save_holding(user_id, fund_code, amount)
     
     return jsonify({"success": True, "message": "保存成功"})
 
@@ -107,9 +107,9 @@ def delete_holding():
     
     # 使用验证后的数据
     validated_data = request.validated_data
-    code = validated_data.get("code")
+    fund_code = validated_data.get("code") or validated_data.get("fund_code")
     
-    if not code:
+    if not fund_code:
         return create_error_response(
             code=ErrorCode.INVALID_INPUT,
             message="缺少基金代码",
@@ -117,7 +117,7 @@ def delete_holding():
         )
     
     # 使用数据库直接删除
-    db.delete_holding(user_id, code)
+    db.delete_holding(user_id, fund_code)
     
     return jsonify({"success": True, "message": "删除成功"})
 
@@ -199,4 +199,9 @@ def import_screenshot():
     except Exception as e:
         import logging
         logging.error(f"OCR error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        return create_error_response(
+            ErrorCode.INVALID_INPUT,
+            f"OCR处理失败: {str(e)}",
+            details={"operation": "ocr_import"},
+            http_status=500
+        )

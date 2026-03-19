@@ -1,5 +1,6 @@
 """用户管理模块"""
 from .pool import get_db, get_cursor
+from src.utils.error_handling import handle_db_errors
 
 # 用户操作
 def get_user_by_username(username):
@@ -18,12 +19,14 @@ def verify_user(username, password):
         return user
     return None
 
+@handle_db_errors
 def get_user_by_id(user_id):
     with get_db() as conn:
         with get_cursor(conn) as cursor:
             cursor.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
             return dict(cursor.fetchone()) if cursor.rowcount > 0 else None
 
+@handle_db_errors
 def create_user(user_id, username, password_hash):
     with get_db() as conn:
         with get_cursor(conn) as cursor:

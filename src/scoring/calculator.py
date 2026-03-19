@@ -6,6 +6,7 @@
 import logging
 from typing import Dict, List, Optional
 
+from src.utils.error_handling import handle_errors
 from .config import SCORE_WEIGHTS, _get_cached_score, _set_cached_score
 from .weights import validate_weights
 from .models import ScoreInput
@@ -180,6 +181,7 @@ def _get_grade(score: int) -> str:
         return "D"
 
 
+@handle_errors(default_return="[评分报告生成失败]", log_level="warning")
 def format_score_report(scoring_result: Dict) -> str:
     """格式化评分报告"""
     details = scoring_result["details"]
@@ -215,6 +217,7 @@ def format_score_report(scoring_result: Dict) -> str:
     return "\n".join(lines)
 
 
+@handle_errors(default_return=None, log_level="warning")
 def apply_ranking_bonus(funds: List[Dict]) -> List[Dict]:
     """
     根据持仓内排名加分，拉开分数差距

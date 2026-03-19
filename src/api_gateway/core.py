@@ -28,16 +28,18 @@ class APIGateway:
         self._rate_limiter = RateLimiter()
         self._init_default_services()
         
-        # 从环境变量读取令牌，开发环境使用默认值
-        import os
-        env = os.getenv("FUND_DAILY_ENV", "development")
+        # 使用配置管理器读取配置
+        from src.config import get_config
+        config = get_config()
         
-        if env == "production":
+        # 从配置读取令牌
+        self.env = config.env
+        admin_token = config.admin_token
+        user_token = config.user_token
+        readonly_token = config.readonly_token
+        
+        if self.env == "production":
             # 生产环境必须设置令牌
-            admin_token = os.getenv("FUND_DAILY_ADMIN_TOKEN")
-            user_token = os.getenv("FUND_DAILY_USER_TOKEN")
-            readonly_token = os.getenv("FUND_DAILY_READONLY_TOKEN")
-            
             if not admin_token or not user_token or not readonly_token:
                 raise ValueError(
                     "生产环境必须设置API网关令牌！请设置环境变量：\n"
@@ -47,10 +49,15 @@ class APIGateway:
                 )
         else:
             # 开发环境使用默认值（带警告）
-            admin_token = os.getenv("FUND_DAILY_ADMIN_TOKEN", "dev-admin-token-change-in-production")
+            if not admin_token:
+                admin_token = "dev-admin-token-change-in-production"
             user_token = os.getenv("FUND_DAILY_USER_TOKEN", "dev-user-token-change-in-production")
-            readonly_token = os.getenv("FUND_DAILY_READONLY_TOKEN", "dev-readonly-token-change-in-production")
-            if env == "development":
+            if not user_token:
+                user_token = "dev-user-token-change-in-production"
+            if not readonly_token:
+                readonly_token = "dev-readonly-token-change-in-production"
+            
+            if self.env == "development":
                 logger.warning("开发环境使用默认API网关令牌，生产环境必须设置强令牌！")
         
         self._valid_tokens = {
