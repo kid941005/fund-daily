@@ -109,15 +109,9 @@ _ctx = _get_ssl_context()
 # ============== HTTP Helpers ==============
 def _make_request(url: str, timeout: int = 10) -> Optional[str]:
     """Make HTTP request with error handling and rate limiting"""
-    global _last_request_time
-
-    # Rate limiting: wait if needed
-    config = get_config()
-    elapsed = time.time() - _last_request_time
-    if elapsed < config.cache.request_interval:
-        sleep_time = config.cache.request_interval - elapsed
-        logger.debug(f"Rate limiting: sleeping {sleep_time:.2f}s")
-        time.sleep(sleep_time)
+    # 使用线程安全的速率限制器
+    from src.utils.rate_limiter import wait_if_needed
+    wait_if_needed()
 
     try:
         req = urllib.request.Request(
@@ -128,7 +122,6 @@ def _make_request(url: str, timeout: int = 10) -> Optional[str]:
             },
         )
         with urllib.request.urlopen(req, context=_ctx, timeout=timeout) as response:
-            _last_request_time = time.time()  # 更新请求时间
             return response.read().decode("utf-8")
     except urllib.error.HTTPError as e:
         logger.error(f"HTTP error: {e.code} {e.reason}")
