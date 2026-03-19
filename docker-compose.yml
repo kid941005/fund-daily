@@ -1,20 +1,26 @@
 version: '3.8'
 
+# 使用环境变量文件
+# 生产环境：创建 .env 文件并设置强密码
+# 开发环境：可以使用 docker-compose.override.yml 覆盖
+
 services:
   # PostgreSQL 数据库
   postgres:
     image: postgres:15-alpine
     container_name: fund-daily-postgres
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: kid
-      POSTGRES_PASSWORD: 941005
-      POSTGRES_DB: fund_daily
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kid"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -39,14 +45,23 @@ services:
     container_name: fund-daily-app
     ports:
       - "5000:5000"
+    env_file:
+      - .env
     environment:
-      - FUND_DAILY_DB_TYPE=postgres
-      - FUND_DAILY_DB_HOST=postgres
-      - FUND_DAILY_DB_USER=kid
-      - FUND_DAILY_DB_PASSWORD=941005
-      - FUND_DAILY_DB_NAME=fund_daily
-      - REDIS_HOST=redis
-      - FUND_DAILY_CACHE_DURATION=600
+      - FUND_DAILY_DB_TYPE=${FUND_DAILY_DB_TYPE}
+      - FUND_DAILY_DB_HOST=${FUND_DAILY_DB_HOST}
+      - FUND_DAILY_DB_PORT=${FUND_DAILY_DB_PORT}
+      - FUND_DAILY_DB_NAME=${FUND_DAILY_DB_NAME}
+      - FUND_DAILY_DB_USER=${FUND_DAILY_DB_USER}
+      - FUND_DAILY_DB_PASSWORD=${FUND_DAILY_DB_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - FUND_DAILY_CACHE_DURATION=${FUND_DAILY_CACHE_DURATION}
+      - FUND_DAILY_JWT_SECRET=${FUND_DAILY_JWT_SECRET}
+      - FUND_DAILY_JWT_EXPIRE_MINUTES=${FUND_DAILY_JWT_EXPIRE_MINUTES}
+      - FUND_DAILY_JWT_REFRESH_DAYS=${FUND_DAILY_JWT_REFRESH_DAYS}
+      - FUND_DAILY_SECRET_KEY=${FUND_DAILY_SECRET_KEY}
+      - FUND_DAILY_ENV=${FUND_DAILY_ENV}
     depends_on:
       postgres:
         condition: service_healthy

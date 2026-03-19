@@ -1,0 +1,26 @@
+# 开发环境覆盖配置
+# 复制此文件为 docker-compose.override.yml 并修改
+
+version: '3.8'
+
+services:
+  postgres:
+    environment:
+      POSTGRES_USER: kid
+      POSTGRES_PASSWORD: dev_password_123
+      POSTGRES_DB: fund_daily_dev
+
+  app:
+    environment:
+      FUND_DAILY_DB_USER: kid
+      FUND_DAILY_DB_PASSWORD: dev_password_123
+      FUND_DAILY_DB_NAME: fund_daily_dev
+      FUND_DAILY_JWT_SECRET: dev-jwt-secret-change-in-production
+      FUND_DAILY_SECRET_KEY: dev-secret-key-change-in-production
+      FUND_DAILY_ENV: development
+    volumes:
+      - ./:/app
+      - ./logs:/app/logs
+    command: >
+      sh -c "python3 -m py_compile web/api/endpoints/*.py &&
+             FUND_DAILY_DB_HOST=postgres FUND_DAILY_DB_PASSWORD=dev_password_123 python3 web/app.py"

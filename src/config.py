@@ -96,18 +96,49 @@ class RedisConfig:
 
 @dataclass
 class JwtConfig:
-    secret: str = "fund-daily-jwt-secret-change-in-production"
+    secret: str = ""
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
 
     @classmethod
     def from_env(cls) -> "JwtConfig":
+        secret = os.getenv("FUND_DAILY_JWT_SECRET", "")
+        env = os.getenv("FUND_DAILY_ENV", "development")
+        
+        # 生产环境强制要求强密钥
+        if env == "production" and (not secret or secret == "fund-daily-jwt-secret-change-in-production"):
+            raise ValueError(
+                "生产环境必须设置强JWT密钥！请设置 FUND_DAILY_JWT_SECRET 环境变量。"
+                "密钥长度至少32字符，包含大小写字母、数字和特殊字符。"
+            )
+        
+        # 开发环境使用默认值（如果未设置）
+        if not secret:
+            secret = "dev-jwt-secret-change-in-production"
+        
         return cls(
-            secret=os.getenv("FUND_DAILY_JWT_SECRET", "fund-daily-jwt-secret-change-in-production"),
+            secret=secret,
             access_token_expire_minutes=int(os.getenv("FUND_DAILY_JWT_EXPIRE_MINUTES", "60")),
             refresh_token_expire_days=int(os.getenv("FUND_DAILY_JWT_REFRESH_DAYS", "7")),
         )
+    
+    def validate(self, env: str = "development") -> List[str]:
+        """验证JWT配置"""
+        errors = []
+        
+        if not self.secret:
+            errors.append("JWT密钥不能为空")
+        elif len(self.secret) < 32 and env == "production":
+            errors.append(f"生产环境JWT密钥长度至少32字符，当前: {len(self.secret)}")
+        
+        if self.access_token_expire_minutes <= 0:
+            errors.append(f"访问令牌过期时间必须为正数: {self.access_token_expire_minutes}")
+        
+        if self.refresh_token_expire_days <= 0:
+            errors.append(f"刷新令牌过期时间必须为正数: {self.refresh_token_expire_days}")
+        
+        return errors
 
 
 @dataclass
@@ -140,7 +171,11 @@ class SecurityConfig:
             errors.append("生产环境必须设置 FUND_DAILY_SECRET_KEY")
         
         if self.secret_key and len(self.secret_key) < 32:
-            errors.append("密钥长度至少32字符，建议使用 secrets.token_hex(32) 生成")
+            errors.append("Flask密钥长度至少32字符，建议使用 secrets.token_hex(32) 生成")
+        
+        # 验证JWT配置
+        env = "production" if is_production else "development"
+        errors.extend(self.jwt.validate(env))
         
         return errors
 

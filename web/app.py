@@ -97,6 +97,15 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ 速率限制器初始化失败: {e}")
 
+# Initialize security headers
+try:
+    from web.security import get_security_headers
+    security_headers = get_security_headers()
+    security_headers.init_app(app)
+    logger.info("✅ 安全HTTP头中间件已初始化")
+except Exception as e:
+    logger.warning(f"⚠️ 安全HTTP头中间件初始化失败: {e}")
+
 # Config paths
 DATA_DIR = os.path.expanduser("~/.openclaw/workspace/skills/fund-daily/data")
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "config.json")
