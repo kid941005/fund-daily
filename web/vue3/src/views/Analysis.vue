@@ -106,12 +106,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import * as echarts from 'echarts/core'
 import { PieChart, BarChart } from 'echarts/charts'
-import {
-  TooltipComponent,
-  LegendComponent,
-  GridComponent,
-} from 'echarts/components'
-import { LabelLayout } from 'echarts/features'
+import { TooltipComponent, GridComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 
 // 注册必需的组件（tree-shaking）
@@ -119,9 +114,7 @@ echarts.use([
   PieChart,
   BarChart,
   TooltipComponent,
-  LegendComponent,
   GridComponent,
-  LabelLayout,
   CanvasRenderer,
 ])
 

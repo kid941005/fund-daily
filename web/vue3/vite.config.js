@@ -6,13 +6,11 @@ import path from 'path'
 export default defineConfig({
   plugins: [
     vue(),
-    // Gzip 压缩
     viteCompression({
       algorithm: 'gzip',
-      threshold: 1024,        // 仅压缩 >1KB 的文件
+      threshold: 1024,
       ext: '.gz',
     }),
-    // Brotli 压缩
     viteCompression({
       algorithm: 'brotliCompress',
       threshold: 1024,
@@ -36,25 +34,20 @@ export default defineConfig({
   build: {
     outDir: '../../dist',
     emptyOutDir: true,
-    // 生产环境关闭 source map，减小体积
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          // echarts 按需导入后体积已大幅减少，独立 chunk
-          'echarts': ['echarts/core'],
-          // Vue 生态独立
-          'vue-vendor': ['vue', 'vue-router', 'pinia'],
-          // axios 独立
-          'axios': ['axios'],
+        // 按 id 关键字分割 vendor chunk，避免重复打包
+        manualChunks(id) {
+          if (id.includes('node_modules/echarts')) return 'echarts'
+          if (id.includes('node_modules/vue') || id.includes('node_modules/@vue')) return 'vue-vendor'
+          if (id.includes('node_modules/axios')) return 'axios'
         },
-        // 带 hash 的 chunk 文件名，便于长期缓存
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
         assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
       }
     },
-    // 警告阈值不变
-    chunkSizeWarningLimit: 600
+    chunkSizeWarningLimit: 400
   }
 })
