@@ -13,6 +13,7 @@ from typing import List, Dict, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 
+from src.utils.error_handling import handle_errors, handle_network_errors
 from src.fetcher import fetch_fund_data, fetch_fund_detail, fetch_fund_manager, fetch_fund_scale
 from src.fetcher import fetch_fund_data_enhanced, fetch_fund_detail_enhanced
 from src.advice import analyze_fund, generate_advice
@@ -55,6 +56,7 @@ class FundService:
         self.max_workers = 4
     
     @timed_metric(metric_type="external_api", name="get_fund_data")
+    @handle_errors(default_return={"error": "服务暂时不可用"}, log_level="error")
     def get_fund_data(self, fund_code: str, use_cache: bool = True) -> Dict:
         """
         获取基金数据（带错误处理）
@@ -188,6 +190,7 @@ class FundService:
         return results
     
     @timed_metric(metric_type="external_api", name="get_market_data")
+    @handle_errors(default_return={"market_sentiment": "平稳", "market_score": 0, "commodity_sentiment": "平稳", "commodity_score": 0, "hot_sectors": [], "market_news": [], "error": True}, log_level="error")
     def get_market_data(self, use_cache: bool = True) -> Dict:
         """
         获取市场数据（情绪、商品、热点板块等）
@@ -225,6 +228,7 @@ class FundService:
             }
     
     @timed_metric(metric_type="external_api", name="calculate_holdings_advice")
+    @handle_errors(default_return={"funds": [], "advice": {"advice": "服务暂时不可用", "action": "观望", "risk_level": "中等风险"}, "error": True}, log_level="error")
     def calculate_holdings_advice(self, holdings: List[Dict]) -> Dict:
         """
         计算持仓投资建议

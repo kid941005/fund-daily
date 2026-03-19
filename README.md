@@ -6,7 +6,7 @@
 [![Version](https://img.shields.io/badge/version-2.6.0-blue)](https://github.com/kid941005/fund-daily/releases/tag/v2.6.0)
 [![Python](https://img.shields.io/badge/python-3.11+-green)](https://www.python.org/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue)](https://www.docker.com/)
-[![Tests](https://img.shields.io/badge/tests-63+-green)](https://github.com/kid941005/fund-daily)
+[![Tests](https://img.shields.io/badge/tests-216+-green)](https://github.com/kid941005/fund-daily)
 
 ## ✨ 特性
 
@@ -16,8 +16,12 @@
 - 🔍 **增强情绪分析** - 60+ 关键词 + 板块权重 + 综合评分
 - 📝 **OCR 识别** - 智能解析基金截图（支持 2列/3列布局）
 - 🐳 **Docker 支持** - 精简镜像 ~300MB (CPU-only PyTorch)
-- ✅ **完整测试** - 63+ 单元测试用例
+- ✅ **完整测试** - 216+ 单元测试用例
 - 🔄 **CI/CD** - GitHub Actions 自动测试 + Docker 构建
+- 🔐 **JWT 认证** - 安全的 API 认证系统
+- 🛡️ **统一错误处理** - 减少 140+ 处重复错误处理代码
+- 📈 **量化分析** - 动量信号、动态权重、投资组合优化
+- 🗄️ **模块化架构** - 清晰的模块分离，易于维护和扩展
 
 ## 🏗️ 项目架构
 
@@ -25,25 +29,43 @@
 fund-daily/
 ├── src/                        # 核心业务模块
 │   ├── fetcher/               # 数据获取层
-│   │   └── __init__.py       # API 调用 + 缓存 + 限流
+│   │   ├── fund_basic/       # 基础基金数据获取
+│   │   ├── market_data/      # 市场数据获取
+│   │   ├── enhanced_fetcher/ # 增强数据获取
+│   │   └── __init__.py       # 统一导出层
 │   ├── analyzer/              # 分析引擎
 │   │   ├── risk.py           # 风险计算 (numpy)
 │   │   └── sentiment.py      # 市场情绪分析
 │   ├── advice/                # 投资建议
-│   │   └── __init__.py       # 建议生成逻辑
-│   ├── models/                # 数据模型
-│   │   └── __init__.py       # dataclasses
-│   └── ocr.py                 # OCR 解析模块
+│   │   └── generate.py       # 建议生成逻辑
+│   ├── scoring/              # 评分系统
+│   │   ├── calculator.py     # 评分计算器
+│   │   ├── config.py         # 权重配置
+│   │   ├── weights.py        # 动态权重
+│   │   └── models.py         # 数据模型
+│   ├── services/             # 业务服务层
+│   │   ├── fund_service.py   # 基金服务
+│   │   ├── market_service.py # 市场服务
+│   │   ├── score_service.py  # 评分服务
+│   │   └── quant_service.py  # 量化服务
+│   ├── utils/                # 工具模块
+│   │   ├── error_handling.py # 统一错误处理
+│   │   ├── cache_keys.py     # 缓存键生成
+│   │   └── rate_limiter.py   # 限流器
+│   ├── interfaces.py         # 接口定义
+│   ├── analyzer_impl.py      # 分析器实现
+│   └── ocr.py                # OCR 解析模块
 │
 ├── web/                        # Web 层
 │   ├── app.py                 # Flask 主应用
 │   ├── api/                   # HTTP 接口
-│   │   ├── routes.py         # API 端点
-│   │   └── auth.py           # 认证
-│   ├── services/              # 业务逻辑
-│   │   └── fund_service.py
-│   ├── templates/             # 前端模板
-│   │   └── index.html        # 单页应用
+│   │   ├── endpoints/        # API 端点
+│   │   │   ├── auth.py      # 认证端点
+│   │   │   ├── funds.py     # 基金端点
+│   │   │   ├── holdings.py  # 持仓端点
+│   │   │   └── system.py    # 系统端点
+│   │   └── validation.py    # 输入验证
+│   ├── openapi/              # OpenAPI 文档生成
 │   └── static/               # 静态资源
 │
 ├── db/                         # 数据层
@@ -54,15 +76,15 @@ fund-daily/
 │   ├── database_pg.py       # PostgreSQL 操作（向后兼容）
 │   └── dingtalk.py          # 钉钉推送
 │
-├── tests/                      # 单元测试 (63+)
-│   ├── test_fetcher.py
-│   ├── test_analyzer.py
-│   ├── test_advice.py
-│   ├── test_ocr.py
-│   └── test_services.py
-│
-├── scripts/                    # CLI 工具
-│   └── fund-daily-cli.py
+├── tests/                      # 单元测试 (216+)
+│   ├── test_fetcher.py      # 数据获取测试
+│   ├── test_analyzer.py     # 分析器测试
+│   ├── test_advice.py       # 建议生成测试
+│   ├── test_services.py     # 服务层测试
+│   ├── test_scoring.py      # 评分系统测试
+│   ├── test_quant_service.py # 量化服务测试
+│   ├── test_jwt_auth.py     # JWT 认证测试
+│   └── test_db_layer.py     # 数据库层测试
 │
 ├── config/                     # 配置文件
 ├── docker-compose.yml          # Docker Compose
@@ -123,14 +145,24 @@ docker run -d -p 5000:5000 fund-daily
 | 接口 | 方法 | 说明 |
 |------|------|------|
 | `/api/funds` | GET | 获取基金列表 |
+| `/api/funds/{code}` | GET | 获取单个基金详情 |
+| `/api/funds/{code}/score` | GET | 获取基金评分 |
 | `/api/holdings` | GET/POST/DELETE | 持仓管理 |
 | `/api/holdings/clear-all` | POST | 一键清仓 |
 | `/api/portfolio-analysis` | GET | 组合分析 |
 | `/api/import-screenshot` | POST | OCR 截图导入 |
 | `/api/news` | GET | 市场热点新闻 |
 | `/api/sectors` | GET | 热门板块 |
-| `/api/login` | POST | 用户登录 |
-| `/api/logout` | POST | 用户退出 |
+| `/api/auth/register` | POST | 用户注册 |
+| `/api/auth/login` | POST | 用户登录 |
+| `/api/auth/logout` | POST | 用户退出 |
+| `/api/auth/refresh` | POST | 刷新 Token |
+| `/api/analysis/market-sentiment` | GET | 市场情绪分析 |
+| `/api/analysis/commodity-sentiment` | GET | 商品情绪分析 |
+| `/api/quant/timing-signals` | GET | 择时信号分析 |
+| `/api/quant/dynamic-weights` | GET | 动态权重计算 |
+| `/api/system/health` | GET | 系统健康检查 |
+| `/api/system/version` | GET | 系统版本信息 |
 
 ## 🧪 测试
 
@@ -147,12 +179,17 @@ pytest tests/ --cov=src --cov-report=html
 
 ## 🛠️ 技术栈
 
-- **后端**: Flask + PostgreSQL
-- **数据分析**: NumPy
+- **后端**: Flask + PostgreSQL + Redis
+- **数据分析**: NumPy + Pandas
+- **认证**: JWT (JSON Web Tokens)
+- **缓存**: Redis + 内存缓存
 - **OCR**: EasyOCR (可选)
-- **测试**: pytest + pytest-cov
+- **测试**: pytest + pytest-cov (216+ 测试用例)
 - **CI/CD**: GitHub Actions
-- **容器化**: Docker
+- **容器化**: Docker + Docker Compose
+- **API 文档**: OpenAPI 3.0
+- **错误处理**: 统一错误处理工具
+- **架构模式**: 依赖注入 + 接口隔离
 
 ## 📄 许可证
 

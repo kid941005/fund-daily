@@ -7,6 +7,8 @@ import logging
 from typing import Dict, Optional, Any, List
 from datetime import datetime
 
+from src.utils.error_handling import handle_errors
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,6 +22,7 @@ class ScoreService:
         from src.interfaces import create_score_service
         self._impl = create_score_service()
     
+    @handle_errors(default_return={"total_score": 0, "grade": "N/A", "error": True}, log_level="error")
     def calculate_score(self, fund_code: str, use_cache: bool = True) -> Dict[str, Any]:
         """计算基金评分（兼容旧接口）"""
         try:
