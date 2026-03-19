@@ -96,9 +96,18 @@ def redis_clear() -> bool:
         return False
 
 
-# 兼容原有接口
+# 注意：以下函数已废弃，请使用 CacheManager
+# 保留这些函数仅用于向后兼容
+
+import warnings
+
 def get_cache(key: str) -> Optional[Any]:
-    """获取缓存（先查 Redis，再查内存）"""
+    """【已废弃】获取缓存（请使用 CacheManager.get()）"""
+    warnings.warn(
+        "get_cache() is deprecated, use CacheManager.get() instead",
+        DeprecationWarning,
+        stacklevel=2
+    )
     # 优先从 Redis 获取
     value = redis_get(key)
     if value is not None:
@@ -107,10 +116,20 @@ def get_cache(key: str) -> Optional[Any]:
 
 
 def set_cache(key: str, value: Any) -> None:
-    """设置缓存（同时写入 Redis 和内存）"""
+    """【已废弃】设置缓存（请使用 CacheManager.set()）"""
+    warnings.warn(
+        "set_cache() is deprecated, use CacheManager.set() instead",
+        DeprecationWarning,
+        stacklevel=2
+    )
     redis_set(key, value)
 
 
 def clear_cache() -> None:
-    """清空缓存"""
+    """【已废弃】清空缓存（请使用 CacheManager.clear()）"""
+    warnings.warn(
+        "clear_cache() is deprecated, use CacheManager.clear() instead",
+        DeprecationWarning,
+        stacklevel=2
+    )
     redis_clear()

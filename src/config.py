@@ -349,17 +349,24 @@ class ConfigManager:
         }
 
 
-# 全局单例实例
+# 全局单例实例（线程安全）
+import threading
 _config_instance = None
+_config_lock = threading.Lock()
 
 def get_config() -> ConfigManager:
-    """获取配置管理器实例（单例模式）"""
+    """获取配置管理器实例（线程安全的单例模式）"""
     global _config_instance
+    
+    # 双重检查锁定模式
     if _config_instance is None:
-        _config_instance = ConfigManager()
-        logger.info("配置管理器初始化完成")
-        logger.info(f"环境: {_config_instance.app.env}")
-        logger.info(f"数据库类型: {_config_instance.database.type}")
+        with _config_lock:
+            if _config_instance is None:
+                _config_instance = ConfigManager()
+                logger.info("配置管理器初始化完成")
+                logger.info(f"环境: {_config_instance.app.env}")
+                logger.info(f"数据库类型: {_config_instance.database.type}")
+    
     return _config_instance
 
 

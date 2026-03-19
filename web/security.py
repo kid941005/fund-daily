@@ -51,8 +51,12 @@ class SecurityHeaders:
         
         # 根据环境配置不同的安全策略
         env = 'development'  # 默认值
-        if self.app and hasattr(self.app, 'config'):
-            env = self.app.config.get('ENV', 'development')
+        try:
+            if self.app and hasattr(self.app, 'config'):
+                env = self.app.config.get('ENV', 'development')
+        except AttributeError:
+            # 如果 self.app 或 self.app.config 为 None，使用默认值
+            pass
         
         if env == 'production':
             # 生产环境：严格策略
@@ -101,31 +105,41 @@ class SecurityHeaders:
     @staticmethod
     def validate_origin(origin):
         """验证请求来源（CORS）"""
-        # 允许的域名列表
-        allowed_origins = [
-            'http://localhost:5000',
-            'http://localhost:5173',
-            'https://fund-daily.example.com'  # 生产域名
-        ]
-        
-        # 开发环境允许所有来源
-        import os
-        env = os.getenv('FUND_DAILY_ENV', 'development')
-        if env == 'development':
-            return True
-        
-        # 生产环境严格检查
-        if origin in allowed_origins:
-            return True
-        
-        # 检查子域名
-        for allowed in allowed_origins:
-            if allowed.startswith('https://') and origin.startswith('https://'):
-                # 简单子域名匹配
-                if origin.endswith(allowed[8:]):  # 移除 'https://'
-                    return True
-        
-        return False
+        if not origin:
+            return False
+            
+        # 从配置获取允许的域名列表
+        try:
+            from src.config import get_config
+            config = get_config()
+            env = config.app.env
+            
+            # 开发环境允许所有来源
+            if env == 'development':
+                return True
+                
+            # 生产环境：这里应该从配置中读取允许的域名
+            # 暂时使用默认列表
+            allowed_origins = [
+                'http://localhost:5000',
+                'http://localhost:5173',
+                'https://fund-daily.example.com'  # 生产域名
+            ]
+            
+            if origin in allowed_origins:
+                return True
+            
+            # 检查子域名
+            for allowed in allowed_origins:
+                if allowed.startswith('https://') and origin.startswith('https://'):
+                    # 简单子域名匹配
+                    if origin.endswith(allowed[8:]):  # 移除 'https://'
+                        return True
+            
+            return False
+        except Exception:
+            # 如果配置系统不可用，使用保守策略
+            return False
 
 
 # 单例实例

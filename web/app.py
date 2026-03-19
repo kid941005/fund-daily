@@ -97,6 +97,16 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ 速率限制器初始化失败: {e}")
 
+# Initialize unified error handler
+try:
+    from web.middleware.error_handler import init_error_handler
+    init_error_handler(app)
+    logger.info("✅ 统一错误处理器已初始化")
+except Exception as e:
+    logger.error(f"❌ 错误处理器初始化失败: {e}")
+    import traceback
+    traceback.print_exc()
+
 # Initialize security headers
 try:
     from web.security import get_security_headers
