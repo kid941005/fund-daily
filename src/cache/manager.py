@@ -99,13 +99,17 @@ class CacheManager:
         1. 写入内存缓存
         2. 写入Redis缓存
         3. 应用缓存雪崩防护（随机过期时间）
+        
+        返回：如果至少一层缓存设置成功则返回True
         """
-        success = True
+        memory_success = False
+        redis_success = False
         
         # 1. 内存缓存
         if self._has_memory_cache:
             try:
                 self._memory_cache.set(key, value, ttl)
+                memory_success = True
             except Exception as e:
                 logger.debug(f"内存缓存设置失败: {e}")
         
@@ -121,39 +125,44 @@ class CacheManager:
                     ttl = protected_ttl
                 
                 self._redis_set(key, value, ttl)
+                redis_success = True
             except Exception as e:
-                success = False
                 self._stats['errors'] += 1
                 logger.debug(f"Redis缓存设置失败: {e}")
         
-        logger.debug(f"缓存设置: {key}")
-        return success
+        logger.debug(f"缓存设置: {key} (内存: {memory_success}, Redis: {redis_success})")
+        return memory_success or redis_success
     
     def delete(self, key: str) -> bool:
         """删除缓存值"""
-        success = True
+        memory_success = False
+        redis_success = False
         
         if self._has_memory_cache:
             try:
                 self._memory_cache.delete(key)
+                memory_success = True
             except Exception:
                 pass
         
         if self._has_redis:
             try:
                 self._redis_delete(key)
+                redis_success = True
             except Exception:
-                success = False
+                pass
         
-        return success
+        return memory_success or redis_success
     
     def clear(self) -> bool:
         """清空所有缓存"""
-        success = True
+        memory_success = False
+        redis_success = False
         
         if self._has_memory_cache:
             try:
                 self._memory_cache.clear()
+                memory_success = True
             except Exception:
                 pass
         
@@ -161,10 +170,11 @@ class CacheManager:
             try:
                 from .redis_cache import redis_clear
                 redis_clear()
+                redis_success = True
             except Exception:
-                success = False
+                pass
         
-        return success
+        return memory_success or redis_success
     
     def get_with_penetration_protection(
         self,

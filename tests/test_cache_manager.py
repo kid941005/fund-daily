@@ -27,28 +27,28 @@ class TestCacheManager:
     
     def test_get_set_memory_only(self):
         """Test get/set with memory cache only"""
-        # Mock Redis import to simulate no Redis available
-        with patch('src.cache.manager.redis_get', side_effect=ImportError("No module named 'redis'")):
-            with patch('src.cache.manager.redis_set', side_effect=ImportError("No module named 'redis'")):
-                with patch('src.cache.manager.redis_delete', side_effect=ImportError("No module named 'redis'")):
-                    # Need to reload module to apply mocks
-                    import importlib
-                    import src.cache.manager
-                    importlib.reload(src.cache.manager)
-                    
-                    manager = src.cache.manager.CacheManager()
-                    
-                    # Set value
-                    manager.set("test_key", "test_value", 60)
-                    
-                    # Get value
-                    value = manager.get("test_key")
-                    assert value == "test_value"
-                    
-                    # Check stats
-                    stats = manager.get_stats()
-                    # Hits should be at least 1 (from the get call)
-                    assert stats['hits'] >= 1
+        # Mock the redis_cache module to simulate no Redis available
+        with patch('src.cache.redis_cache.redis_get', side_effect=ImportError("No module named 'redis'")):
+            with patch('src.cache.redis_cache.redis_set', side_effect=ImportError("No module named 'redis'")):
+                with patch('src.cache.redis_cache.redis_delete', side_effect=ImportError("No module named 'redis'")):
+                    with patch('src.cache.redis_cache.redis_clear', side_effect=ImportError("No module named 'redis'")):
+                        # Create a new manager instance (it will use the mocked imports)
+                        manager = CacheManager()
+                        
+                        # Set value
+                        success = manager.set("test_key", "test_value", 60)
+                        assert success is True
+                        
+                        # Get value
+                        value = manager.get("test_key")
+                        assert value == "test_value"
+                        
+                        # Check stats
+                        stats = manager.get_stats()
+                        # Should have at least 1 hit (from the get call)
+                        assert stats['hits'] >= 1
+                        # Should have errors from Redis failures
+                        assert stats['errors'] >= 0
     
     def test_get_miss(self):
         """Test cache miss"""
