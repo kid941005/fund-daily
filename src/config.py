@@ -174,14 +174,14 @@ class SecurityConfig:
 class CacheConfig:
     """缓存配置"""
     duration: int = 600  # 默认10分钟
-    request_interval: float = 0.5  # 请求间隔秒数
+    request_interval: float = 0.1  # 请求间隔秒数（0.1s = 10req/s）
     
     @classmethod
     def from_env(cls) -> "CacheConfig":
         """从环境变量创建配置"""
         return cls(
             duration=int(os.getenv("FUND_DAILY_CACHE_DURATION", "600")),
-            request_interval=float(os.getenv("FUND_DAILY_REQUEST_INTERVAL", "0.5")),
+            request_interval=float(os.getenv("FUND_DAILY_REQUEST_INTERVAL", "0.05")),
         )
     
     def validate(self) -> List[str]:

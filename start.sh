@@ -1,4 +1,12 @@
 #!/bin/bash
+# Fund Daily 启动脚本
+
 cd /home/kid/fund-daily
-export FUND_DAILY_DB_PATH=/home/kid/fund-daily/data/fund-daily.db
-exec python3 -m flask run --host=0.0.0.0 --port=5000
+
+# 设置数据库环境变量
+export FUND_DAILY_DB_HOST=localhost
+export FUND_DAILY_DB_PASSWORD=941005
+export FUND_DAILY_SERVER_PORT=5007
+
+# 启动服务
+exec python3 web/app.py

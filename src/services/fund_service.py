@@ -256,17 +256,24 @@ class FundService:
                     "message": "暂无有效持仓"
                 }
             
-            # 获取基金数据
-            funds_data = []
-            for code in fund_codes:
+            # 并行获取基金数据（避免串行调用外部API被速率限制）
+            def _fetch_one_fund(code):
                 try:
                     fund_data = self.get_fund_data(code, use_cache=True)
-                    # 获取持仓信息
                     holding = next((h for h in holdings if h["code"] == code), {})
                     fund_data["amount"] = holding.get("amount", 0)
-                    funds_data.append(fund_data)
+                    return fund_data
                 except Exception as e:
                     logger.warning(f"Failed to get data for fund {code}: {e}")
+                    return None
+
+            with ThreadPoolExecutor(max_workers=min(len(fund_codes), self.max_workers)) as executor:
+                futures = {executor.submit(_fetch_one_fund, code): code for code in fund_codes}
+                funds_data = []
+                for future in as_completed(futures):
+                    result = future.result()
+                    if result:
+                        funds_data.append(result)
             
             if not funds_data:
                 return {
