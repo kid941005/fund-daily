@@ -58,16 +58,29 @@ def test_timing_signals_returns_structure(quant_service):
     assert isinstance(result, dict)
 
 
-def test_portfolio_analysis_requires_holdings(quant_service):
+def test_portfolio_analysis_requires_holdings(quant_service, monkeypatch):
+    # Patch both user and global holdings to be empty
+    monkeypatch.setattr(
+        "src.services.quant_service.QuantService._fetch_user_holdings",
+        lambda self, user_id: [],
+    )
+    monkeypatch.setattr(
+        "src.services.quant_service.QuantService._fetch_all_holdings",
+        lambda self: [],
+    )
     with pytest.raises(QuantServiceError):
         quant_service.portfolio_analysis(None)
 
 
 def test_rebalancing_no_amount(monkeypatch, quant_service):
-    # Patch _fetch_user_holdings to return empty so _fetch_all_holdings gets called
+    # Patch both user and global holdings to be empty
     monkeypatch.setattr(
         "src.services.quant_service.QuantService._fetch_user_holdings",
         lambda self, user_id: [],
+    )
+    monkeypatch.setattr(
+        "src.services.quant_service.QuantService._fetch_all_holdings",
+        lambda self: [],
     )
     with pytest.raises(QuantServiceError):
         quant_service.rebalancing(None)
@@ -78,7 +91,7 @@ class _DummyCursor:
         pass
 
     def fetchall(self):
-        return [("000003", "基金C", 10.0)]
+        return [{"code": "000003", "name": "基金C", "amount": 10.0}]
 
     def __enter__(self):
         return self
