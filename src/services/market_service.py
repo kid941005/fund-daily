@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 from src.analyzer import get_market_sentiment, get_commodity_sentiment
 from src.fetcher import fetch_hot_sectors, fetch_market_news
 from src.services.metrics_service import get_metrics_service, timed_metric
-from src.cache.redis_cache import redis_get, redis_set, get_redis_client
+from src.cache.manager import get_cache_manager
 from src.error import (
     MarketServiceError, ErrorCode,
     market_data_fetch_failed, cache_operation_failed
@@ -37,6 +37,7 @@ class MarketService:
         """
         self.cache_enabled = cache_enabled
         self.metrics_service = get_metrics_service()
+        self.cache_manager = get_cache_manager()
         
         # 缓存配置 - 使用统一的常量配置
         from src.constants import CACHE_PREFIXES, CACHE_TTL
@@ -68,7 +69,7 @@ class MarketService:
             cache_key = f"{self.cache_prefix}sentiment"
             
             if use_cache and self.cache_enabled:
-                cached = redis_get(cache_key)
+                cached = self.cache_manager.get(cache_key)
                 if cached:
                     # 记录缓存命中
                     self.metrics_service.record_cache_hit("market_sentiment", hit=True)
@@ -83,7 +84,7 @@ class MarketService:
             
             if use_cache and self.cache_enabled:
                 try:
-                    redis_set(cache_key, sentiment_data, ttl=self.market_data_ttl)
+                    self.cache_manager.set(cache_key, sentiment_data, ttl=self.market_data_ttl)
                 except Exception as e:
                     logger.warning(f"Failed to cache market sentiment: {e}")
             
@@ -109,7 +110,7 @@ class MarketService:
             cache_key = f"{self.cache_prefix}commodity"
             
             if use_cache and self.cache_enabled:
-                cached = redis_get(cache_key)
+                cached = self.cache_manager.get(cache_key)
                 if cached:
                     return cached
             
@@ -119,7 +120,7 @@ class MarketService:
             
             if use_cache and self.cache_enabled:
                 try:
-                    redis_set(cache_key, commodity_data, ttl=self.market_data_ttl)
+                    self.cache_manager.set(cache_key, commodity_data, ttl=self.market_data_ttl)
                 except Exception as e:
                     logger.warning(f"Failed to cache commodity sentiment: {e}")
             
@@ -146,7 +147,7 @@ class MarketService:
             cache_key = f"{self.sectors_key}:{limit}"
             
             if use_cache and self.cache_enabled:
-                cached = redis_get(cache_key)
+                cached = self.cache_manager.get(cache_key)
                 if cached:
                     return cached
             
@@ -156,7 +157,7 @@ class MarketService:
             
             if use_cache and self.cache_enabled:
                 try:
-                    redis_set(cache_key, sectors, ttl=self.sectors_ttl)
+                    self.cache_manager.set(cache_key, sectors, ttl=self.sectors_ttl)
                 except Exception as e:
                     logger.warning(f"Failed to cache hot sectors: {e}")
             
@@ -182,7 +183,7 @@ class MarketService:
             cache_key = f"{self.news_key}:{limit}"
             
             if use_cache and self.cache_enabled:
-                cached = redis_get(cache_key)
+                cached = self.cache_manager.get(cache_key)
                 if cached:
                     return cached
             
@@ -192,7 +193,7 @@ class MarketService:
             
             if use_cache and self.cache_enabled:
                 try:
-                    redis_set(cache_key, news, ttl=self.news_ttl)
+                    self.cache_manager.set(cache_key, news, ttl=self.news_ttl)
                 except Exception as e:
                     logger.warning(f"Failed to cache market news: {e}")
             
@@ -215,7 +216,7 @@ class MarketService:
         """
         try:
             if use_cache and self.cache_enabled:
-                cached = redis_get(self.market_data_key)
+                cached = self.cache_manager.get(self.market_data_key)
                 if cached:
                     logger.debug("Using cached full market data")
                     return cached
@@ -246,7 +247,7 @@ class MarketService:
             # 设置缓存
             if use_cache and self.cache_enabled:
                 try:
-                    redis_set(self.market_data_key, market_data, ttl=self.market_data_ttl)
+                    self.cache_manager.set(self.market_data_key, market_data, ttl=self.market_data_ttl)
                 except Exception as e:
                     logger.warning(f"Failed to cache full market data: {e}")
             

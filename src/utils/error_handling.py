@@ -192,10 +192,16 @@ handle_file_errors = handle_errors(
     exception_types=(IOError, FileNotFoundError, PermissionError)
 )
 
+# 数据库错误处理器 - 使用更精确的异常类型
+try:
+    from psycopg2 import Error as DBError
+except ImportError:
+    DBError = Exception  # SQLite 或其他驱动时回退
+
 handle_db_errors = handle_errors(
     default_return=None,
     log_level="error",
-    exception_types=(Exception,),  # 数据库异常类型可能因驱动而异
+    exception_types=(DBError, IOError, OSError, AttributeError),
     raise_exception=False
 )
 
@@ -230,3 +236,5 @@ if __name__ == "__main__":
     print(f"   安全除法: 10 / 0 = {result}")
     
     print(f"\n✅ 错误处理工具测试完成")
+# Patched: handle_db_errors should only catch DB-related exceptions
+# This is done at the module level by importing and reassigning

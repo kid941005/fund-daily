@@ -62,8 +62,22 @@ class EnhancedFetcher:
             try:
                 db_data = self._get_fund_data_from_db(fund_code)
                 if db_data:
-                    logger.info(f"从数据库获取基金数据: {fund_code}")
-                    return db_data
+                    # 检查数据来源日期是否过期
+                    data_date_str = db_data.get('jzrq') or db_data.get('nav_date')
+                    if data_date_str:
+                        from datetime import date, datetime
+                        if isinstance(data_date_str, str):
+                            try:
+                                data_date = datetime.strptime(data_date_str, '%Y-%m-%d').date()
+                                days_old = (date.today() - data_date).days
+                                if days_old * 24 > self.db_fallback_hours:
+                                    logger.info(f"数据库数据过期 ({days_old}天): {fund_code}，回退到API")
+                                    db_data = None  # 标记为过期，重新获取
+                            except ValueError:
+                                pass  # 日期格式无法解析，使用数据库数据
+                    if db_data:
+                        logger.info(f"从数据库获取基金数据: {fund_code}")
+                        return db_data
             except Exception as e:
                 logger.warning(f"从数据库获取基金数据失败，回退到API: {fund_code}, {e}")
         

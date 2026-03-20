@@ -36,7 +36,8 @@ class ErrorHandler:
         
         # 注册自定义异常处理器
         app.register_error_handler(ServiceError, self.handle_service_error)
-        app.register_error_handler(Exception, self.handle_generic_error)
+        # 注意：不要注册 catch-all Exception handler，会导致 HTTPException 被意外拦截
+        # 只保留特定状态码的处理器
         
         # 添加请求上下文销毁时的清理
         app.teardown_request(self.teardown_request)
@@ -66,7 +67,7 @@ class ErrorHandler:
         logger.warning(f"Bad request: {error.description}", extra=self._get_request_context())
         
         response = create_error_response(
-            error_code=ErrorCode.INVALID_INPUT,
+            code=ErrorCode.INVALID_INPUT,
             message=error.description or "请求参数无效",
             http_status=400,
             details={"validation_errors": getattr(error, 'validation_errors', [])}
@@ -79,7 +80,7 @@ class ErrorHandler:
         logger.warning(f"Unauthorized: {error.description}", extra=self._get_request_context())
         
         response = create_error_response(
-            error_code=ErrorCode.OPERATION_NOT_ALLOWED,
+            code=ErrorCode.OPERATION_NOT_ALLOWED,
             message=error.description or "未授权访问",
             http_status=401,
             details={"auth_required": True}
@@ -92,7 +93,7 @@ class ErrorHandler:
         logger.warning(f"Forbidden: {error.description}", extra=self._get_request_context())
         
         response = create_error_response(
-            error_code=ErrorCode.OPERATION_NOT_ALLOWED,
+            code=ErrorCode.OPERATION_NOT_ALLOWED,
             message=error.description or "禁止访问",
             http_status=403,
             details={"permission_denied": True}
@@ -105,7 +106,7 @@ class ErrorHandler:
         logger.info(f"Not found: {request.path}", extra=self._get_request_context())
         
         response = create_error_response(
-            error_code=ErrorCode.RESOURCE_NOT_AVAILABLE,
+            code=ErrorCode.RESOURCE_NOT_AVAILABLE,
             message="请求的资源不存在",
             http_status=404,
             details={"path": request.path}
@@ -119,7 +120,7 @@ class ErrorHandler:
                       extra=self._get_request_context())
         
         response = create_error_response(
-            error_code=ErrorCode.OPERATION_NOT_ALLOWED,
+            code=ErrorCode.OPERATION_NOT_ALLOWED,
             message=f"不支持 {request.method} 方法",
             http_status=405,
             details={
@@ -135,7 +136,7 @@ class ErrorHandler:
         logger.warning(f"Rate limit exceeded: {request.path}", extra=self._get_request_context())
         
         response = create_error_response(
-            error_code=ErrorCode.RATE_LIMIT_EXCEEDED,
+            code=ErrorCode.RATE_LIMIT_EXCEEDED,
             message="请求过于频繁，请稍后再试",
             http_status=429,
             details={
@@ -179,10 +180,10 @@ class ErrorHandler:
             }
         
         response = create_error_response(
-            error_code=ErrorCode.INTERNAL_ERROR,
+            code=ErrorCode.INTERNAL_ERROR,
             message=message,
+            details=details,
             http_status=500,
-            details=details
         )
         
         return jsonify(response), 500

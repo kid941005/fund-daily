@@ -48,12 +48,18 @@ class FundService:
         
         # 缓存配置 - 使用统一的常量配置
         from src.constants import CACHE_PREFIXES, CACHE_TTL
+        from src.utils.cache_keys import CacheKeyGenerator
         self.cache_prefix = CACHE_PREFIXES.get("fund", "fund_daily:v2:")
+        self._cache_key_gen = CacheKeyGenerator()
         self.market_cache_key = f"{self.cache_prefix}market_data"
         self.market_cache_ttl = CACHE_TTL.get("market_data", 300)  # 5分钟
         
         # 并行工作线程数
         self.max_workers = 4
+    
+    def _fund_cache_key(self, fund_code: str) -> str:
+        """生成基金数据缓存键（统一使用 CacheKeyGenerator）"""
+        return self._cache_key_gen.fund_data(fund_code)
     
     @timed_metric(metric_type="external_api", name="get_fund_data")
     @handle_errors(default_return={"error": "服务暂时不可用"}, log_level="error")
@@ -72,9 +78,9 @@ class FundService:
             FundServiceError: 基金数据获取失败
         """
         try:
-            # 尝试从缓存获取
+            # 尝试从缓存获取（使用统一的缓存键）
             if use_cache and self.cache_enabled:
-                cache_key = f"{self.cache_prefix}fund:{fund_code}"
+                cache_key = self._fund_cache_key(fund_code)
                 cached = self.cache_manager.get(cache_key)
                 if cached:
                     logger.debug(f"Using cached data for {fund_code}")

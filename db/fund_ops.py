@@ -143,7 +143,7 @@ def get_recent_funds(days=7):
                 FROM funds f
                 LEFT JOIN latest_nav ln ON f.fund_code = ln.fund_code AND ln.rn = 1
                 LEFT JOIN latest_score ls ON f.fund_code = ls.fund_code AND ls.rn = 1
-                WHERE f.updated_at >= CURRENT_DATE - INTERVAL '%s days'
+                WHERE f.updated_at >= CURRENT_DATE - INTERVAL '1 day' * %s
                 ORDER BY f.updated_at DESC
             """, (days,))
             return [dict(row) for row in cursor.fetchall()]
@@ -175,9 +175,9 @@ def get_fund_history(fund_code, days=30):
                     fs.valuation_score, fs.sector_score, fs.risk_score
                 FROM funds f
                 LEFT JOIN fund_nav fn ON f.fund_code = fn.fund_code
-                    AND fn.nav_date >= CURRENT_DATE - INTERVAL '%s days'
+                    AND fn.nav_date >= CURRENT_DATE - INTERVAL '1 day' * %s
                 LEFT JOIN fund_scores fs ON f.fund_code = fs.fund_code
-                    AND fs.score_date >= CURRENT_DATE - INTERVAL '%s days'
+                    AND fs.score_date >= CURRENT_DATE - INTERVAL '1 day' * %s
                 WHERE f.fund_code = %s
                 ORDER BY fn.nav_date DESC, fs.score_date DESC
             """, (days, days, fund_code))

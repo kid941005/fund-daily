@@ -386,39 +386,29 @@ def serve_vue(path):
 @app.route("/health")
 def health_check():
     """基础健康检查端点（保持向后兼容）"""
-    import psycopg2
-    import redis
-    
-    # 使用配置管理器
+    from db import database_pg as db
     from src.config import get_config
     config = get_config()
     
-    # Check PostgreSQL
+    # Check PostgreSQL using connection pool (避免连接泄漏)
     pg_status = "ok"
     try:
-        conn = psycopg2.connect(
-            host=config.database.host,
-            port=config.database.port,
-            database=config.database.name,
-            user=config.database.user,
-            password=config.database.password,
-        )
-        conn.close()
+        with db.get_db() as conn:
+            with db.get_cursor(conn) as cursor:
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
     except Exception as e:
         pg_status = str(e)
     
     # Check Redis
     redis_status = "ok"
     try:
-        r = redis.Redis(
-            host=config.redis.host,
-            port=config.redis.port,
-            db=config.redis.db,
-            password=config.redis.password,
-            socket_connect_timeout=3,
-            socket_timeout=3,
-        )
-        r.ping()
+        from src.cache.redis_cache import get_redis_client
+        client = get_redis_client()
+        if client:
+            client.ping()
+        else:
+            redis_status = "client not initialized"
     except Exception as e:
         redis_status = str(e)
     
@@ -429,7 +419,7 @@ def health_check():
         "redis": redis_status,
         "config": {
             "env": config.app.env,
-            "database_type": "postgres",  # 固定为PostgreSQL
+            "database_type": "postgres",
             "cache_enabled": config.cache.duration > 0,
         }
     }
