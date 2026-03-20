@@ -104,8 +104,6 @@ def init_db():
                     fund_company VARCHAR(100),
                     establish_date DATE,
                     fund_size DECIMAL(15,2),
-
-from src.config import get_config
                     manager VARCHAR(100),
                     risk_level VARCHAR(20),
                     rating DECIMAL(3,1),

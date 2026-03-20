@@ -30,7 +30,7 @@ def get_redis_client():
             )
             # 测试连接
             _redis_client.ping()
-            logger.info(f"✅ Redis 连接成功: {REDIS_HOST}:{REDIS_PORT}")
+            logger.info(f"✅ Redis 连接成功: {config.host}:{config.port}")
         except ImportError:
             logger.warning("⚠️ redis-py 未安装，使用内存缓存")
             _redis_client = None
