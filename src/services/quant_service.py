@@ -44,9 +44,9 @@ class QuantService:
                     cursor.execute("SELECT code, name, amount FROM holdings WHERE amount > 0")
                     for row in cursor.fetchall():
                         holdings.append({
-                            "code": row[0],
-                            "name": row[1] or f"基金{row[0]}",
-                            "amount": float(row[2]),
+                            "code": row["code"],
+                            "name": row["name"] or f"基金{row['code']}",
+                            "amount": float(row["amount"]),
                         })
         except Exception as exc:
             logger.exception("Failed to fetch all holdings")
