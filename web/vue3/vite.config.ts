@@ -38,7 +38,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // 按 id 关键字分割 vendor chunk，避免重复打包
-        manualChunks(id) {
+        manualChunks(id: string) {
           if (id.includes('node_modules/echarts')) return 'echarts'
           if (id.includes('node_modules/vue') || id.includes('node_modules/@vue')) return 'vue-vendor'
           if (id.includes('node_modules/axios')) return 'axios'

@@ -102,7 +102,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
 import * as echarts from 'echarts/core'
 import { PieChart, BarChart } from 'echarts/charts'

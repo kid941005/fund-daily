@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia'
 import api from '@/api'
+import { CACHE_CONFIG } from '@/constants'
+import type { Fund, Holding, Advice, Sector, NewsItem, User } from '@/types/api'
 
-import { CACHE_CONFIG, API_CONFIG } from '@/constants'
-
-function getCachedFunds() {
+function getCachedFunds(): Fund[] | null {
   try {
     const cached = localStorage.getItem(CACHE_CONFIG.FUNDS_KEY)
     if (cached) {
@@ -18,7 +18,7 @@ function getCachedFunds() {
   return null
 }
 
-function setCachedFunds(data) {
+function setCachedFunds(data: Fund[]): void {
   try {
     localStorage.setItem(CACHE_CONFIG.FUNDS_KEY, JSON.stringify({
       data,
@@ -29,16 +29,27 @@ function setCachedFunds(data) {
   }
 }
 
+interface LoadingState {
+  funds: boolean
+  holdings: boolean
+  advice: boolean
+  sectors: boolean
+  news: boolean
+  timing: boolean
+  optimize: boolean
+  rebalancing: boolean
+}
+
 export const useFundStore = defineStore('fund', {
   state: () => ({
-    funds: [],
-    holdings: [],
-    advice: null,
-    sectors: [],
-    news: [],
-    timingSignals: {},
-    portfolioOptimize: {},
-    rebalancing: {},
+    funds: [] as Fund[],
+    holdings: [] as Holding[],
+    advice: null as Advice | null,
+    sectors: [] as Sector[],
+    news: [] as NewsItem[],
+    timingSignals: {} as Record<string, unknown>,
+    portfolioOptimize: {} as Record<string, unknown>,
+    rebalancing: {} as Record<string, unknown>,
     loading: {
       funds: false,
       holdings: false,
@@ -48,23 +59,22 @@ export const useFundStore = defineStore('fund', {
       timing: false,
       optimize: false,
       rebalancing: false
-    },
-    error: null,
-    user: null
+    } as LoadingState,
+    error: null as string | null,
+    user: null as User | null
   }),
-  
+
   getters: {
-    totalAmount: (state) => {
-      return state.holdings.reduce((sum, h) => sum + (h.amount || 0), 0)
+    totalAmount(): number {
+      return this.holdings.reduce((sum, h) => sum + (h.amount || 0), 0)
     },
-    hasHoldings: (state) => {
-      return state.holdings.length > 0 && state.holdings.some(h => h.amount > 0)
+    hasHoldings(): boolean {
+      return this.holdings.length > 0 && this.holdings.some(h => (h.amount || 0) > 0)
     }
   },
-  
+
   actions: {
-    async fetchFunds(force = false) {
-      // 强制刷新时清除本地缓存
+    async fetchFunds(force = false): Promise<void> {
       if (force) {
         try {
           localStorage.removeItem(CACHE_CONFIG.FUNDS_KEY)
@@ -72,8 +82,7 @@ export const useFundStore = defineStore('fund', {
           console.error('Cache clear error:', e)
         }
       }
-      
-      // 优先从本地缓存读取（非强制刷新时）
+
       if (!force) {
         const cached = getCachedFunds()
         if (cached) {
@@ -81,43 +90,37 @@ export const useFundStore = defineStore('fund', {
           return
         }
       }
-      
-      // 缓存过期或强制刷新，从API获取
+
       this.loading.funds = true
       try {
-        // 传递 force 参数给后端 API
         const data = await api.getFunds(force)
         this.funds = data.funds || []
         setCachedFunds(this.funds)
       } catch (e) {
-        // 使用格式化错误消息（如果可用）
-        const errorMessage = e.formatted?.message || e.message || '获取基金数据失败'
-        this.error = errorMessage
-        console.error('Failed to fetch funds:', e.formatted || e)
+        const err = e as { formatted?: { message?: string }; message?: string }
+        this.error = err.formatted?.message || err.message || '获取基金数据失败'
+        console.error('Failed to fetch funds:', e)
       } finally {
         this.loading.funds = false
       }
     },
-    
-    // 定时刷新（后台每10分钟）
-    startPeriodicFetch() {
+
+    startPeriodicFetch(): void {
       setInterval(() => {
         this.fetchFunds(true)
       }, 10 * 60 * 1000)
     },
-    
-    async fetchHoldings() {
+
+    async fetchHoldings(): Promise<void> {
       this.loading.holdings = true
       try {
         const data = await api.getHoldings()
         this.holdings = data.holdings || []
-        
-        // 自动获取缺失的基金名称
+
         for (const h of this.holdings) {
           if (!h.name || h.name === '') {
             try {
-              const res = await api.getFundDetail(h.code)
-              // API 返回格式: { success, detail: { fund_name } }
+              const res = await api.getFundDetail(h.code) as { detail?: { fund_name?: string }; fund?: { name?: string } }
               const fundName = res.detail?.fund_name || res.fund?.name
               if (fundName) {
                 h.name = fundName
@@ -128,47 +131,43 @@ export const useFundStore = defineStore('fund', {
           }
         }
       } catch (e) {
-        // 使用格式化错误消息（如果可用）
-        const errorMessage = e.formatted?.message || e.message || '获取持仓数据失败'
-        this.error = errorMessage
-        console.error('Failed to fetch holdings:', e.formatted || e)
+        const err = e as { formatted?: { message?: string }; message?: string }
+        this.error = err.formatted?.message || err.message || '获取持仓数据失败'
+        console.error('Failed to fetch holdings:', e)
       } finally {
         this.loading.holdings = false
       }
     },
-    
-    async fetchAdvice() {
+
+    async fetchAdvice(): Promise<void> {
       this.loading.advice = true
       try {
         const data = await api.getAdvice()
         this.advice = data.advice || null
       } catch (e) {
-        // 使用格式化错误消息（如果可用）
-        const errorMessage = e.formatted?.message || e.message || '获取投资建议失败'
-        this.error = errorMessage
-        console.error('Failed to fetch advice:', e.formatted || e)
+        const err = e as { formatted?: { message?: string }; message?: string }
+        this.error = err.formatted?.message || err.message || '获取投资建议失败'
+        console.error('Failed to fetch advice:', e)
       } finally {
         this.loading.advice = false
       }
     },
-    
-    async fetchSectors() {
+
+    async fetchSectors(): Promise<void> {
       this.loading.sectors = true
       try {
         const data = await api.getSectors()
         this.sectors = data.sectors || []
       } catch (e) {
-        // 使用格式化错误消息（如果可用）
-        const errorMessage = e.formatted?.message || e.message || '获取热点板块失败'
-        this.error = errorMessage
-        console.error('Failed to fetch sectors:', e.formatted || e)
+        const err = e as { formatted?: { message?: string }; message?: string }
+        this.error = err.formatted?.message || err.message || '获取热点板块失败'
+        console.error('Failed to fetch sectors:', e)
       } finally {
         this.loading.sectors = false
       }
     },
-    
-    async fetchNews(force = false) {
-      // 优先从缓存读取
+
+    async fetchNews(force = false): Promise<void> {
       if (!force) {
         const cached = localStorage.getItem(CACHE_CONFIG.NEWS_KEY)
         if (cached) {
@@ -183,28 +182,25 @@ export const useFundStore = defineStore('fund', {
           }
         }
       }
-      
+
       this.loading.news = true
       try {
         const data = await api.getNews()
         this.news = data.news || []
-        // 保存到缓存
         localStorage.setItem(CACHE_CONFIG.NEWS_KEY, JSON.stringify({
           data: this.news,
           timestamp: Date.now()
         }))
       } catch (e) {
-        // 使用格式化错误消息（如果可用）
-        const errorMessage = e.formatted?.message || e.message || '获取市场新闻失败'
-        this.error = errorMessage
-        console.error('Failed to fetch news:', e.formatted || e)
+        const err = e as { formatted?: { message?: string }; message?: string }
+        this.error = err.formatted?.message || err.message || '获取市场新闻失败'
+        console.error('Failed to fetch news:', e)
       } finally {
         this.loading.news = false
       }
     },
-    
-    // 量化模块
-    async fetchTimingSignals() {
+
+    async fetchTimingSignals(): Promise<void> {
       this.loading.timing = true
       try {
         const res = await fetch('/api/quant/timing-signals')
@@ -218,14 +214,17 @@ export const useFundStore = defineStore('fund', {
         this.loading.timing = false
       }
     },
-    
-    async fetchPortfolioOptimize() {
+
+    async fetchPortfolioOptimize(): Promise<void> {
       this.loading.optimize = true
       try {
         const res = await fetch('/api/quant/portfolio-optimize')
         const data = await res.json()
         if (data.success) {
-          this.portfolioOptimize = { allocations: data.data?.allocations || [], fund_count: data.data?.fund_count || 0 }
+          this.portfolioOptimize = {
+            allocations: data.data?.allocations || [],
+            fund_count: data.data?.fund_count || 0
+          }
         }
       } catch (e) {
         console.error('Failed to fetch portfolio optimize:', e)
@@ -233,8 +232,8 @@ export const useFundStore = defineStore('fund', {
         this.loading.optimize = false
       }
     },
-    
-    async fetchRebalancing() {
+
+    async fetchRebalancing(): Promise<void> {
       this.loading.rebalancing = true
       try {
         const res = await fetch('/api/quant/rebalancing')
@@ -248,49 +247,48 @@ export const useFundStore = defineStore('fund', {
         this.loading.rebalancing = false
       }
     },
-    
-    async checkLogin() {
+
+    async checkLogin(): Promise<void> {
       try {
         const data = await api.checkLogin()
-        // API 返回: { logged_in, username }
         if (data.logged_in) {
-          this.user = { username: data.username }
+          this.user = { username: data.username || '' }
         } else {
           this.user = null
         }
-      } catch (e) {
+      } catch {
         this.user = null
       }
     },
-    
-    async login(username, password) {
+
+    async login(username: string, password: string): Promise<unknown> {
       const data = await api.login(username, password)
       if (data.success) {
-        this.user = { username: data.username }
+        this.user = { username: data.username || username }
         await this.fetchHoldings()
         await this.fetchFunds(true)
       }
       return data
     },
-    
-    async logout() {
+
+    async logout(): Promise<void> {
       await api.logout()
       this.user = null
       this.holdings = []
     },
-    
-    async saveHoldings(funds) {
+
+    async saveHoldings(funds: unknown[]): Promise<void> {
       await api.saveHoldings({ funds })
       await this.fetchHoldings()
-        await this.fetchFunds(true)
+      await this.fetchFunds(true)
     },
-    
-    async clearHoldings() {
+
+    async clearHoldings(): Promise<void> {
       await api.clearHoldings()
       this.holdings = []
     },
-    
-    async loadAll() {
+
+    async loadAll(): Promise<void> {
       await Promise.all([
         this.fetchFunds(),
         this.fetchHoldings(),

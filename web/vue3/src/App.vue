@@ -192,7 +192,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useFundStore } from '@/stores/fund'
 import api from '@/api'
