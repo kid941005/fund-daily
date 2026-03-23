@@ -10,6 +10,7 @@ from src.utils.error_handling import handle_errors
 from .config import SCORE_WEIGHTS, _get_cached_score, _set_cached_score
 from .weights import validate_weights
 from .models import ScoreInput
+from .utils import get_grade  # 统一使用 utils.py 的等级函数
 
 logger = logging.getLogger(__name__)
 
@@ -146,7 +147,7 @@ def calculate_total_score(
         "base_score": total_score,
         "ranking_bonus": 0,
         "max_score": 100,
-        "grade": _get_grade(total_score),
+        "grade": get_grade(total_score),
         "details": {
             "valuation": valuation,
             "performance": performance,
@@ -165,20 +166,7 @@ def calculate_total_score(
     return result
 
 
-def _get_grade(score: int) -> str:
-    """根据评分获取等级"""
-    if score >= 80:
-        return "A"
-    elif score >= 70:
-        return "B+"
-    elif score >= 60:
-        return "B"
-    elif score >= 50:
-        return "C+"
-    elif score >= 40:
-        return "C"
-    else:
-        return "D"
+
 
 
 @handle_errors(default_return="[评分报告生成失败]", log_level="warning")
@@ -257,7 +245,7 @@ def apply_ranking_bonus(funds: List[Dict]) -> List[Dict]:
         score_100['total_score'] = total_score
         score_100['ranking_bonus'] = ranking_bonus
         score_100['base_score'] = base_score
-        score_100['grade'] = _get_grade(total_score)
+        score_100['grade'] = get_grade(total_score)
     
     return funds
 

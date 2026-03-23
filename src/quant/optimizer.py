@@ -104,37 +104,48 @@ def optimize_portfolio(funds: List[Dict], target_return: float = None) -> Dict:
 def calculate_efficient_frontier(funds: List[Dict], num_points: int = 10) -> List[Dict]:
     """
     计算有效前沿曲线上的点
-    
+
     Args:
         funds: 基金列表
         num_points: 有效前沿上的点数
-    
+
     Returns:
-        list: 有效前沿上的(收益, 风险, 权重)点
+        list: 有效前沿上的(收益, 风险, 夏普比)点
     """
+    if not funds or len(funds) < 2:
+        return []
+
     returns, volatilities = calculate_returns_volatility(funds)
-    
-    # 按评分分配权重
     scores = np.array([f.get("score_100", {}).get("total_score", 0) for f in funds])
-    
-    if scores.sum() == 0:
-        # 如果没有评分数据，使用等权重
-        weights = np.array([1.0 / n] * n)
-    else:
-        # 基于评分的权重分配
-        scores_shifted = np.maximum(scores - 30, 0)  # 低于30分权重为0
+    n = len(funds)
+
+    points = []
+    for i in range(num_points):
+        risk_pref = i / max(num_points - 1, 1)
+        scores_shifted = np.maximum(scores - 30, 0)
         if scores_shifted.sum() > 0:
-            weights = scores_shifted / scores_shifted.sum()
+            score_weights = scores_shifted / scores_shifted.sum()
         else:
-            weights = np.array([1.0 / n] * n)
-        
+            score_weights = np.array([1.0 / n] * n)
+
+        uniform_weights = np.ones(n) / n
+
+        if risk_pref < 0.5:
+            blend = risk_pref * 2
+            weights = (1 - blend) * uniform_weights + blend * score_weights
+        else:
+            blend = (risk_pref - 0.5) * 2
+            weights = (1 - blend) * score_weights + blend * score_weights
+
+        weights = weights / weights.sum()
         port_return = np.dot(weights, returns)
-        port_vol = np.sqrt(np.dot(weights, np.dot(np.diag(volatilities**2), weights)))
-        
+        port_vol = np.sqrt(np.dot(weights, np.dot(np.diag(volatilities ** 2), weights)))
+        sharpe = port_return / (port_vol + 0.001)
+
         points.append({
             "return": round(port_return * 100, 2),
             "volatility": round(port_vol * 100, 2),
-            "sharpe": round(port_return / (port_vol + 0.01), 2)
+            "sharpe": round(sharpe, 2)
         })
-    
+
     return points

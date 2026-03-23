@@ -309,20 +309,28 @@ class TestCalculatorGetGrade:
     """Test _get_grade boundary values"""
 
     def test_grade_boundaries(self):
-        from src.scoring.calculator import _get_grade
+        from src.scoring.utils import get_grade
 
-        assert _get_grade(0) == "D"
-        assert _get_grade(39) == "D"
-        assert _get_grade(40) == "C"
-        assert _get_grade(49) == "C"
-        assert _get_grade(50) == "C+"
-        assert _get_grade(59) == "C+"
-        assert _get_grade(60) == "B"
-        assert _get_grade(69) == "B"
-        assert _get_grade(70) == "B+"
-        assert _get_grade(79) == "B+"
-        assert _get_grade(80) == "A"
-        assert _get_grade(100) == "A"
+        # 新的等级标准：A+(95-100), A(90-94), B+(85-89), B(80-84), 
+        # C+(75-79), C(70-74), D+(65-69), D(60-64), F(0-59)
+        assert get_grade(0) == "F"
+        assert get_grade(59) == "F"
+        assert get_grade(60) == "D"
+        assert get_grade(64) == "D"
+        assert get_grade(65) == "D+"
+        assert get_grade(69) == "D+"
+        assert get_grade(70) == "C"
+        assert get_grade(74) == "C"
+        assert get_grade(75) == "C+"
+        assert get_grade(79) == "C+"
+        assert get_grade(80) == "B"
+        assert get_grade(84) == "B"
+        assert get_grade(85) == "B+"
+        assert get_grade(89) == "B+"
+        assert get_grade(90) == "A"
+        assert get_grade(94) == "A"
+        assert get_grade(95) == "A+"
+        assert get_grade(100) == "A+"
 
 
 class TestCalculatorTotalScore:
@@ -369,7 +377,7 @@ class TestCalculatorTotalScore:
         )
 
         assert result["total_score"] == 76.0  # 20+15+12+10+8+6+3+2
-        assert result["grade"] == "B+"
+        assert result["grade"] == "C+"  # 新等级标准: 75-79=C+
         assert "details" in result
         assert len(result["details"]) == 8
 
@@ -381,7 +389,7 @@ class TestCalculatorTotalScore:
             "base_score": 85.0,
             "ranking_bonus": 0,
             "max_score": 100,
-            "grade": "A",
+            "grade": "B+",  # 新等级: 85-89=B+
             "details": {},
         }
 
@@ -442,7 +450,7 @@ class TestFormatScoreReport:
             "total_score": 83.0,
             "base_score": 75.0,
             "ranking_bonus": 8,
-            "grade": "A",
+            "grade": "B",  # 新等级: 80-84=B
             "details": {
                 "valuation": {"score": 20},
                 "performance": {"score": 15},
@@ -471,7 +479,7 @@ class TestApplyRankingBonus:
         from src.scoring.calculator import apply_ranking_bonus
 
         funds = [
-            {"code": "000001", "score_100": {"total_score": 80, "grade": "A"}}
+            {"code": "000001", "score_100": {"total_score": 80, "grade": "B"}}
         ]
         result = apply_ranking_bonus(funds)
         assert result[0]["score_100"]["total_score"] == 80
@@ -481,7 +489,7 @@ class TestApplyRankingBonus:
 
         funds = [
             {"code": "000001", "daily_change": 5.0, "return_1m": 10.0,
-             "score_100": {"total_score": 80, "grade": "A"}},
+             "score_100": {"total_score": 80, "grade": "B"}},
             {"code": "000002", "daily_change": 3.0, "return_1m": 8.0,
              "score_100": {"total_score": 75, "grade": "B+"}},
             {"code": "000003", "daily_change": 1.0, "return_1m": 5.0,
@@ -508,7 +516,7 @@ class TestCalculatorScoreInput:
                 "base_score": 80.0,
                 "ranking_bonus": 0,
                 "max_score": 100,
-                "grade": "A",
+                "grade": "B",  # 新等级: 80-84=B
                 "details": {
                     "valuation": {"score": 20},
                     "performance": {"score": 15},
@@ -541,4 +549,4 @@ class TestCalculatorScoreInput:
 
         result = calculator.calculate_score_v2(inp)
         assert result["total_score"] == 80.0
-        assert result["grade"] == "A"
+        assert result["grade"] == "B"  # 新等级: 80-84=B

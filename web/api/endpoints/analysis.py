@@ -27,23 +27,15 @@ def _get_user_id():
 def get_portfolio_analysis():
     """Get portfolio analysis using new service layer"""
     user_id = _get_user_id()
-    
-    # 如果没有用户ID，使用默认用户或获取所有持仓
+
+    # 必须登录，未认证用户不得访问任何持仓数据
     if not user_id:
-        # 尝试从数据库获取第一个用户
-        try:
-            conn = db.get_db()
-            cursor = conn.cursor()
-            cursor.execute("SELECT id FROM users LIMIT 1")
-            user = cursor.fetchone()
-            if user:
-                user_id = user[0]
-                print(f"[DEBUG] 使用默认用户ID: {user_id}")
-            cursor.close()
-            conn.close()
-        except Exception as e:
-            print(f"[DEBUG] 获取默认用户失败: {e}")
-            user_id = None
+        from src.error import ErrorCode, create_error_response
+        return jsonify(create_error_response(
+            code=ErrorCode.UNAUTHORIZED,
+            message="请先登录",
+            http_status=401
+        )), 401
 
     if user_id:
         holdings = db.get_holdings(user_id)
