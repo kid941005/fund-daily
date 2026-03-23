@@ -28,15 +28,19 @@ export interface UnifiedError extends Error {
 export interface Fund {
   code: string
   name?: string
+  fund_code?: string
+  fund_name?: string
   netWorth?: number
   netWorthDate?: string
   dayGrowth?: number
+  daily_change?: number
   lastWeekGrowth?: number
   lastMonthGrowth?: number
   lastThreeMonthsGrowth?: number
   lastSixMonthsGrowth?: number
   lastYearGrowth?: number
- 今年以来?: number
+  amount?: number
+  今年以来?: number
   ['今年来']?: number
   estimatedWorth?: number
   estimatedWorthDate?: string
@@ -45,6 +49,20 @@ export interface Fund {
   redeemStatus?: string
   fundType?: string
   riskLevel?: string
+  score_100?: Score100
+}
+
+// 评分详情
+export interface Score100 {
+  total_score?: number
+  details?: {
+    details?: {
+      valuation?: { score?: number }
+      performance?: { score?: number }
+      risk_control?: { score?: number }
+      momentum?: { score?: number }
+    }
+  }
 }
 
 // 持仓数据
@@ -60,6 +78,10 @@ export interface Holding {
 export interface Advice {
   type?: string
   message?: string
+  market_sentiment?: string
+  market_score?: number
+  commodity_sentiment?: string
+  action?: string
   funds?: FundAdvice[]
 }
 
@@ -103,22 +125,38 @@ export interface TimingSignals {
 export interface Allocation {
   code: string
   name: string
-  target_weight: number
-  current_weight: number
-  action: 'buy' | 'sell' | 'hold'
+  target_weight?: number
+  current_weight?: number
+  weight?: number
+  action?: 'buy' | 'sell' | 'hold'
   reason?: string
   score?: number
 }
 
 export interface PortfolioOptimize {
   allocations: Allocation[]
-  fund_count: number
+  fund_count?: number
+  name?: string
+  cycle?: string
 }
 
 export interface RebalancingResult {
   current_holdings: Holding[]
   target_holdings: TargetHolding[]
   changes: RebalanceChange[]
+  allocations?: Allocation[]
+  funds?: AnalysisFund[]
+  fund_count?: number
+}
+
+export interface AnalysisFund {
+  code: string
+  name: string
+  amount?: number
+  current_pct?: number
+  target_pct?: number
+  score_100?: Score100
+  action?: string
 }
 
 export interface TargetHolding {
@@ -172,5 +210,21 @@ export interface NewsResponse {
 
 export interface AnalysisResponse {
   success: boolean
-  data: unknown
+  data: {
+    analysis?: {
+      allocation?: {
+        suggestions?: Array<{ fund_code: string; action: string; amount?: number }>
+      }
+      funds?: AnalysisFund[]
+    }
+    [key: string]: unknown
+  }
+}
+
+// Settings
+export interface AppSettings {
+  notify_enabled?: boolean
+  notify_time?: string
+  dark_mode?: boolean
+  refresh_interval?: number
 }

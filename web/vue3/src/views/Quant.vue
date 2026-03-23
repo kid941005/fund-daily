@@ -87,45 +87,37 @@
 import { ref, computed, onMounted } from 'vue'
 import { useFundStore } from '@/stores/fund'
 import axios from 'axios'
+import type { Fund, PortfolioOptimize, Allocation } from '@/types/api'
 
 const store = useFundStore()
+
 const timingSignals = computed(() => store.timingSignals)
-const portfolioOptimize = computed(() => store.portfolioOptimize)
+const portfolioOptimize = computed<PortfolioOptimize>(() => store.portfolioOptimize as PortfolioOptimize)
 const rebalancing = computed(() => store.rebalancing)
 const loading = computed(() => store.loading.timing)
 const optimizeLoading = computed(() => store.loading.optimize)
 const rebalancingLoading = computed(() => store.loading.rebalancing)
 
-// 排序相关
-const sortOrder = ref('desc') // desc: 高分优先, asc: 低分优先
+const sortOrder = ref<'asc' | 'desc'>('desc')
 
-// 排序后的基金列表
-const sortedFunds = computed(() => {
+const sortedFunds = computed<Fund[]>(() => {
   if (!store.funds?.length) return []
-  
   const funds = [...store.funds]
-  
   return funds.sort((a, b) => {
     const scoreA = a.score_100?.total_score || 0
     const scoreB = b.score_100?.total_score || 0
-    
-    if (sortOrder.value === 'desc') {
-      return scoreB - scoreA // 高分优先
-    } else {
-      return scoreA - scoreB // 低分优先
-    }
+    return sortOrder.value === 'desc' ? scoreB - scoreA : scoreA - scoreB
   })
 })
 
-// 动态权重数据
-const dynamicWeights = ref(null)
+const dynamicWeights = ref<Record<string, unknown> | null>(null)
 const weightsLoading = ref(false)
 
 store.fetchTimingSignals()
 store.fetchPortfolioOptimize()
 store.fetchRebalancing()
 
-const getScoreClass = (score) => {
+const getScoreClass = (score: number | undefined | null): string => {
   if (!score) return ''
   if (score >= 70) return 'excellent'
   if (score >= 50) return 'good'
@@ -133,13 +125,11 @@ const getScoreClass = (score) => {
   return 'poor'
 }
 
-// 排序函数
-const toggleSortOrder = () => {
+const toggleSortOrder = (): void => {
   sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc'
 }
 
-// 获取动态权重
-async function fetchDynamicWeights() {
+async function fetchDynamicWeights(): Promise<void> {
   weightsLoading.value = true
   try {
     const res = await axios.get('/api/quant/dynamic-weights')
@@ -157,15 +147,14 @@ onMounted(() => {
   fetchDynamicWeights()
 })
 
-function getSignalClass(signal) {
+function getSignalClass(signal: string): string {
   if (signal === '买入') return 'buy'
   if (signal === '卖出') return 'sell'
   if (signal === '持有') return 'keep'
   return ''
 }
 
-// 权重项名称映射
-const weightLabels = {
+const weightLabels: Record<string, string> = {
   valuation: '估值面',
   performance: '业绩表现',
   risk_control: '风险控制',
@@ -176,10 +165,10 @@ const weightLabels = {
   liquidity: '流动性'
 }
 
-// 计算最高权重
-const maxWeight = computed(() => {
-  if (!portfolioOptimize.value?.allocations?.length) return 0
-  const weights = portfolioOptimize.value.allocations.map(a => a.weight || 0)
+const maxWeight = computed<string>(() => {
+  const allocs = (portfolioOptimize.value as PortfolioOptimize)?.allocations
+  if (!allocs?.length) return '0'
+  const weights = allocs.map((a: Allocation) => a.weight || 0)
   return Math.max(...weights).toFixed(1)
 })
 </script>

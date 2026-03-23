@@ -43,7 +43,8 @@ def get_funds():
     
     codes = [h["code"] for h in holdings if h.get("amount", 0) > 0]
     if not codes:
-        fund_codes = ["000001", "110022", "161725"]
+        codes = ["000001", "110022", "161725"]
+    fund_codes = codes
     
     # 并行获取基金数据
     def process_fund(fund_code):

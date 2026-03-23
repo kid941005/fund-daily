@@ -150,91 +150,102 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useFundStore } from '@/stores/fund'
+import type { Holding, Fund } from '@/types/api'
 
 const store = useFundStore()
+
 const showImport = ref(false)
 const showClearConfirm = ref(false)
-const importTab = ref('ocr')
+const importTab = ref<'ocr' | 'text'>('ocr')
 const ocrLoading = ref(false)
-const ocrResult = ref([])
+const ocrResult = ref<Array<{ code: string; amount: number }>>([])
 const importText = ref('')
 
-const totalAmount = computed(() => {
-  return store.holdings?.reduce((sum, h) => sum + (h.amount || 0), 0) || 0
+const totalAmount = computed<number>(() => {
+  return store.holdings.reduce((sum, h) => sum + (h.amount || 0), 0)
 })
 
-// 获取基金数据
-const getFundData = (code) => {
-  if (!store.funds?.length) return null
-  return store.funds.find(f => f.fund_code === code)
+const getFundData = (code: string): Fund | undefined => {
+  if (!store.funds?.length) return undefined
+  return store.funds.find(f => f.fund_code === code || f.code === code)
 }
 
-// 计算当日收益
-const calculateProfit = (holding) => {
+const calculateProfit = (holding: Holding): number => {
   const fundData = getFundData(holding.code)
   if (!fundData || fundData.daily_change === undefined || !holding.amount) return 0
-  
-  // 当日收益 = 持仓金额 * 日涨跌幅
   return holding.amount * (fundData.daily_change / 100)
 }
 
-// 获取估值颜色类（绿色涨，红色跌）
-const getValuationClass = (change) => {
+const getValuationClass = (change: number | undefined): string => {
   if (change === undefined) return ''
   return change > 0 ? 'text-up' : change < 0 ? 'text-down' : ''
 }
 
-// 获取板块涨幅颜色类（红色涨，绿色跌）
-const getSectorChangeClass = (change) => {
+const getSectorChangeClass = (change: number | undefined): string => {
   if (change === undefined) return ''
-  // 红色代表涨，绿色代表跌
   return change > 0 ? 'text-down' : change < 0 ? 'text-up' : ''
 }
 
-// 获取收益颜色类（红色正收益，绿色负收益）
-const getProfitClass = (profit) => {
+const getProfitClass = (profit: number | undefined): string => {
   if (profit === undefined || profit === 0) return ''
-  // 红色代表正收益，绿色代表负收益
   return profit > 0 ? 'text-down' : profit < 0 ? 'text-up' : ''
 }
 
-const refreshData = async () => {
+const refreshData = async (): Promise<void> => {
   await store.fetchHoldings()
   await store.fetchFunds()
 }
 
-const handleOcrFile = async (event) => {
-  // OCR 处理逻辑
+const handleOcrFile = async (event: Event): Promise<void> => {
+  const target = event.target as HTMLInputElement
+  if (!target.files?.length) return
+  ocrLoading.value = true
+  try {
+    // OCR logic placeholder
+    console.log('OCR file:', target.files[0].name)
+  } finally {
+    ocrLoading.value = false
+  }
 }
 
-const confirmOcrImport = async () => {
-  // 导入逻辑
+const confirmOcrImport = async (): Promise<void> => {
+  if (!ocrResult.value.length) return
+  await store.saveHoldings(ocrResult.value)
+  showImport.value = false
+  ocrResult.value = []
 }
 
-const confirmTextImport = async () => {
-  // 文本导入逻辑
+const confirmTextImport = async (): Promise<void> => {
+  if (!importText.value.trim()) return
+  const lines = importText.value.trim().split('\n')
+  const funds = lines
+    .map(line => line.trim().split(/\s+/))
+    .filter(parts => parts.length >= 2)
+    .map(([code, amount]) => ({ code, amount: parseFloat(amount) }))
+    .filter(f => !isNaN(f.amount))
+  if (funds.length) {
+    await store.saveHoldings(funds)
+    showImport.value = false
+    importText.value = ''
+  }
 }
 
-const updateHolding = async (holding) => {
-  // 更新持仓逻辑
+const updateHolding = async (_holding: Holding): Promise<void> => {
+  // placeholder
 }
 
-// 清仓功能
-const confirmClearAll = () => {
+const confirmClearAll = (): void => {
   if (store.holdings?.length > 0) {
     showClearConfirm.value = true
   }
 }
 
-const clearAllHoldings = async () => {
+const clearAllHoldings = async (): Promise<void> => {
   try {
     await store.clearHoldings()
     showClearConfirm.value = false
-    // 可以添加成功提示
-    console.log('清仓成功')
   } catch (error) {
     console.error('清仓失败:', error)
-    // 可以添加错误提示
   }
 }
 </script>

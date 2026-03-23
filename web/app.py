@@ -332,8 +332,8 @@ def vue_app():
 @app.route('/<path:path>')
 def serve_vue(path):
     """Serve Vue static files"""
+    from flask import jsonify
     if path.startswith('api/'):
-        from flask import jsonify
         return jsonify({'error': 'Not found'}), 404
 
     # 对于静态资源请求，优先返回压缩版本（长期缓存）

@@ -57,27 +57,27 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useFundStore } from '@/stores/fund'
+import type { Advice, Sector, NewsItem } from '@/types/api'
 
 const store = useFundStore()
 
-const advice = computed(() => store.advice)
-const sectors = computed(() => store.sectors)
-const news = computed(() => store.news)
-const newsLoading = computed(() => store.loading.news)
+const advice = computed<Advice | null>(() => store.advice)
+const sectors = computed<Sector[]>(() => store.sectors)
+const news = computed<NewsItem[]>(() => store.news)
+const newsLoading = computed<boolean>(() => store.loading.news)
 
-const sentimentClass = computed(() => {
-  const sentiment = advice.value?.market_sentiment
-  if (sentiment?.includes('乐观') || sentiment?.includes('上涨')) return 'up'
-  if (sentiment?.includes('谨慎') || sentiment?.includes('下跌')) return 'down'
+const sentimentClass = computed<string>(() => {
+  const sentiment = advice.value?.market_sentiment ?? ''
+  if (sentiment.includes('乐观') || sentiment.includes('上涨')) return 'up'
+  if (sentiment.includes('谨慎') || sentiment.includes('下跌')) return 'down'
   return ''
 })
 
-const openUrl = (url) => {
+const openUrl = (url: string | undefined): void => {
   if (url) window.open(url, '_blank')
 }
 
 onMounted(() => {
-  // 首页加载市场数据
   store.loadAll()
 })
 </script>

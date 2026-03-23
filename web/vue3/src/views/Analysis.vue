@@ -109,37 +109,36 @@ import { PieChart, BarChart } from 'echarts/charts'
 import { TooltipComponent, GridComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 
-// 注册必需的组件（tree-shaking）
-echarts.use([
-  PieChart,
-  BarChart,
-  TooltipComponent,
-  GridComponent,
-  CanvasRenderer,
-])
+echarts.use([PieChart, BarChart, TooltipComponent, GridComponent, CanvasRenderer])
 
 import api from '@/api'
 import { useFundStore } from '@/stores/fund'
+import type { AnalysisFund } from '@/types/api'
 
-const pieChart = ref(null)
-const barChart = ref(null)
+interface AnalysisData {
+  funds?: AnalysisFund[]
+  allocation?: {
+    suggestions?: Array<{ fund_code: string; action: string; amount?: number }>
+  }
+}
+
+const pieChart = ref<HTMLElement | null>(null)
+const barChart = ref<HTMLElement | null>(null)
 const store = useFundStore()
-const analysis = ref(null)
+const analysis = ref<AnalysisData | null>(null)
 const rebalancing = computed(() => store.rebalancing)
 const rebalancingLoading = computed(() => store.loading.rebalancing)
 
-const sortByScore = (order) => {
-  sortOrder.value = order
-}
+const sortOrder = ref<'asc' | 'desc'>('desc')
 const loading = ref(true)
 
 store.fetchRebalancing()
 
-const fetchAnalysis = async () => {
+const fetchAnalysis = async (): Promise<void> => {
   loading.value = true
   try {
     const data = await api.getAnalysis()
-    analysis.value = data.analysis || data
+    analysis.value = (data as { analysis?: AnalysisData }).analysis || (data as unknown as AnalysisData)
     nextTick(initCharts)
   } catch (e) {
     console.error('Failed to fetch analysis:', e)
@@ -148,30 +147,25 @@ const fetchAnalysis = async () => {
   }
 }
 
-const initCharts = () => {
-  if (!analysis.value?.funds) {
-    return
-  }
-  
-  
-  // 延迟一下确保 DOM 渲染完成
+const initCharts = (): void => {
+  if (!analysis.value?.funds) return
   setTimeout(() => {
     initPieChart()
     initBarChart()
   }, 100)
 }
 
-const initPieChart = () => {
-  if (!pieChart.value) return
-  
+const initPieChart = (): void => {
+  if (!pieChart.value || !analysis.value?.funds) return
+
   const chart = echarts.init(pieChart.value)
   const data = analysis.value.funds
-    .filter(f => f.amount > 0)
+    .filter(f => (f.amount ?? 0) > 0)
     .map(f => ({
-      name: f.fund_name?.substring(0, 8) || f.fund_code,
+      name: (f.name || f.fund_name || f.code)?.substring(0, 8) || f.code,
       value: f.amount || 0
     }))
-  
+
   chart.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
     series: [{
@@ -190,15 +184,15 @@ const initPieChart = () => {
   })
 }
 
-const initBarChart = () => {
-  if (!barChart.value) return
-  
+const initBarChart = (): void => {
+  if (!barChart.value || !analysis.value?.funds) return
+
   const chart = echarts.init(barChart.value)
   const data = analysis.value.funds.map(f => ({
-    name: f.fund_name?.substring(0, 6) || f.fund_code,
+    name: (f.name || f.fund_name || f.code)?.substring(0, 6) || f.code,
     value: f.score_100?.total_score || 0
   }))
-  
+
   chart.setOption({
     tooltip: { trigger: 'axis' },
     xAxis: { type: 'category', data: data.map(d => d.name) },
@@ -215,7 +209,7 @@ const initBarChart = () => {
   })
 }
 
-const getScoreClass = (score) => {
+const getScoreClass = (score: number | undefined | null): string => {
   if (!score) return ''
   if (score >= 70) return 'excellent'
   if (score >= 50) return 'good'
@@ -223,11 +217,11 @@ const getScoreClass = (score) => {
   return 'poor'
 }
 
-const getSuggestion = (fund) => {
+const getSuggestion = (fund: AnalysisFund): string => {
   const score = fund.score_100?.total_score || 0
   const current = fund.current_pct || 0
   const target = fund.target_pct || 0
-  
+
   if (score < 20) return '清仓'
   if (score < 35) return '减仓'
   if (target > current) return '增持'
@@ -235,8 +229,7 @@ const getSuggestion = (fund) => {
   return '持有'
 }
 
-onMounted(async () => {
-  // 确保已登录
+onMounted(async (): Promise<void> => {
   await store.checkLogin()
   fetchAnalysis()
 })

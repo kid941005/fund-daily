@@ -195,16 +195,27 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useFundStore } from '@/stores/fund'
-import api from '@/api'
+
+interface LoginForm {
+  username: string
+  password: string
+  confirmPassword: string
+}
+
+interface Settings {
+  dingtalk: { enabled: boolean; webhook: string }
+  telegram: { enabled: boolean; bot_token: string; chat_id: string }
+  email: { enabled: boolean; smtp_server: string; smtp_port: number; username: string; password: string; to_addr: string }
+}
 
 const store = useFundStore()
 const showLogin = ref(false)
 const showSettings = ref(false)
-const settingsTab = ref('notify')
+const settingsTab = ref<'notify' | 'security'>('notify')
 const isRegistering = ref(false)
-const loginForm = ref({ username: '', password: '', confirmPassword: '' })
+const loginForm = ref<LoginForm>({ username: '', password: '', confirmPassword: '' })
 
-const settings = reactive({
+const settings = reactive<Settings>({
   dingtalk: { enabled: false, webhook: '' },
   telegram: { enabled: false, bot_token: '', chat_id: '' },
   email: { enabled: false, smtp_server: '', smtp_port: 587, username: '', password: '', to_addr: '' }
@@ -216,32 +227,32 @@ const passwordForm = reactive({
   confirmPassword: ''
 })
 
-const currentDate = computed(() => {
-  return new Date().toLocaleDateString('zh-CN', { 
-    year: 'numeric', 
-    month: 'long', 
+const currentDate = computed<string>(() => {
+  return new Date().toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
     day: 'numeric',
     weekday: 'long'
   })
 })
 
-const switchToLogin = () => {
+const switchToLogin = (): void => {
   isRegistering.value = false
   loginForm.value = { username: '', password: '', confirmPassword: '' }
 }
 
-const switchToRegister = () => {
+const switchToRegister = (): void => {
   isRegistering.value = true
   loginForm.value = { username: '', password: '', confirmPassword: '' }
 }
 
-const closeLogin = () => {
+const closeLogin = (): void => {
   showLogin.value = false
   loginForm.value = { username: '', password: '', confirmPassword: '' }
 }
 
-const handleLogin = async () => {
-  const result = await store.login(loginForm.value.username, loginForm.value.password)
+const handleLogin = async (): Promise<void> => {
+  const result = await store.login(loginForm.value.username, loginForm.value.password) as { success?: boolean; message?: string }
   if (result.success) {
     showLogin.value = false
     loginForm.value = { username: '', password: '', confirmPassword: '' }
@@ -251,39 +262,36 @@ const handleLogin = async () => {
   }
 }
 
-const handleRegister = async () => {
+const handleRegister = async (): Promise<void> => {
   const { username, password, confirmPassword } = loginForm.value
-  
+
   if (!username || !password) {
     alert('用户名和密码不能为空')
     return
   }
-  
   if (password.length < 6) {
     alert('密码长度至少6位')
     return
   }
-  
   if (password !== confirmPassword) {
     alert('两次输入的密码不一致')
     return
   }
-  
+
   try {
     const response = await fetch('/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     })
-    
-    const data = await response.json()
-    
+    const data = await response.json() as { success?: boolean; error?: { message?: string }; message?: string }
+
     if (data.success) {
       alert('注册成功！请使用新账号登录')
       isRegistering.value = false
       loginForm.value = { username: '', password: '', confirmPassword: '' }
     } else {
-      alert(data.error?.message || '注册失败')
+      alert(data.error?.message || data.message || '注册失败')
     }
   } catch (error) {
     alert('注册请求失败，请检查网络连接')
@@ -291,11 +299,11 @@ const handleRegister = async () => {
   }
 }
 
-const handleLogout = async () => {
+const handleLogout = async (): Promise<void> => {
   await store.logout()
 }
 
-const loadSettings = async () => {
+const loadSettings = async (): Promise<void> => {
   try {
     const res = await fetch('/api/config')
     const data = await res.json()
@@ -309,14 +317,14 @@ const loadSettings = async () => {
   }
 }
 
-const saveSettings = async () => {
+const saveSettings = async (): Promise<void> => {
   try {
     const res = await fetch('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings)
     })
-    const data = await res.json()
+    const data = await res.json() as { success?: boolean; message?: string }
     if (data.success) {
       alert('设置已保存')
       showSettings.value = false
@@ -324,11 +332,11 @@ const saveSettings = async () => {
       alert(data.message || '保存失败')
     }
   } catch (e) {
-    alert('保存失败: ' + e.message)
+    alert('保存失败')
   }
 }
 
-const changePassword = async () => {
+const changePassword = async (): Promise<void> => {
   if (!passwordForm.oldPassword || !passwordForm.newPassword) {
     alert('请填写完整')
     return
@@ -337,7 +345,7 @@ const changePassword = async () => {
     alert('两次密码不一致')
     return
   }
-  
+
   try {
     const res = await fetch('/api/password', {
       method: 'POST',
@@ -347,7 +355,7 @@ const changePassword = async () => {
         new_password: passwordForm.newPassword
       })
     })
-    const data = await res.json()
+    const data = await res.json() as { success?: boolean; message?: string }
     if (data.success) {
       alert('密码修改成功')
       passwordForm.oldPassword = ''
@@ -357,20 +365,18 @@ const changePassword = async () => {
       alert(data.message || '修改失败')
     }
   } catch (e) {
-    alert('修改失败: ' + e.message)
+    alert('修改失败')
   }
 }
 
-onMounted(async () => {
-  // 检查登录状态
+onMounted(async (): Promise<void> => {
   await store.checkLogin()
   if (store.user) {
     loadSettings()
   }
 })
 
-// 清除错误
-const clearError = () => {
+const clearError = (): void => {
   store.error = null
 }
 </script>
