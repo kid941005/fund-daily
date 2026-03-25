@@ -259,7 +259,9 @@ async def serve_static(path: str):
                 if encoding:
                     response.headers["Content-Encoding"] = encoding
                     response.headers["Vary"] = "Accept-Encoding"
-                    response.headers.pop("Content-Length", None)
+                    # Remove Content-Length when encoding (Content-Encoding changes the size)
+                    if "Content-Length" in response.headers:
+                        del response.headers["Content-Length"]
                 
                 # Set content type
                 import mimetypes
