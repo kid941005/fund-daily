@@ -4,7 +4,7 @@ Authentication Router
 
 import hashlib
 import logging
-from typing import Optional
+from typing import Optional, Tuple
 
 from fastapi import APIRouter, Depends, Request, HTTPException, Response
 from fastapi.responses import JSONResponse
@@ -47,6 +47,42 @@ class ChangePasswordRequest(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: Optional[str] = None
+
+
+def validate_password_strength(password: str) -> Tuple[bool, str]:
+    """
+    验证密码强度
+    
+    Returns:
+        (is_valid, error_message)
+    """
+    if len(password) < 8:
+        return False, "密码长度至少8位"
+    
+    if len(password) > 128:
+        return False, "密码长度不能超过128位"
+    
+    # 检查是否包含数字
+    if not any(c.isdigit() for c in password):
+        return False, "密码必须包含数字"
+    
+    # 检查是否包含小写字母
+    if not any(c.islower() for c in password):
+        return False, "密码必须包含小写字母"
+    
+    # 检查是否包含大写字母
+    if not any(c.isupper() for c in password):
+        return False, "密码必须包含大写字母"
+    
+    # 检查常见弱密码
+    weak_passwords = [
+        "password", "12345678", "qwerty", "abc123",
+        "password123", "admin123", "welcome"
+    ]
+    if password.lower() in weak_passwords:
+        return False, "密码过于简单，请使用更复杂的密码"
+    
+    return True, ""
 
 
 def _generate_user_id():
@@ -219,10 +255,12 @@ async def register(
             content={"success": False, "error": "用户名和密码不能为空"}
         )
     
-    if len(password) < 6:
+    # 密码强度校验
+    is_valid, error_msg = validate_password_strength(password)
+    if not is_valid:
         return JSONResponse(
             status_code=400,
-            content={"success": False, "error": "密码长度至少6位"}
+            content={"success": False, "error": error_msg}
         )
     
     try:
@@ -328,10 +366,12 @@ async def change_password(
             content={"success": False, "error": "密码不能为空"}
         )
     
-    if len(new_password) < 6:
+    # 新密码强度校验
+    is_valid, error_msg = validate_password_strength(new_password)
+    if not is_valid:
         return JSONResponse(
             status_code=400,
-            content={"success": False, "error": "新密码长度至少6位"}
+            content={"success": False, "error": error_msg}
         )
     
     try:
