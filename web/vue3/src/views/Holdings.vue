@@ -267,11 +267,11 @@ const handleOcrFile = async (event: Event): Promise<void> => {
   ocrResult.value = []
   try {
     const file = target.files[0]
-    const res = await api.importScreenshot(file) as { success: boolean; funds?: Array<{ code: string; amount: number }>; error?: string }
-    if (res.success && res.funds) {
-      ocrResult.value = res.funds
+    const res = await api.importScreenshot(file) as { success: boolean; parsed?: Array<{ code: string; amount: number }>; message?: string; error?: string }
+    if (res.success && res.parsed && res.parsed.length > 0) {
+      ocrResult.value = res.parsed
     } else {
-      alert(res.error || 'OCR 识别失败')
+      alert(res.message || res.error || 'OCR 识别失败，未找到基金数据')
     }
   } catch (e) {
     console.error('OCR error:', e)
