@@ -208,7 +208,7 @@ export default {
 
   // 评分
   getScore(code: string): Promise<unknown> {
-    return api.get(`/score/${code}`)
+    return api.get(`/score/${code}?force=true`)
   },
 
   getAnalysis(): Promise<AnalysisResponse> {
