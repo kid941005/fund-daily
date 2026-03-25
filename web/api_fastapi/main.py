@@ -77,7 +77,7 @@ async def log_requests(request: Request, call_next):
     
     # Log request
     method = request.method
-    path = request.path
+    path = request.url.path
     if '/password' in path or '/login' in path:
         logger.info(f"[{request_id}] {method} {path}")
     else:

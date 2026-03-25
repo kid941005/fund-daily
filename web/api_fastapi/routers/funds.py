@@ -66,7 +66,7 @@ async def get_funds(request: Request, force: str = Query("false")):
     def process_fund(fund_code):
         data = fetch_fund_data(fund_code, use_cache=use_cache)
         if not data.get("error"):
-            return analyze_fund(data)
+            return analyze_fund(data, use_cache=use_cache)
         return None
     
     funds_data = []
@@ -137,7 +137,7 @@ async def get_fund_score(request: Request, fund_code: str, force: str = Query("f
             return JSONResponse(status_code=status_code, content=error_response)
         
         daily_change = float(fund_data.get("estimated_change", 0) or fund_data.get("gszzl", 0) or 0)
-        scoring = generate_100_score(fund_code, daily_change)
+        scoring = generate_100_score(fund_code, daily_change, use_cache=use_cache)
         
         if "error" in scoring:
             error_response, status_code = create_error_response(
