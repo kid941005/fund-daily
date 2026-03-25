@@ -392,6 +392,8 @@ onMounted(async (): Promise<void> => {
   await store.checkLogin()
   if (store.user) {
     loadSettings()
+    // 启动定时刷新（板块5分钟，基金10分钟，市场5分钟）
+    store.startPeriodicFetch()
   }
 })
 

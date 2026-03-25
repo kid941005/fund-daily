@@ -28,13 +28,21 @@ class SecurityHeaders:
         
         # 检查 Content-Type（仅对 POST/PUT/PATCH）
         if request.method in ['POST', 'PUT', 'PATCH']:
-            content_type = request.headers.get('Content-Type', '')
-            if not content_type.startswith('application/json'):
-                from flask import jsonify
-                return jsonify({
-                    "error": "Content-Type 必须为 application/json",
-                    "success": False
-                }), 415
+            # 文件上传端点例外（需要 multipart/form-data）
+            if request.path in ['/api/holdings/import-screenshot', '/api/holdings/import_screenshot',
+                                '/api/import-screenshot', '/api/import_screenshot',
+                                '/api/import']:
+                # 允许 multipart/form-data 用于文件上传
+                pass  # 允许所有 Content-Type
+            else:
+                # 其他端点必须使用 application/json
+                content_type = request.headers.get('Content-Type', '')
+                if not content_type.startswith('application/json'):
+                    from flask import jsonify
+                    return jsonify({
+                        "error": "Content-Type 必须为 application/json",
+                        "success": False
+                    }), 415
     
     def _after_request(self, response):
         """响应后处理，添加安全头"""

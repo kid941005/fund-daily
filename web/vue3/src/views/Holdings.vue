@@ -178,6 +178,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useFundStore } from '@/stores/fund'
+import api from '@/api'
 import type { Holding, Fund } from '@/types/api'
 
 const store = useFundStore()
@@ -263,9 +264,18 @@ const handleOcrFile = async (event: Event): Promise<void> => {
   const target = event.target as HTMLInputElement
   if (!target.files?.length) return
   ocrLoading.value = true
+  ocrResult.value = []
   try {
-    // OCR logic placeholder
-    console.log('OCR file:', target.files[0].name)
+    const file = target.files[0]
+    const res = await api.importScreenshot(file) as { success: boolean; funds?: Array<{ code: string; amount: number }>; error?: string }
+    if (res.success && res.funds) {
+      ocrResult.value = res.funds
+    } else {
+      alert(res.error || 'OCR 识别失败')
+    }
+  } catch (e) {
+    console.error('OCR error:', e)
+    alert('OCR 识别失败，请重试')
   } finally {
     ocrLoading.value = false
   }
@@ -538,9 +548,11 @@ button {
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: 40px;
   z-index: 1000;
+  overflow-y: auto;
 }
 
 .modal {
@@ -549,6 +561,9 @@ button {
   padding: 32px;
   width: 90%;
   max-width: 500px;
+  max-height: 85vh;
+  overflow-y: auto;
+  margin-bottom: 40px;
 }
 
 .modal-header {
@@ -626,6 +641,8 @@ button {
   padding: 20px;
   background: #f8fafc;
   border-radius: 12px;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .ocr-result h4 {

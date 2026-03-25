@@ -228,5 +228,16 @@ export default {
   },
   getRebalancing(): Promise<unknown> {
     return api.get('/quant/rebalancing')
+  },
+
+  // OCR 识别
+  importScreenshot(file: File): Promise<{ success: boolean; funds?: Array<{ code: string; amount: number }>; error?: string }> {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post('/import_screenshot', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
   }
 }

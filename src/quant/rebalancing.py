@@ -85,16 +85,22 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
         target_amount = item["target_amount"]
 
         if action == "卖出" and current_amount > 0:
+            # 区分清仓（<30分）和减持（30-50分）
+            score = item["score"]
+            if score < 30:
+                reason = f"评分{score}分（<30分），建议清仓"
+            else:
+                reason = f"评分{score}分（30-50分），建议减持至一半"
             trades.append({
                 "fund_code": fund.get("fund_code", ""),
                 "fund_name": fund.get("fund_name", ""),
-                "score": item["score"],
+                "score": score,
                 "action": action,
                 "current_amount": round(current_amount, 2),
                 "current_pct": round(item["pct"], 1),
                 "target_amount": round(target_amount, 2),
                 "target_pct": round(item["target_pct"], 1),
-                "reason": f"评分{item['score']}分（<30分），建议清仓"
+                "reason": reason
             })
         elif action == "买入" and target_amount > current_amount:
             trades.append({

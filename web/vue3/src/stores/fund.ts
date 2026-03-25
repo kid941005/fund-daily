@@ -106,9 +106,21 @@ export const useFundStore = defineStore('fund', {
     },
 
     startPeriodicFetch(): void {
+      // 每10分钟刷新基金数据
       setInterval(() => {
         this.fetchFunds(true)
       }, 10 * 60 * 1000)
+
+      // 每15分钟刷新热门板块（与后端缓存时间一致）
+      setInterval(() => {
+        this.fetchSectors()
+      }, 15 * 60 * 1000)
+
+      // 每5分钟刷新市场概览和择时信号
+      setInterval(() => {
+        this.fetchAdvice()
+        this.fetchTimingSignals()
+      }, 5 * 60 * 1000)
     },
 
     async fetchHoldings(): Promise<void> {

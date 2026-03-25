@@ -146,7 +146,7 @@ def import_holdings():
     return jsonify({"success": False, "error": "No data provided"}), 400
 
 
-@holdings_bp.route("/import-screenshot", methods=["POST"])
+@holdings_bp.route("/import_screenshot", methods=["POST"])
 def import_screenshot():
     """OCR识别截图并导入持仓"""
     import os
@@ -189,7 +189,7 @@ def import_screenshot():
             
             return jsonify({
                 "success": True,
-                "parsed": [{"code": r.get("code", ""), "amount": r.get("amount", 0), "name": r.get("name", "")} for r in parsed]
+                "funds": [{"code": r.get("code", ""), "amount": r.get("amount", 0), "name": r.get("name", "")} for r in parsed]
             })
         finally:
             # 删除临时文件

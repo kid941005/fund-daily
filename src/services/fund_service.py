@@ -268,10 +268,30 @@ class FundService:
                     fund_data = self.get_fund_data(code, use_cache=True)
                     holding = next((h for h in holdings if h["code"] == code), {})
                     fund_data["amount"] = holding.get("amount", 0)
+                    # 确保 fund_code 存在（优先用 API 返回的，否则用持仓的）
+                    if not fund_data.get("fund_code"):
+                        fund_data["fund_code"] = code
+                    # 优先使用 API 返回的名称，否则用持仓记录中的名称
+                    fund_name = fund_data.get("fund_name") or fund_data.get("name")
+                    if not fund_name:
+                        fund_data["fund_name"] = holding.get("name", f"基金{code}")
+                    else:
+                        fund_data["fund_name"] = fund_name
                     return fund_data
                 except Exception as e:
                     logger.warning(f"Failed to get data for fund {code}: {e}")
-                    return None
+                    # API 失败时，从持仓记录构建基础数据
+                    holding = next((h for h in holdings if h["code"] == code), {})
+                    return {
+                        "fund_code": code,
+                        "fund_name": holding.get("name", f"基金{code}"),
+                        "name": holding.get("name", f"基金{code}"),
+                        "amount": holding.get("amount", 0),
+                        "nav": 0,
+                        "estimate_nav": 0,
+                        "daily_change": 0,
+                        "error": str(e)
+                    }
 
             with ThreadPoolExecutor(max_workers=min(len(fund_codes), self.max_workers)) as executor:
                 futures = {executor.submit(_fetch_one_fund, code): code for code in fund_codes}

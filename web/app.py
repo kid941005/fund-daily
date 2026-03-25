@@ -367,7 +367,7 @@ def serve_vue(path):
                         resp.headers['Content-Type'] = 'text/javascript'
                     elif rel_path.endswith('.css'):
                         resp.headers['Content-Type'] = 'text/css'
-                resp.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+                resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
                 resp.headers['Content-Length'] = len(data)
                 return resp
 
@@ -479,5 +479,16 @@ if __name__ == "__main__":
     # 使用配置管理器
     from src.config import get_config
     config = get_config()
+    
+    # 预初始化 OCR（避免第一次调用时等待）
+    try:
+        from src.ocr import _get_easyocr_reader
+        reader = _get_easyocr_reader()
+        if reader:
+            logger.info("✅ OCR 预初始化完成")
+        else:
+            logger.warning("⚠️ OCR 初始化失败或不可用")
+    except Exception as e:
+        logger.warning(f"⚠️ OCR 预初始化失败: {e}")
     
     app.run(host=config.server.host, port=config.server.port, debug=config.server.debug)
