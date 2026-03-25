@@ -201,7 +201,7 @@ async def import_holdings(request: Request):
     )
 
 
-@router.post("/import-screenshot")
+@router.post("/import_screenshot")
 async def import_screenshot(request: Request, file: UploadFile = File(...)):
     """OCR import holdings from screenshot"""
     import os
