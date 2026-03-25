@@ -77,6 +77,22 @@
               <span>动量</span>
               <span>{{ fund.score_100?.details?.details?.momentum?.score || 0 }}/15</span>
             </div>
+            <div class="detail">
+              <span>情绪</span>
+              <span>{{ fund.score_100?.details?.details?.sentiment?.score || 0 }}/10</span>
+            </div>
+            <div class="detail">
+              <span>板块</span>
+              <span>{{ fund.score_100?.details?.details?.sector?.score || 0 }}/8</span>
+            </div>
+            <div class="detail">
+              <span>经理</span>
+              <span>{{ fund.score_100?.details?.details?.manager?.score || 0 }}/4</span>
+            </div>
+            <div class="detail">
+              <span>流动</span>
+              <span>{{ fund.score_100?.details?.details?.liquidity?.score || 0 }}/3</span>
+            </div>
           </div>
         </div>
       </div>
