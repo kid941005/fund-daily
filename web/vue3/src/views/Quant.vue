@@ -117,11 +117,12 @@ const dynamicWeights = ref<Record<string, unknown> | null>(null)
 const weightsLoading = ref(false)
 
 onMounted(() => {
-  fetchDynamicWeights()
-  // 始终获取数据，确保页面有内容显示
+  console.log('[Quant] onMounted, timingSignals:', JSON.stringify(store.timingSignals))
+  // 直接获取数据，不管store里有没有
   store.fetchTimingSignals()
   store.fetchPortfolioOptimize()
   store.fetchRebalancing()
+  fetchDynamicWeights()
 })
 
 const getScoreClass = (score: number | undefined | null): string => {

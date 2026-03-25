@@ -202,13 +202,18 @@ export const useFundStore = defineStore('fund', {
 
     async fetchTimingSignals(): Promise<void> {
       this.loading.timing = true
+      console.log('[DEBUG] fetchTimingSignals called, current timingSignals:', JSON.stringify(this.timingSignals))
       try {
-        const res = await api.get('/quant/timing-signals') as { success?: boolean; data?: { market_timing?: Record<string, unknown> } }
-        if (res.success) {
-          this.timingSignals = res.data?.market_timing || {}
+        const res = await api.getTimingSignals() as { success?: boolean; data?: { market_timing?: Record<string, unknown> } }
+        console.log('[DEBUG] fetchTimingSignals response:', res)
+        if (res.success && res.data?.market_timing) {
+          this.timingSignals = res.data.market_timing
+          console.log('[DEBUG] timingSignals updated:', JSON.stringify(this.timingSignals))
+        } else {
+          console.log('[DEBUG] fetchTimingSignals: no data, res:', res)
         }
       } catch (e) {
-        console.error('Failed to fetch timing signals:', e)
+        console.error('[DEBUG] Failed to fetch timing signals:', e)
       } finally {
         this.loading.timing = false
       }
@@ -217,7 +222,7 @@ export const useFundStore = defineStore('fund', {
     async fetchPortfolioOptimize(): Promise<void> {
       this.loading.optimize = true
       try {
-        const res = await api.get('/quant/portfolio-optimize') as { success?: boolean; data?: { allocations?: unknown[]; fund_count?: number } }
+        const res = await api.getPortfolioOptimize() as { success?: boolean; data?: { allocations?: unknown[]; fund_count?: number } }
         if (res.success) {
           this.portfolioOptimize = {
             allocations: res.data?.allocations || [],
@@ -234,7 +239,7 @@ export const useFundStore = defineStore('fund', {
     async fetchRebalancing(): Promise<void> {
       this.loading.rebalancing = true
       try {
-        const res = await api.get('/quant/rebalancing') as { success?: boolean; data?: Record<string, unknown> }
+        const res = await api.getRebalancing() as { success?: boolean; data?: Record<string, unknown> }
         if (res.success) {
           this.rebalancing = res.data || {}
         }

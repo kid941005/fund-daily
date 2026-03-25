@@ -50,6 +50,7 @@ const api: AxiosInstance = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = getAuthToken()
+    console.log('[API Request]', config.method?.toUpperCase(), config.url, 'Token:', token ? 'yes' : 'no')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -121,6 +122,7 @@ api.interceptors.response.use(
   (response) => response.data,
   (error: AxiosError) => {
     const config = error.config as RetryConfig | undefined
+    console.log('[API Error]', error.response?.status, error.config?.url, error.message)
     const formatted: FormattedError = formatError(error)
 
     const finalError: UnifiedError = new Error(formatted.message)
@@ -216,5 +218,15 @@ export default {
   // 量化
   getDynamicWeights(): Promise<unknown> {
     return api.get('/quant/dynamic-weights')
+  },
+  getTimingSignals(): Promise<unknown> {
+    console.log('[API] getTimingSignals called')
+    return api.get('/quant/timing-signals')
+  },
+  getPortfolioOptimize(): Promise<unknown> {
+    return api.get('/quant/portfolio-optimize')
+  },
+  getRebalancing(): Promise<unknown> {
+    return api.get('/quant/rebalancing')
   }
 }
