@@ -1,5 +1,14 @@
-# Fund Daily v2.6.0 Docker Compose 配置 (FastAPI)
-# 使用 FastAPI 替代 Flask
+version: '3.8'
+
+# Fund Daily v2.6.0 Docker Compose 配置
+# 项目特性:
+# - 仅支持 PostgreSQL (SQLite 已完全移除)
+# - JWT 认证系统
+# - 多级缓存管理器 (Redis + 内存)
+# - 统一错误处理中间件
+# - 响应式 Vue 3 前端
+# - 线程安全速率限制器
+# - 健康检查和监控端点
 
 services:
   # PostgreSQL 数据库 (v15 Alpine)
@@ -36,7 +45,6 @@ services:
       - .env
     volumes:
       - redis_data:/data
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     ports:
       - "${REDIS_PORT:-6379}:6379"
     healthcheck:
@@ -48,7 +56,7 @@ services:
     networks:
       - fund-daily-network
 
-  # Vue 前端构建
+  # Node.js 前端构建服务
   frontend-builder:
     build:
       context: ./web/vue3
@@ -62,12 +70,13 @@ services:
     networks:
       - fund-daily-network
 
-  # FastAPI 后端应用
+  # Flask 后端应用 (多阶段构建)
   backend:
     build:
       context: .
-      dockerfile: Dockerfile.fastapi
-    container_name: fund-daily-backend-fastapi
+      dockerfile: Dockerfile
+      target: builder
+    container_name: fund-daily-backend
     depends_on:
       postgres:
         condition: service_healthy
@@ -93,13 +102,14 @@ services:
       - REDIS_TTL=${REDIS_TTL:-1800}
       
       # 应用配置
-      - FUND_DAILY_SECRET_KEY=${FUND_DAILY_SECRET_KEY:-dev-secret-key-change-in-production}
+      - FUND_DAILY_SECRET_KEY=${FUND_DAILY_SECRET_KEY}
       - FUND_DAILY_ENV=${FUND_DAILY_ENV:-production}
       - FUND_DAILY_SERVER_HOST=0.0.0.0
       - FUND_DAILY_SERVER_PORT=5000
+      - FUND_DAILY_SERVER_DEBUG=${FUND_DAILY_SERVER_DEBUG:-false}
       
       # JWT 配置
-      - FUND_DAILY_JWT_SECRET=${FUND_DAILY_JWT_SECRET:-jwt-secret-change-in-production}
+      - FUND_DAILY_JWT_SECRET=${FUND_DAILY_JWT_SECRET}
       - FUND_DAILY_JWT_EXPIRE_MINUTES=${FUND_DAILY_JWT_EXPIRE_MINUTES:-30}
       - FUND_DAILY_JWT_REFRESH_DAYS=${FUND_DAILY_JWT_REFRESH_DAYS:-7}
       
@@ -111,14 +121,19 @@ services:
       - FUND_DAILY_SECURE_COOKIES=${FUND_DAILY_SECURE_COOKIES:-false}
       - FUND_DAILY_SSL_VERIFY=${FUND_DAILY_SSL_VERIFY:-true}
       
+      # 监控配置
+      - PROMETHEUS_METRICS_PORT=${PROMETHEUS_METRICS_PORT:-9090}
+      
       # 日志配置
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FILE=/var/log/fund-daily/app.log
       
-      # CORS 配置
-      - CORS_ORIGINS=*
+      # 可选功能
+      - ENABLE_OCR=${ENABLE_OCR:-false}
     volumes:
       - ./dist:/app/dist:ro
       - ./data:/app/data
+      - fund-daily-logs:/var/log/fund-daily
     ports:
       - "${FUND_DAILY_SERVER_PORT:-5000}:5000"
     healthcheck:
@@ -131,7 +146,7 @@ services:
     networks:
       - fund-daily-network
 
-  # Nginx 反向代理
+  # Nginx 反向代理 (可选，生产环境推荐)
   nginx:
     image: nginx:alpine
     container_name: fund-daily-nginx
@@ -193,6 +208,8 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  fund-daily-logs:
     driver: local
   prometheus_data:
     driver: local
