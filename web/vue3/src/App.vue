@@ -1,5 +1,9 @@
 <template>
   <div id="app">
+    <!-- 路由切换加载指示器 -->
+    <div v-if="isNavigating" class="nav-loading">
+      <div class="nav-loading-spinner"></div>
+    </div>
     <header class="header">
       <div class="header-content">
         <h1>🦞 Fund Daily</h1>
@@ -197,6 +201,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useFundStore } from '@/stores/fund'
+import router from '@/router'
+
+const isNavigating = ref(false)
+router.beforeEach(() => {
+  isNavigating.value = true
+})
+router.afterEach(() => {
+  isNavigating.value = false
+})
 
 interface LoginForm {
   username: string
@@ -901,5 +914,29 @@ canvas,
   button {
     min-height: 44px; /* 提高触摸目标大小 */
   }
+}
+
+/* 路由切换加载指示器 */
+.nav-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  height: 3px;
+  background: rgba(79, 70, 229, 0.1);
+}
+
+.nav-loading-spinner {
+  height: 100%;
+  background: linear-gradient(90deg, #4f46e5, #7c3aed, #4f46e5);
+  background-size: 200% 100%;
+  animation: nav-loading 1s ease-in-out infinite;
+}
+
+@keyframes nav-loading {
+  0% { width: 0; }
+  50% { width: 70%; }
+  100% { width: 100%; }
 }
 </style>
