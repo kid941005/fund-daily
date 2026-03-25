@@ -24,13 +24,14 @@ class FetcherAdapter(IFetcher):
         if not data:
             return None
         return FundData(
-            code=data.get('fundcode', code),
+            code=data.get('code', code),
             name=data.get('name', ''),
             net_value=float(data.get('nav') or 0),
-            daily_change=float(data.get('gszzl') or 0),
-            return_1y=float(data.get('syl_1n') or 0),
-            return_6m=float(data.get('syl_6y') or 0),
-            return_3m=float(data.get('syl_3y') or 0),
+            daily_change=float(data.get('estimated_change', 0) or 0),
+            return_1y=float(data.get('return_1y') or 0),
+            return_6m=float(data.get('return_6m') or 0),
+            return_3m=float(data.get('return_3m') or 0),
+            return_1m=float(data.get('return_1m') or 0),
             risk_level=data.get('risk_level', '未知'),
             manager=data.get('manager', ''),
             scale=float(data.get('scale') or 0),

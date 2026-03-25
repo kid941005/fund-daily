@@ -183,13 +183,13 @@ def analyze_technical_indicators(fund_code: str) -> Dict:
     return {"ma5": None, "ma10": None, "ma20": None, "macd": {"trend": "neutral"}, "rsi": None, "recommendation": "hold"}
 
 
-def generate_100_score(fund_code: str, daily_change: float = 0.0) -> Dict:
+def generate_100_score(fund_code: str, daily_change: float = 0.0, use_cache: bool = True) -> Dict:
     """Generate 100-point score - 使用统一评分服务"""
     try:
         from src.services.score_service import get_score_service
         
         service = get_score_service()
-        scoring = service.calculate_score(fund_code, use_cache=True)
+        scoring = service.calculate_score(fund_code, use_cache=use_cache)
         
         # 保持向后兼容，确保返回格式一致
         return scoring

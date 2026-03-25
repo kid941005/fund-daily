@@ -44,14 +44,19 @@ class ScorerImpl(IScorer):
             # 准备评分输入数据
             # 注意：calculate_total_score需要完整的参数列表
             # 合并 fund_detail 和 fund_data，确保评分函数能获取到收益率数据
+            # 优先使用 raw_data 中的收益率数据（来自 fetch_fund_data 的 _fetch_fund_returns）
+            # 只有当 raw_data 中没有时，才尝试从 fund_detail 获取
             merged_fund_data = dict(raw_data) if raw_data else {}
             if fund_detail:
-                merged_fund_data.update({
-                    'return_1y': fund_detail.get('syl_1n'),
-                    'return_3m': fund_detail.get('syl_3y'),
-                    'return_1m': fund_detail.get('syl_1y'),
-                    'return_6m': fund_detail.get('syl_6y'),
-                })
+                # 只在 raw_data 没有数据时才从 fund_detail 补充（且值不为 None）
+                if merged_fund_data.get('return_1y') is None and fund_detail.get('syl_1n') is not None:
+                    merged_fund_data['return_1y'] = fund_detail.get('syl_1n')
+                if merged_fund_data.get('return_3m') is None and fund_detail.get('syl_3y') is not None:
+                    merged_fund_data['return_3m'] = fund_detail.get('syl_3y')
+                if merged_fund_data.get('return_1m') is None and fund_detail.get('syl_1y') is not None:
+                    merged_fund_data['return_1m'] = fund_detail.get('syl_1y')
+                if merged_fund_data.get('return_6m') is None and fund_detail.get('syl_6y') is not None:
+                    merged_fund_data['return_6m'] = fund_detail.get('syl_6y')
             
             raw_result = calculate_total_score(
                 fund_detail=fund_detail,

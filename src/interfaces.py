@@ -18,6 +18,7 @@ class FundData:
     return_1y: float
     return_6m: float
     return_3m: float
+    return_1m: float  # 近一月收益率
     risk_level: str
     manager: str
     scale: float

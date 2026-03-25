@@ -106,7 +106,7 @@ def get_fund_score(fund_code):
             )
         
         daily_change = float(fund_data.get("estimated_change", 0) or fund_data.get("gszzl", 0) or 0)
-        scoring = generate_100_score(fund_code, daily_change)
+        scoring = generate_100_score(fund_code, daily_change, use_cache=use_cache)
         
         if "error" in scoring:
             return create_error_response(
