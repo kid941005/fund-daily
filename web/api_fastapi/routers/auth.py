@@ -8,7 +8,7 @@ from typing import Optional, Tuple
 
 from fastapi import APIRouter, Depends, Request, HTTPException, Response
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from db import database_pg as db
 from src.auth import hash_password as _hash_password, verify_password as _verify_password

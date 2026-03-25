@@ -11,6 +11,7 @@ from datetime import datetime
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -66,6 +67,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# GZip compression middleware (for API responses)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 # Request logging middleware

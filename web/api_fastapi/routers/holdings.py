@@ -6,9 +6,9 @@ import re
 import logging
 from typing import Optional, List
 
-from fastapi import APIRouter, Depends, Request, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, Request, HTTPException, UploadFile, File, Query
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from db import database_pg as db
 from src.error import ErrorCode, create_error_response
@@ -76,8 +76,12 @@ class SingleHoldingRequest(BaseModel):
 
 
 @router.get("/holdings")
-async def get_holdings(request: Request):
-    """Get user holdings"""
+async def get_holdings(
+    request: Request,
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(20, ge=1, le=100, description="每页数量")
+):
+    """Get user holdings with pagination"""
     # Check rate limit
     limit_result = check_rate_limit(request, "holdings")
     if not limit_result["allowed"]:
@@ -85,7 +89,23 @@ async def get_holdings(request: Request):
     
     user_id = _auth_required(request)
     holdings = db.get_holdings(user_id)
-    return {"success": True, "holdings": holdings}
+    
+    # 分页
+    total = len(holdings)
+    start = (page - 1) * page_size
+    end = start + page_size
+    paginated = holdings[start:end]
+    
+    return {
+        "success": True,
+        "holdings": paginated,
+        "pagination": {
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": (total + page_size - 1) // page_size
+        }
+    }
 
 
 @router.post("/holdings")
