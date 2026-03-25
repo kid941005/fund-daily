@@ -1,0 +1,6 @@
+{
+  "dingtalk": {
+    "enabled": false,
+    "webhook": ""
+  }
+}

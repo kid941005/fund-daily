@@ -338,6 +338,7 @@ def parse_image_easyocr(image_path: str) -> Dict:
 
             # Extract all numeric texts from row
             numeric_items = []
+            code = None  # Initialize code to None for each row
             for item in row:
                 text = item["text"].strip()
                 # Check if it's a fund code
