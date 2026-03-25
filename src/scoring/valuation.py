@@ -9,9 +9,25 @@ def calculate_valuation_score(fund_detail: Dict, fund_data: Dict = None) -> Dict
     """
     估值面评分 (满分25分)
     基于基金收益率、规模调整
+    
+    边界情况处理:
+    - 数据缺失: 返回较低分
     """
     details = {}
     scores = []
+    
+    # 检查数据是否存在
+    has_data = fund_data and any(
+        fund_data.get(f"return_{t}") is not None
+        for t in ['1m', '3m', '6m', '1y']
+    ) if fund_data else False
+    
+    if not has_data:
+        return {
+            "score": 5,  # 较低的基础分
+            "reason": "数据获取失败",
+            "details": {"return_1y_score": 1, "return_3m_score": 1}
+        }
     
     # 1.1 近1年收益评分 (15分) - 基于实际收益率
     return_1y = 0
