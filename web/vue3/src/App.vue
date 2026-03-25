@@ -260,11 +260,7 @@ const handleLogin = async (): Promise<void> => {
   try {
     const result = await store.login(loginForm.value.username, loginForm.value.password) as { success?: boolean; message?: string }
     if (result.success) {
-      // 强制刷新一次数据并确保加载成功
-      await Promise.all([
-        store.fetchHoldings(),
-        store.fetchFunds(true)
-      ])
+      // store.login 已加载所有板块数据
       showLogin.value = false
       loginForm.value = { username: '', password: '', confirmPassword: '' }
       loadSettings()

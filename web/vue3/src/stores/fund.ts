@@ -266,8 +266,17 @@ export const useFundStore = defineStore('fund', {
       if (data.success) {
         this.user = { username: data.username || username }
         this.error = null  // 清除之前的错误提示
-        await this.fetchHoldings()
-        await this.fetchFunds(true)
+        // 并行加载所有板块数据
+        await Promise.all([
+          this.fetchHoldings(),
+          this.fetchFunds(true),
+          this.fetchAdvice(),
+          this.fetchSectors(),
+          this.fetchNews(),
+          this.fetchTimingSignals(),
+          this.fetchPortfolioOptimize(),
+          this.fetchRebalancing()
+        ])
       }
       return data
     },
