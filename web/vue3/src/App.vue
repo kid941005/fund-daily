@@ -72,7 +72,9 @@
           </div>
           <div class="modal-actions">
             <button type="button" @click="closeLogin">取消</button>
-            <button type="submit" class="primary">登录</button>
+            <button type="submit" class="primary" :disabled="loggingIn">
+              {{ loggingIn ? '登录中...' : '登录' }}
+            </button>
           </div>
           <p class="auth-switch">
             没有账号？<a href="#" @click.prevent="switchToRegister">立即注册</a>
@@ -214,6 +216,7 @@ const showSettings = ref(false)
 const settingsTab = ref<'notify' | 'security'>('notify')
 const isRegistering = ref(false)
 const loginForm = ref<LoginForm>({ username: '', password: '', confirmPassword: '' })
+const loggingIn = ref(false)
 
 const settings = reactive<Settings>({
   dingtalk: { enabled: false, webhook: '' },
@@ -252,13 +255,24 @@ const closeLogin = (): void => {
 }
 
 const handleLogin = async (): Promise<void> => {
-  const result = await store.login(loginForm.value.username, loginForm.value.password) as { success?: boolean; message?: string }
-  if (result.success) {
-    showLogin.value = false
-    loginForm.value = { username: '', password: '', confirmPassword: '' }
-    loadSettings()
-  } else {
-    alert(result.message || '登录失败')
+  if (loggingIn.value) return
+  loggingIn.value = true
+  try {
+    const result = await store.login(loginForm.value.username, loginForm.value.password) as { success?: boolean; message?: string }
+    if (result.success) {
+      // 强制刷新一次数据并确保加载成功
+      await Promise.all([
+        store.fetchHoldings(),
+        store.fetchFunds(true)
+      ])
+      showLogin.value = false
+      loginForm.value = { username: '', password: '', confirmPassword: '' }
+      loadSettings()
+    } else {
+      alert(result.message || '登录失败')
+    }
+  } finally {
+    loggingIn.value = false
   }
 }
 
