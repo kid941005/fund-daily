@@ -5,7 +5,9 @@
     <!-- 市场择时 -->
     <section class="section">
       <h2>🎯 市场择时</h2>
-      <div v-if="loading" class="loading">加载中...</div>
+      <div v-if="loading || !hasTimingData" class="loading">
+        {{ loading ? '加载中...' : '暂无数据' }}
+      </div>
       <div v-else class="timing-cards">
         <!-- 综合信号 & 信心指数 -->
         <div class="timing-main">
@@ -97,6 +99,7 @@ const rebalancing = computed(() => store.rebalancing)
 const loading = computed(() => store.loading.timing)
 const optimizeLoading = computed(() => store.loading.optimize)
 const rebalancingLoading = computed(() => store.loading.rebalancing)
+const hasTimingData = computed(() => timingSignals.value && Object.keys(timingSignals.value).length > 0)
 
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
@@ -113,9 +116,15 @@ const sortedFunds = computed<Fund[]>(() => {
 const dynamicWeights = ref<Record<string, unknown> | null>(null)
 const weightsLoading = ref(false)
 
-store.fetchTimingSignals()
-store.fetchPortfolioOptimize()
-store.fetchRebalancing()
+onMounted(() => {
+  fetchDynamicWeights()
+  // 如果store没有数据则请求，有数据则直接使用（login已加载）
+  if (!store.timingSignals || Object.keys(store.timingSignals).length === 0) {
+    store.fetchTimingSignals()
+    store.fetchPortfolioOptimize()
+    store.fetchRebalancing()
+  }
+})
 
 const getScoreClass = (score: number | undefined | null): string => {
   if (!score) return ''
@@ -145,6 +154,12 @@ async function fetchDynamicWeights(): Promise<void> {
 
 onMounted(() => {
   fetchDynamicWeights()
+  // 如果store没有数据则请求，有数据则直接使用（login已加载）
+  if (!store.timingSignals || Object.keys(store.timingSignals).length === 0) {
+    store.fetchTimingSignals()
+    store.fetchPortfolioOptimize()
+    store.fetchRebalancing()
+  }
 })
 
 function getSignalClass(signal: string): string {
