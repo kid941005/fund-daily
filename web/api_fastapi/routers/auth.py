@@ -1,0 +1,347 @@
+"""
+Authentication Router
+"""
+
+import hashlib
+import logging
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Request, HTTPException, Response
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
+from db import database_pg as db
+from src.auth import hash_password as _hash_password, verify_password as _verify_password
+from src.jwt_auth import (
+    create_token_pair, 
+    verify_access_token, 
+    verify_refresh_token,
+    create_access_token,
+    create_refresh_token,
+)
+from src.error import ErrorCode
+from web.api_fastapi.deps import get_current_user, AuthenticatedUser
+from web.api_fastapi.middleware.rate_limiter import check_rate_limit
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/api", tags=["认证"])
+
+
+# Request/Response Models
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    email: Optional[str] = None
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: Optional[str] = None
+
+
+def _generate_user_id():
+    """Generate user ID"""
+    import uuid
+    return hashlib.md5(str(uuid.uuid4()).encode()).hexdigest()[:16]
+
+
+@router.post("/login")
+async def login(
+    request: Request,
+    response: Response,
+    data: LoginRequest
+):
+    """User login - supports both session and JWT"""
+    # Check rate limit
+    limit_result = check_rate_limit(request, "auth")
+    if not limit_result["allowed"]:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "success": False,
+                "error": f"请求过于频繁，请等待{limit_result['retry_after']}秒后重试",
+                "limit": limit_result["limit"],
+                "remaining": limit_result["remaining"],
+                "reset": limit_result["reset"],
+                "retry_after": limit_result["retry_after"],
+            }
+        )
+    
+    username = data.username.strip()
+    password = data.password
+    
+    if not username or not password:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "用户名和密码不能为空"}
+        )
+    
+    try:
+        user = db.verify_user(username, password)
+        if not user:
+            return JSONResponse(
+                status_code=401,
+                content={"success": False, "error": "用户名或密码错误"}
+            )
+        
+        # Generate JWT tokens
+        tokens = create_token_pair(user["user_id"], user["username"])
+        
+        # Set session cookie (for backward compatibility)
+        response.set_cookie(
+            key="session",
+            value=user["user_id"],
+            httponly=True,
+            samesite="Lax",
+            max_age=60 * 60 * 24 * 7
+        )
+        
+        return {
+            "success": True,
+            "message": "登录成功",
+            "username": user["username"],
+            **tokens
+        }
+    except Exception as e:
+        logger.error(f"Login failed: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": f"登录失败: {str(e)}"}
+        )
+
+
+@router.post("/logout")
+async def logout(request: Request, response: Response):
+    """User logout - clear session"""
+    response.delete_cookie("session")
+    return {"success": True, "message": "登出成功"}
+
+
+@router.get("/check-login")
+async def check_login(request: Request):
+    """Check login status - supports both session and JWT"""
+    # Try JWT first
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+        is_valid, payload, error = verify_access_token(token)
+        if is_valid:
+            return {
+                "success": True,
+                "logged_in": True,
+                "user_id": payload.get("sub"),
+                "username": payload.get("username"),
+                "auth_method": "jwt"
+            }
+    
+    # Fallback to session
+    user_id = request.cookies.get("session")
+    if user_id:
+        user = db.get_user_by_id(user_id)
+        if user:
+            return {
+                "success": True,
+                "logged_in": True,
+                "user_id": user_id,
+                "username": user.get("username"),
+                "auth_method": "session"
+            }
+    
+    return {"success": True, "logged_in": False}
+
+
+@router.post("/register")
+async def register(
+    request: Request,
+    response: Response,
+    data: RegisterRequest
+):
+    """User registration"""
+    # Check rate limit
+    limit_result = check_rate_limit(request, "auth")
+    if not limit_result["allowed"]:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "success": False,
+                "error": f"请求过于频繁，请等待{limit_result['retry_after']}秒后重试"
+            }
+        )
+    
+    username = data.username.strip()
+    password = data.password
+    
+    if not username or not password:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "用户名和密码不能为空"}
+        )
+    
+    if len(password) < 6:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "密码长度至少6位"}
+        )
+    
+    try:
+        # Check if username exists
+        existing = db.get_user_by_username(username)
+        if existing:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "error": "用户名已存在"}
+            )
+        
+        # Create new user
+        user_id = _generate_user_id()
+        password_hash = _hash_password(password)
+        db.create_user(user_id, username, password_hash)
+        
+        # Generate tokens
+        tokens = create_token_pair(user_id, username)
+        
+        # Set session cookie
+        response.set_cookie(
+            key="session",
+            value=user_id,
+            httponly=True,
+            samesite="Lax",
+            max_age=60 * 60 * 24 * 7
+        )
+        
+        return {
+            "success": True,
+            "message": "注册成功",
+            "user_id": user_id,
+            "username": username,
+            **tokens
+        }
+    except Exception as e:
+        logger.error(f"Registration failed: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": f"注册失败: {str(e)}"}
+        )
+
+
+@router.post("/refresh")
+async def refresh_token(request: Request, data: RefreshTokenRequest):
+    """Refresh access token using refresh token"""
+    refresh_token_val = data.refresh_token
+    
+    if not refresh_token_val:
+        # Try to get from cookie
+        refresh_token_val = request.cookies.get("refresh_token")
+    
+    if not refresh_token_val:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "缺少 refresh_token"}
+        )
+    
+    is_valid, payload, error = verify_refresh_token(refresh_token_val)
+    
+    if not is_valid:
+        return JSONResponse(
+            status_code=401,
+            content={"success": False, "error": error or "refresh_token 无效"}
+        )
+    
+    # Create new access token
+    new_access_token = create_access_token(
+        payload.get("sub"), 
+        payload.get("username")
+    )
+    
+    return {
+        "success": True,
+        "access_token": new_access_token,
+        "token_type": "Bearer",
+        "expires_in": 60 * 60  # 1 hour
+    }
+
+
+@router.post("/password")
+async def change_password(
+    request: Request,
+    data: ChangePasswordRequest,
+    current_user: dict = Depends(lambda request: _get_user_from_request(request))
+):
+    """Change user password"""
+    old_password = data.old_password
+    new_password = data.new_password
+    
+    # Get user_id from request (JWT or session)
+    user_id = _get_user_from_request(request)
+    
+    if not user_id:
+        return JSONResponse(
+            status_code=401,
+            content={"success": False, "error": "请先登录"}
+        )
+    
+    if not old_password or not new_password:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "密码不能为空"}
+        )
+    
+    if len(new_password) < 6:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "新密码长度至少6位"}
+        )
+    
+    try:
+        # Verify old password
+        user = db.get_user_by_id(user_id)
+        if not user:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "error": "用户不存在"}
+            )
+        
+        if not _verify_password(old_password, user["password"]):
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "error": "原密码错误"}
+            )
+        
+        # Update password
+        new_hash = _hash_password(new_password)
+        db.update_user_password(user_id, new_hash)
+        
+        return {
+            "success": True,
+            "message": "密码修改成功，请重新登录"
+        }
+    except Exception as e:
+        logger.error(f"Password change failed: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": f"修改密码失败: {str(e)}"}
+        )
+
+
+def _get_user_from_request(request: Request) -> Optional[str]:
+    """Extract user_id from request (JWT or session)"""
+    # Try JWT first
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+        is_valid, payload, error = verify_access_token(token)
+        if is_valid:
+            return payload.get("sub")
+    
+    # Fallback to session
+    return request.cookies.get("session")

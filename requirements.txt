@@ -12,5 +12,13 @@ redis>=4.5.0
 prometheus-client>=0.19.0  # For metrics collection
 psutil>=5.9.0  # For system metrics in health checks
 
+# FastAPI (for migration)
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+python-multipart>=0.0.6
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+pydantic>=2.0.0
+
 # Optional: OCR functionality
 # pip install easyocr  # ~2GB, includes PyTorch
