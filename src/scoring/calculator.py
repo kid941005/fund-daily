@@ -28,13 +28,14 @@ def calculate_total_score(
     fund_scale: float,
     daily_change: float,
     fund_data: Dict = None,
-    fund_code: str = ""
+    fund_code: str = "",
+    use_cache: bool = True
 ) -> Dict:
     """
     计算基金综合评分（100分制）
     """
-    # 尝试从缓存获取
-    if fund_code:
+    # 尝试从缓存获取（仅当 use_cache=True 时）
+    if use_cache and fund_code:
         cached = _get_cached_score(fund_code)
         if cached:
             logger.info(f"Using cached score for {fund_code}")

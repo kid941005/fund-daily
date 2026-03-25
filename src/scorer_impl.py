@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class ScorerImpl(IScorer):
     """评分器实现类"""
     
-    def calculate_score(self, fund_data: Union[FundData, Dict], market_data: MarketData) -> ScoreResult:
+    def calculate_score(self, fund_data: Union[FundData, Dict], market_data: MarketData, use_cache: bool = True) -> ScoreResult:
         """计算基金评分"""
         try:
             # 兼容 dict 和 FundData 对象
@@ -71,7 +71,8 @@ class ScorerImpl(IScorer):
                 fund_scale=10.0,  # 默认10亿
                 daily_change=daily_change,
                 fund_data=merged_fund_data,
-                fund_code=fund_code  # 用于缓存
+                fund_code=fund_code,  # 用于缓存
+                use_cache=use_cache  # 传递缓存参数
             )
             
             # 转换为ScoreResult

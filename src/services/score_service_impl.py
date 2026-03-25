@@ -60,8 +60,8 @@ class ScoreServiceImpl(IScoreService):
             # 获取市场数据
             market_data = self._get_market_data()
             
-            # 计算评分
-            result = self.scorer.calculate_score(fund_data, market_data)
+            # 计算评分（传递 use_cache 以控制内部缓存）
+            result = self.scorer.calculate_score(fund_data, market_data, use_cache=use_cache)
             
             # 缓存结果
             if use_cache:
