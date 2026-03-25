@@ -86,16 +86,39 @@ async def login(
             content={"success": False, "error": "用户名和密码不能为空"}
         )
     
+    # 检查账户是否被锁定
+    from src.cache.redis_cache import is_account_locked, increment_login_fail_count, get_login_fail_count
+    if is_account_locked(username):
+        fail_count = get_login_fail_count(username)
+        return JSONResponse(
+            status_code=429,
+            content={
+                "success": False,
+                "error": f"登录失败次数过多，账户已锁定15分钟。请{fail_count}秒后重试。"
+            }
+        )
+    
     try:
         user = db.verify_user(username, password)
         if not user:
+            # 登录失败，增加失败次数
+            fail_count = increment_login_fail_count(username)
             return JSONResponse(
                 status_code=401,
-                content={"success": False, "error": "用户名或密码错误"}
+                content={
+                    "success": False,
+                    "error": "用户名或密码错误",
+                    "fail_count": fail_count,
+                    "remaining_attempts": max(0, 5 - fail_count)
+                }
             )
         
         # Generate JWT tokens
         tokens = create_token_pair(user["user_id"], user["username"])
+        
+        # 登录成功，重置失败次数
+        from src.cache.redis_cache import reset_login_fail_count
+        reset_login_fail_count(username)
         
         # Set session cookie (for backward compatibility)
         response.set_cookie(
@@ -122,9 +145,18 @@ async def login(
 
 @router.post("/logout")
 async def logout(request: Request, response: Response):
-    """User logout - clear session"""
+    """User logout - clear session and revoke JWT token"""
+    # 获取 token 并加入黑名单
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+        from src.cache.redis_cache import add_token_to_blacklist
+        add_token_to_blacklist(token)
+    
+    # 清除 session cookie
     response.delete_cookie("session")
-    return {"success": True, "message": "登出成功"}
+    
+    return {"success": True, "message": "登出成功，已撤销 Token"}
 
 
 @router.get("/check-login")

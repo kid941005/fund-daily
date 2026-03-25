@@ -126,6 +126,11 @@ def verify_token(token: str, expected_type: str = TokenType.ACCESS) -> Tuple[boo
         (is_valid, payload, error_message)
     """
     try:
+        # 检查 Token 黑名单
+        from src.cache.redis_cache import is_token_blacklisted
+        if is_token_blacklisted(token):
+            return False, None, "Token has been revoked"
+        
         payload = jwt.decode(
             token,
             JWT_SECRET,
@@ -195,3 +200,11 @@ def get_user_from_token(token: str) -> Tuple[bool, Optional[str], Optional[str]]
 
 
 __all__ = [
+    "create_access_token",
+    "create_refresh_token",
+    "create_token_pair",
+    "verify_access_token",
+    "verify_refresh_token",
+    "get_user_from_token",
+    "TokenType",
+]

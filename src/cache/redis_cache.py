@@ -83,6 +83,187 @@ def redis_delete(key: str) -> bool:
         return False
 
 
+# ============== Token 黑名单 ==============
+
+TOKEN_BLACKLIST_PREFIX = "token:blacklist:"
+
+
+def is_token_blacklisted(token: str) -> bool:
+    """
+    检查 Token 是否在黑名单中
+    
+    Args:
+        token: JWT token
+        
+    Returns:
+        True if token is blacklisted (should be rejected)
+    """
+    client = get_redis_client()
+    if client is None:
+        return False
+    try:
+        key = TOKEN_BLACKLIST_PREFIX + token
+        return client.exists(key) == 1
+    except Exception as e:
+        logger.error(f"检查 Token 黑名单失败: {e}")
+        return False
+
+
+def add_token_to_blacklist(token: str, expires_in: int = None) -> bool:
+    """
+    将 Token 加入黑名单
+    
+    Args:
+        token: JWT token
+        expires_in: 过期时间（秒），默认使用 JWT 的剩余有效时间
+        
+    Returns:
+        True if added successfully
+    """
+    client = get_redis_client()
+    if client is None:
+        return False
+    try:
+        key = TOKEN_BLACKLIST_PREFIX + token
+        if expires_in is None:
+            # 默认 24 小时
+            expires_in = 86400
+        client.setex(key, expires_in, "1")
+        logger.info(f"Token 已加入黑名单")
+        return True
+    except Exception as e:
+        logger.error(f"添加 Token 到黑名单失败: {e}")
+        return False
+
+
+def remove_token_from_blacklist(token: str) -> bool:
+    """
+    将 Token 从黑名单移除
+    
+    Args:
+        token: JWT token
+        
+    Returns:
+        True if removed successfully
+    """
+    client = get_redis_client()
+    if client is None:
+        return False
+    try:
+        key = TOKEN_BLACKLIST_PREFIX + token
+        client.delete(key)
+        return True
+    except Exception as e:
+        logger.error(f"从黑名单移除 Token 失败: {e}")
+        return False
+
+
+# ============== 登录失败次数限制 ==============
+
+LOGIN_FAIL_PREFIX = "login:fail:"
+
+
+def get_login_fail_count(username: str) -> int:
+    """
+    获取用户登录失败次数
+    
+    Args:
+        username: 用户名
+        
+    Returns:
+        失败次数
+    """
+    client = get_redis_client()
+    if client is None:
+        return 0
+    try:
+        key = LOGIN_FAIL_PREFIX + username
+        count = client.get(key)
+        return int(count) if count else 0
+    except Exception as e:
+        logger.error(f"获取登录失败次数失败: {e}")
+        return 0
+
+
+def increment_login_fail_count(username: str, lockout_seconds: int = 900) -> int:
+    """
+    增加登录失败次数
+    
+    Args:
+        username: 用户名
+        lockout_seconds: 锁定时间（默认15分钟）
+        
+    Returns:
+        新的失败次数
+    """
+    client = get_redis_client()
+    if client is None:
+        return 0
+    try:
+        key = LOGIN_FAIL_PREFIX + username
+        pipe = client.pipeline()
+        pipe.incr(key)
+        pipe.expire(key, lockout_seconds)
+        results = pipe.execute()
+        new_count = results[0]
+        
+        # 如果达到5次失败，额外设置锁定标记
+        if new_count >= 5:
+            lock_key = LOGIN_FAIL_PREFIX + username + ":locked"
+            client.setex(lock_key, lockout_seconds, "1")
+            logger.warning(f"用户 {username} 登录失败 {new_count} 次，账户已锁定")
+        
+        return new_count
+    except Exception as e:
+        logger.error(f"增加登录失败次数失败: {e}")
+        return 0
+
+
+def reset_login_fail_count(username: str) -> bool:
+    """
+    重置登录失败次数（登录成功后调用）
+    
+    Args:
+        username: 用户名
+        
+    Returns:
+        True if reset successfully
+    """
+    client = get_redis_client()
+    if client is None:
+        return False
+    try:
+        key = LOGIN_FAIL_PREFIX + username
+        lock_key = LOGIN_FAIL_PREFIX + username + ":locked"
+        client.delete(key)
+        client.delete(lock_key)
+        return True
+    except Exception as e:
+        logger.error(f"重置登录失败次数失败: {e}")
+        return False
+
+
+def is_account_locked(username: str) -> bool:
+    """
+    检查账户是否被锁定
+    
+    Args:
+        username: 用户名
+        
+    Returns:
+        True if locked
+    """
+    client = get_redis_client()
+    if client is None:
+        return False
+    try:
+        key = LOGIN_FAIL_PREFIX + username + ":locked"
+        return client.exists(key) == 1
+    except Exception as e:
+        logger.error(f"检查账户锁定状态失败: {e}")
+        return False
+
+
 def redis_clear() -> bool:
     """清空 Redis 缓存"""
     client = get_redis_client()
