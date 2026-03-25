@@ -50,7 +50,7 @@ def get_funds():
     def process_fund(fund_code):
         data = fetch_fund_data(fund_code, use_cache=use_cache)
         if not data.get("error"):
-            return analyze_fund(data)
+            return analyze_fund(data, use_cache=use_cache)
         return None
     
     funds_data = []

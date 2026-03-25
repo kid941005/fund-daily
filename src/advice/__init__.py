@@ -21,8 +21,13 @@ from src.scoring.utils import normalize_returns
 
 
 
-def analyze_fund(fund_data: Dict) -> Dict:
-    """Analyze fund data"""
+def analyze_fund(fund_data: Dict, use_cache: bool = True) -> Dict:
+    """Analyze fund data
+    
+    Args:
+        fund_data: Fund data dictionary
+        use_cache: Whether to use cache for scoring (default True)
+    """
     if "error" in fund_data:
         return {"error": fund_data["error"]}
     if not fund_data.get("code"):
@@ -53,7 +58,7 @@ def analyze_fund(fund_data: Dict) -> Dict:
     score_100 = {}
     try:
         from . import generate_100_score
-        score_100 = generate_100_score(fund_code, estimated_change) or {}
+        score_100 = generate_100_score(fund_code, estimated_change, use_cache=use_cache) or {}
     except Exception as e:
         logger.error(f"Error generating score for {fund_code}: {e}")
 
