@@ -265,6 +265,7 @@ export const useFundStore = defineStore('fund', {
       const data = await api.login(username, password)
       if (data.success) {
         this.user = { username: data.username || username }
+        this.error = null  // 清除之前的错误提示
         await this.fetchHoldings()
         await this.fetchFunds(true)
       }
@@ -272,9 +273,17 @@ export const useFundStore = defineStore('fund', {
     },
 
     async logout(): Promise<void> {
-      await api.logout()
+      try {
+        await api.logout()
+      } catch (e) {
+        console.error('Logout failed:', e)
+      }
       this.user = null
+      this.error = null
       this.holdings = []
+      this.timingSignals = {}
+      this.portfolioOptimize = {}
+      this.rebalancing = {}
     },
 
     async saveHoldings(funds: unknown[]): Promise<void> {

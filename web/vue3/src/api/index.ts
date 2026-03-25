@@ -190,5 +190,10 @@ export default {
 
   getAnalysis(): Promise<AnalysisResponse> {
     return api.get('/analysis/portfolio')
+  },
+
+  // 量化
+  getDynamicWeights(): Promise<unknown> {
+    return api.get('/quant/dynamic-weights')
   }
 }

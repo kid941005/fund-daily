@@ -105,7 +105,7 @@ def get_fund_score(fund_code):
                 http_status=500
             )
         
-        daily_change = float(fund_data.get("gszzl", 0) or 0)
+        daily_change = float(fund_data.get("estimated_change", 0) or fund_data.get("gszzl", 0) or 0)
         scoring = generate_100_score(fund_code, daily_change)
         
         if "error" in scoring:

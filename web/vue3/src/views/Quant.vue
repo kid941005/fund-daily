@@ -86,7 +86,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useFundStore } from '@/stores/fund'
-import axios from 'axios'
+import api from '@/api'
 import type { Fund, PortfolioOptimize, Allocation } from '@/types/api'
 
 const store = useFundStore()
@@ -132,7 +132,7 @@ const toggleSortOrder = (): void => {
 async function fetchDynamicWeights(): Promise<void> {
   weightsLoading.value = true
   try {
-    const res = await axios.get('/api/quant/dynamic-weights')
+    const res = await api.getDynamicWeights()
     if (res.data.success) {
       dynamicWeights.value = res.data.data
     }

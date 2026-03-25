@@ -15,13 +15,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 def mock_fund_data():
     """Mock fund data from East Money API"""
     return {
-        "fundcode": "000001",
+        "code": "000001",
         "name": "华夏成长混合",
         "jzrq": "2026-03-11",
-        "dwjz": "1.1080",
-        "gsz": "1.1003",
-        "gszzl": "-0.69",
-        "gztime": "2026-03-12 15:00"
+        "nav": 1.1080,
+        "estimated_nav": 1.1003,
+        "estimated_change": -0.69,
+        "estimated_change_percent": -0.69,
+        "update_time": "2026-03-12 15:00",
+        "source": "eastmoney"
     }
 
 
@@ -29,13 +31,15 @@ def mock_fund_data():
 def mock_fund_data_positive():
     """Mock fund data with positive change"""
     return {
-        "fundcode": "110022",
+        "code": "110022",
         "name": "易方达消费行业股票",
         "jzrq": "2026-03-11",
-        "dwjz": "3.2430",
-        "gsz": "3.2835",
-        "gszzl": "1.25",
-        "gztime": "2026-03-12 15:00"
+        "nav": 3.2430,
+        "estimated_nav": 3.2835,
+        "estimated_change": 1.25,
+        "estimated_change_percent": 1.25,
+        "update_time": "2026-03-12 15:00",
+        "source": "eastmoney"
     }
 
 

@@ -140,7 +140,9 @@
         </div>
         <div class="modal-actions">
           <button class="btn-secondary" @click="showClearConfirm = false">取消</button>
-          <button class="btn-danger" @click="clearAllHoldings">确认清仓</button>
+          <button class="btn-danger" :disabled="clearing" @click="clearAllHoldings">
+            {{ clearing ? '清空中...' : '确认清仓' }}
+          </button>
         </div>
       </div>
     </div>
@@ -156,6 +158,7 @@ const store = useFundStore()
 
 const showImport = ref(false)
 const showClearConfirm = ref(false)
+const clearing = ref(false)
 const importTab = ref<'ocr' | 'text'>('ocr')
 const ocrLoading = ref(false)
 const ocrResult = ref<Array<{ code: string; amount: number }>>([])
@@ -241,11 +244,15 @@ const confirmClearAll = (): void => {
 }
 
 const clearAllHoldings = async (): Promise<void> => {
+  if (clearing.value) return
+  clearing.value = true
   try {
     await store.clearHoldings()
     showClearConfirm.value = false
   } catch (error) {
     console.error('清仓失败:', error)
+  } finally {
+    clearing.value = false
   }
 }
 </script>

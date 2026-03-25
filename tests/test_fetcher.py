@@ -119,7 +119,7 @@ class TestFetchMarketNews:
     @patch('src.fetcher.market_data.fetcher._make_request')
     def test_fetch_market_news_success(self, mock_request):
         """Test successful news fetch"""
-        mock_request.return_value = '{"news":[{"title":"测试新闻","showtime":"2026-03-12","source":"东方财富","digest":"摘要"}]}'
+        mock_request.return_value = 'var ajaxResult={"LivesList":[{"title":"测试新闻","showtime":"2026-03-12","source":"东方财富","digest":"摘要"}]}'
 
         result = fetch_market_news(5)
 
@@ -138,5 +138,5 @@ class TestFetchHotSectors:
         result = fetch_hot_sectors(10)
 
         assert len(result) == 2
-        assert result[0]["f14"] == "新能源"
-        assert result[0]["f3"] == 2.5
+        assert result[0]["name"] == "新能源"
+        assert result[0]["change"] == 2.5

@@ -18,40 +18,42 @@ from ..analyzer import calculate_risk_metrics, get_market_sentiment, get_commodi
 from src.scoring.utils import normalize_returns
 
 # 保留原有函数以保持兼容性
-from .generate import generate_advice as _generate_advice_old
+
 
 
 def analyze_fund(fund_data: Dict) -> Dict:
     """Analyze fund data"""
     if "error" in fund_data:
         return {"error": fund_data["error"]}
-    if not fund_data.get("fundcode"):
+    if not fund_data.get("code"):
         return {"error": "No fund data available"}
 
-    gszzl = float(fund_data.get("gszzl", 0))
-    trend = "up" if gszzl > 0 else "down" if gszzl < 0 else "flat"
+    # 使用 fetch_fund_data 返回的标准化字段名
+    fund_code = fund_data.get("code", "")
+    name = fund_data.get("name", "Unknown")
+    nav = fund_data.get("nav", 0) or fund_data.get("dwjz", "N/A")
+    estimated_change = float(fund_data.get("estimated_change", 0) or fund_data.get("estimated_change_percent", 0) or fund_data.get("gszzl", 0))
+    estimated_nav = fund_data.get("estimated_nav", "N/A")
+
+    trend = "up" if estimated_change > 0 else "down" if estimated_change < 0 else "flat"
 
     # 生成 summary
-    name = fund_data.get("name", "Unknown")
-    nav = fund_data.get("dwjz", "N/A")
-    if gszzl > 3:
-        summary = f"🚀 {name} 大涨 {gszzl}%，净值 {nav}"
-    elif gszzl > 1:
-        summary = f"📈 {name} 上涨 {gszzl}%，净值 {nav}"
-    elif gszzl > -1:
-        summary = f"➖ {name} 平盘 {gszzl}%，净值 {nav}"
-    elif gszzl > -3:
-        summary = f"📉 {name} 下跌 {gszzl}%，净值 {nav}"
+    if estimated_change > 3:
+        summary = f"🚀 {name} 大涨 {estimated_change}%，净值 {nav}"
+    elif estimated_change > 1:
+        summary = f"📈 {name} 上涨 {estimated_change}%，净值 {nav}"
+    elif estimated_change > -1:
+        summary = f"➖ {name} 平盘 {estimated_change}%，净值 {nav}"
+    elif estimated_change > -3:
+        summary = f"📉 {name} 下跌 {estimated_change}%，净值 {nav}"
     else:
-        summary = f"🔻 {name} 大跌 {gszzl}%，净值 {nav}"
-
-    fund_code = fund_data.get("fundcode")
+        summary = f"🔻 {name} 大跌 {estimated_change}%，净值 {nav}"
 
     # 生成100分制评分
     score_100 = {}
     try:
         from . import generate_100_score
-        score_100 = generate_100_score(fund_code, gszzl) or {}
+        score_100 = generate_100_score(fund_code, estimated_change) or {}
     except Exception as e:
         logger.error(f"Error generating score for {fund_code}: {e}")
 
@@ -59,9 +61,9 @@ def analyze_fund(fund_data: Dict) -> Dict:
         "fund_code": fund_code,
         "fund_name": name,
         "nav": nav,
-        "estimate_nav": fund_data.get("gsz"),
-        "daily_change": gszzl,
-        "date": fund_data.get("jzrq"),
+        "estimate_nav": estimated_nav,
+        "daily_change": estimated_change,
+        "date": fund_data.get("update_time"),
         "trend": trend,
         "summary": summary,
         "score_100": score_100,
@@ -96,10 +98,10 @@ def get_fund_detail_info(code: str, use_cache: bool = True) -> Dict:
         return {
             "fund_code": code,
             "fund_name": fund_data.get("name", ""),
-            "nav": fund_data.get("dwjz"),
-            "estimate_nav": fund_data.get("gsz"),
-            "daily_change": fund_data.get("gszzl"),
-            "date": fund_data.get("jzrq"),
+            "nav": fund_data.get("nav"),
+            "estimate_nav": fund_data.get("estimated_nav"),
+            "daily_change": fund_data.get("estimated_change"),
+            "date": fund_data.get("update_time"),
             "return_1w": detail_data.get("syl_1z"),
             "return_1m": detail_data.get("syl_1y"),
             "return_3m": detail_data.get("syl_3y"),
@@ -200,7 +202,7 @@ def format_100_score_report(fund_code: str) -> str:
     """Format 100 score report"""
     fund_data = fetch_fund_data(fund_code)
     fund_name = fund_data.get("name", fund_code)
-    daily_change = float(fund_data.get("gszzl", 0) or 0)
+    daily_change = float(fund_data.get("estimated_change", 0) or fund_data.get("estimated_change_percent", 0) or 0)
 
     scoring = generate_100_score(fund_code, daily_change)
 

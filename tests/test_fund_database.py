@@ -286,6 +286,7 @@ class TestFundServiceWithDatabase:
         from src.services.fund_service import FundService
         return FundService()
     
+    @pytest.mark.integration
     def test_service_uses_enhanced_fetcher(self, fund_service):
         """Test that FundService uses enhanced fetcher when available"""
         from src.fetcher import HAS_ENHANCED_FETCHER
@@ -298,6 +299,7 @@ class TestFundServiceWithDatabase:
             assert 'fund_name' in result
             assert 'fund_code' in result
     
+    @pytest.mark.integration
     def test_service_cache_behavior(self, fund_service):
         """Test FundService cache behavior with database"""
         # 清除缓存以确保从数据库获取

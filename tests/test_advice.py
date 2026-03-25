@@ -49,7 +49,7 @@ class TestAnalyzeFund:
     
     def test_generate_summary_positive(self):
         """Test summary generation for positive change"""
-        fund_data = {"fundcode": "000001", "name": "测试基金", "dwjz": "1.5", "gszzl": "3.5"}
+        fund_data = {"code": "000001", "name": "测试基金", "nav": 1.5, "estimated_change": 3.5}
         
         result = analyze_fund(fund_data)
         
@@ -57,7 +57,7 @@ class TestAnalyzeFund:
     
     def test_generate_summary_negative(self):
         """Test summary generation for negative change"""
-        fund_data = {"fundcode": "000001", "name": "测试基金", "dwjz": "1.5", "gszzl": "-3.5"}
+        fund_data = {"code": "000001", "name": "测试基金", "nav": 1.5, "estimated_change": -3.5}
         
         result = analyze_fund(fund_data)
         
@@ -71,11 +71,11 @@ class TestGenerateDailyReport:
     def test_generate_report(self, mock_fetch):
         """Test report generation"""
         mock_fetch.return_value = {
-            "fundcode": "000001",
+            "code": "000001",
             "name": "测试基金",
-            "dwjz": "1.0",
-            "gsz": "1.01",
-            "gszzl": "1.0"
+            "nav": 1.0,
+            "estimated_nav": 1.01,
+            "estimated_change": 1.0
         }
 
         result = generate_daily_report(["000001"])
@@ -89,11 +89,11 @@ class TestGenerateDailyReport:
     def test_report_summary_counts(self, mock_fetch):
         """Test report summary counts"""
         mock_fetch.return_value = {
-            "fundcode": "000001",
+            "code": "000001",
             "name": "测试基金",
-            "dwjz": "1.0",
-            "gsz": "1.01",
-            "gszzl": "1.0"
+            "nav": 1.0,
+            "estimated_nav": 1.01,
+            "estimated_change": 1.0
         }
         
         result = generate_daily_report(["000001"])
@@ -250,7 +250,7 @@ class TestGetFundDetailInfo:
     def test_get_detail_success(self, mock_fetch_detail, mock_fetch_data):
         """Test successful detail fetch"""
         mock_fetch_data.return_value = {
-            "fundcode": "000001",
+            "code": "000001",
             "name": "测试基金"
         }
         mock_fetch_detail.return_value = {}

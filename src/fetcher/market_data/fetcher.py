@@ -38,11 +38,24 @@ def fetch_market_news(limit: int = 8) -> List[Dict]:
     url = "https://newsapi.eastmoney.com/kuaixun/v1/getlist_102_ajaxResult_50_1_.html"
     content = _make_request(url)
 
-    if content:
+    if content and content.strip():
         try:
-            # 解析JSON
-            data = json.loads(content)
-            news_list = data.get("news", [])[:limit]
+            # 解析JSON（东方财富返回格式：var ajaxResult={...}）
+            json_str = content.strip()
+            if json_str.startswith("var ajaxResult="):
+                json_str = json_str[len("var ajaxResult="):]
+            data = json.loads(json_str)
+            raw_list = data.get("LivesList", []) or []
+            news_list = [
+                {
+                    "title": item.get("title", ""),
+                    "summary": item.get("digest", ""),
+                    "url": item.get("url_w", "") or item.get("url_m", ""),
+                    "time": item.get("showtime", ""),
+                    "source": "东方财富",
+                }
+                for item in raw_list[:limit]
+            ]
             
             # 缓存结果
             set_cache(cache_key, news_list)
@@ -51,7 +64,7 @@ def fetch_market_news(limit: int = 8) -> List[Dict]:
             logger.error(f"Failed to parse market news JSON: {e}")
             return []
     else:
-        logger.error("Failed to fetch market news")
+        logger.error("Failed to fetch market news: empty response")
         return []
 
 
@@ -98,7 +111,16 @@ def fetch_hot_sectors(limit: int = 10) -> List[Dict]:
     if content:
         try:
             data = json.loads(content)
-            sectors = data.get("data", {}).get("diff", [])[:limit]
+            raw_sectors = data.get("data", {}).get("diff", [])[:limit]
+            sectors = [
+                {
+                    "name": s.get("f14", ""),
+                    "change": s.get("f3", 0),
+                    "volume": s.get("f2", 0),
+                    "reason": s.get("f4", ""),
+                }
+                for s in raw_sectors
+            ]
             
             # 缓存结果
             set_cache(cache_key, sectors)

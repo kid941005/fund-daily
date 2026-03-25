@@ -232,14 +232,17 @@ def validate_fund_code_param(param_name: str = "code"):
         def wrapper(*args, **kwargs):
             from flask import request
             
-            code = request.args.get(param_name)
+            # URL路径参数在 request.view_args 中，查询参数在 request.args 中
+            code = request.view_args.get(param_name) if request.view_args else None
+            if not code:
+                code = request.args.get(param_name)
             if not code:
                 return jsonify({"success": False, "error": f"缺少{param_name}参数"}), 400
             
             try:
                 validated_code = validator.validate_fund_code(code, param_name)
-                # 将验证后的代码添加到kwargs
-                kwargs[f'validated_{param_name}'] = validated_code
+                # 验证后的代码直接更新到原参数
+                kwargs[param_name] = validated_code
                 return func(*args, **kwargs)
             except ValidationError as e:
                 return jsonify({"success": False, "error": str(e)}), 400
