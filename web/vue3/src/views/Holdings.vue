@@ -23,9 +23,32 @@
         </div>
       </div>
       
+      <!-- 排序按钮 -->
+      <div class="sort-controls">
+        <span class="sort-label">排序：</span>
+        <button 
+          @click="toggleSort('amount')" 
+          :class="{ active: sortKey === 'amount' }"
+        >
+          持仓金额 {{ sortKey === 'amount' ? (sortOrder === 'desc' ? '🔽' : '🔼') : '' }}
+        </button>
+        <button 
+          @click="toggleSort('daily_change')" 
+          :class="{ active: sortKey === 'daily_change' }"
+        >
+          今日涨跌 {{ sortKey === 'daily_change' ? (sortOrder === 'desc' ? '🔽' : '🔼') : '' }}
+        </button>
+        <button 
+          @click="toggleSort('profit')" 
+          :class="{ active: sortKey === 'profit' }"
+        >
+          当日收益 {{ sortKey === 'profit' ? (sortOrder === 'desc' ? '🔽' : '🔼') : '' }}
+        </button>
+      </div>
+      
       <!-- 持仓列表 -->
       <div v-if="store.holdings?.length" class="holding-list">
-        <div v-for="holding in store.holdings" :key="holding.code" class="holding-item">
+        <div v-for="holding in sortedHoldings" :key="holding.code" class="holding-item">
           <div class="holding-info">
             <span class="code">{{ holding.code }}</span>
             <span class="name">{{ holding.name || '未知基金' }}</span>
@@ -67,6 +90,9 @@
           <div class="holding-amount">
             <input type="number" v-model.number="holding.amount" @change="updateHolding(holding)" />
             <span>元</span>
+          </div>
+          <div class="holding-actions">
+            <button @click="removeHolding(holding.code)" class="btn-icon" title="删除">🗑️</button>
           </div>
         </div>
       </div>
@@ -164,6 +190,40 @@ const ocrLoading = ref(false)
 const ocrResult = ref<Array<{ code: string; amount: number }>>([])
 const importText = ref('')
 
+// 排序相关
+const sortKey = ref<'amount' | 'daily_change' | 'profit'>('amount')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+
+const sortedHoldings = computed<Holding[]>(() => {
+  const holdings = [...store.holdings]
+  const key = sortKey.value
+  const order = sortOrder.value === 'desc' ? -1 : 1
+  
+  return holdings.sort((a, b) => {
+    if (key === 'amount') {
+      return ((a.amount || 0) - (b.amount || 0)) * order
+    } else if (key === 'daily_change') {
+      const fundA = getFundData(a.code)
+      const fundB = getFundData(b.code)
+      const changeA = fundA?.daily_change ?? 0
+      const changeB = fundB?.daily_change ?? 0
+      return (changeA - changeB) * order
+    } else if (key === 'profit') {
+      return (calculateProfit(a) - calculateProfit(b)) * order
+    }
+    return 0
+  })
+})
+
+const toggleSort = (key: 'amount' | 'daily_change' | 'profit'): void => {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc'
+  } else {
+    sortKey.value = key
+    sortOrder.value = 'desc'
+  }
+}
+
 const totalAmount = computed<number>(() => {
   return store.holdings.reduce((sum, h) => sum + (h.amount || 0), 0)
 })
@@ -235,6 +295,15 @@ const confirmTextImport = async (): Promise<void> => {
 
 const updateHolding = async (_holding: Holding): Promise<void> => {
   // placeholder
+}
+
+const removeHolding = async (code: string): Promise<void> => {
+  if (!confirm('确定删除该持仓吗？')) return
+  try {
+    await store.removeHolding(code)
+  } catch (error) {
+    console.error('删除失败:', error)
+  }
 }
 
 const confirmClearAll = (): void => {
@@ -790,5 +859,59 @@ button {
   .tab-btn {
     padding: 10px;
   }
+}
+
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.sort-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.sort-controls button {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.sort-controls button:hover {
+  border-color: #4f46e5;
+  color: #4f46e5;
+}
+
+.sort-controls button.active {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: white;
+}
+
+.holding-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.btn-icon:hover {
+  background: #fee2e2;
 }
 </style>

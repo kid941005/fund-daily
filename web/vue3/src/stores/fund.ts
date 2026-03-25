@@ -297,6 +297,11 @@ export const useFundStore = defineStore('fund', {
       this.holdings = []
     },
 
+    async removeHolding(code: string): Promise<void> {
+      await api.deleteHolding(code)
+      await this.fetchHoldings()
+    },
+
     async loadAll(): Promise<void> {
       await Promise.all([
         this.fetchFunds(),
