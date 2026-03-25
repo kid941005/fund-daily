@@ -6,11 +6,63 @@ Each job class wraps a task handler with scheduling metadata.
 """
 
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Callable, TypeVar
 from datetime import datetime, timedelta
 from enum import Enum
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import traceback
 
 logger = logging.getLogger(__name__)
+
+
+T = TypeVar('T')
+
+
+def batch_process(
+    items: List[T],
+    processor: Callable[[T], Any],
+    batch_size: int = 10,
+    max_workers: int = 5,
+    progress_callback: Callable[[int, int], None] = None
+) -> Dict[str, List[Any]]:
+    """
+    分批处理任务
+    
+    Args:
+        items: 待处理的数据列表
+        processor: 处理函数
+        batch_size: 每批大小
+        max_workers: 最大并发数
+        progress_callback: 进度回调函数 (current, total)
+    
+    Returns:
+        {"success": [...], "failed": [...]}
+    """
+    results = {"success": [], "failed": []}
+    total = len(items)
+    
+    for batch_start in range(0, total, batch_size):
+        batch_end = min(batch_start + batch_size, total)
+        batch = items[batch_start:batch_end]
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_item = {executor.submit(processor, item): item for item in batch}
+            
+            for future in as_completed(future_to_item):
+                item = future_to_item[future]
+                try:
+                    result = future.result()
+                    results["success"].append(result)
+                except Exception as e:
+                    logger.warning(f"处理失败 {item}: {e}")
+                    results["failed"].append({"item": item, "error": str(e)})
+        
+        if progress_callback:
+            progress_callback(batch_end, total)
+        
+        logger.debug(f"批次完成: {batch_end}/{total}")
+    
+    return results
 
 
 class ScheduledJobType(str, Enum):
