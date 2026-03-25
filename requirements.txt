@@ -26,3 +26,4 @@ pydantic>=2.0.0
 
 # Optional: OCR functionality
 # pip install easyocr  # ~2GB, includes PyTorch
+pytest-asyncio>=0.23.0  # For async test fixtures
