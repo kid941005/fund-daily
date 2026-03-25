@@ -1,6 +1,4 @@
 # Core dependencies
-flask==3.0.0
-flask-cors==4.0.0
 requests==2.31.0
 numpy>=1.24.0  # For accurate risk calculations
 

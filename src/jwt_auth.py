@@ -176,25 +176,8 @@ def decode_token_unsafe(token: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def get_token_from_header() -> Optional[str]:
-    """
-    从 Flask 请求头中提取 Bearer token
-    
-    Returns:
-        token 字符串或 None
-    """
-    from flask import request
-    
-    auth_header = request.headers.get("Authorization", "")
-    if auth_header.startswith("Bearer "):
-        return auth_header[7:]
-    return None
 
 
-def get_token_from_cookie() -> Optional[str]:
-    """从 Cookie 中提取 JWT token"""
-    from flask import request
-    return request.cookies.get("access_token")
 
 
 def get_user_from_token(token: str) -> Tuple[bool, Optional[str], Optional[str]]:
@@ -211,91 +194,4 @@ def get_user_from_token(token: str) -> Tuple[bool, Optional[str], Optional[str]]
     return True, payload.get("sub"), None
 
 
-# ============== Flask Decorator ==============
-def jwt_required(f):
-    """
-    JWT 认证装饰器
-    支持从 Header (Authorization: Bearer xxx) 或 Cookie 获取 token
-    验证通过后将 user_id, username 注入 request
-    """
-    from functools import wraps
-    from flask import request, g
-    from flask import jsonify
-    
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        # 尝试从 header 获取 token
-        token = get_token_from_header()
-        
-        # 如果 header 没有，尝试从 cookie 获取
-        if not token:
-            token = get_token_from_cookie()
-        
-        if not token:
-            return jsonify({
-                "success": False,
-                "error": "缺少认证令牌",
-                "need_auth": True,
-                "error_code": "MISSING_TOKEN"
-            }), 401
-        
-        is_valid, payload, error = verify_access_token(token)
-        if not is_valid:
-            return jsonify({
-                "success": False,
-                "error": error or "认证失败",
-                "need_auth": True,
-                "error_code": "INVALID_TOKEN"
-            }), 401
-        
-        # 注入用户信息到 request context
-        g.user_id = payload.get("sub")
-        g.username = payload.get("username")
-        g.token_payload = payload
-        
-        return f(*args, **kwargs)
-    
-    return decorated
-
-
-def jwt_optional(f):
-    """
-    可选的 JWT 认证装饰器
-    如果提供了有效 token 则注入用户信息，否则继续执行
-    """
-    from functools import wraps
-    from flask import request, g
-    
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = get_token_from_header() or get_token_from_cookie()
-        
-        if token:
-            is_valid, payload, _ = verify_access_token(token)
-            if is_valid:
-                g.user_id = payload.get("sub")
-                g.username = payload.get("username")
-                g.token_payload = payload
-                g.is_authenticated = True
-            else:
-                g.is_authenticated = False
-        else:
-            g.is_authenticated = False
-        
-        return f(*args, **kwargs)
-    
-    return decorated
-
-
 __all__ = [
-    "create_access_token",
-    "create_refresh_token",
-    "create_token_pair",
-    "verify_access_token",
-    "verify_refresh_token",
-    "get_user_from_token",
-    "jwt_required",
-    "jwt_optional",
-    "get_token_from_header",
-    "TokenType",
-]

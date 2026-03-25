@@ -13,7 +13,6 @@ from fastapi.responses import JSONResponse
 from src.jwt_auth import (
     verify_access_token, 
     create_token_pair, 
-    get_token_from_header,
     create_access_token,
     create_refresh_token,
     verify_refresh_token,
