@@ -118,12 +118,10 @@ const weightsLoading = ref(false)
 
 onMounted(() => {
   fetchDynamicWeights()
-  // 如果store没有数据则请求，有数据则直接使用（login已加载）
-  if (!store.timingSignals || Object.keys(store.timingSignals).length === 0) {
-    store.fetchTimingSignals()
-    store.fetchPortfolioOptimize()
-    store.fetchRebalancing()
-  }
+  // 始终获取数据，确保页面有内容显示
+  store.fetchTimingSignals()
+  store.fetchPortfolioOptimize()
+  store.fetchRebalancing()
 })
 
 const getScoreClass = (score: number | undefined | null): string => {
@@ -151,16 +149,6 @@ async function fetchDynamicWeights(): Promise<void> {
     weightsLoading.value = false
   }
 }
-
-onMounted(() => {
-  fetchDynamicWeights()
-  // 如果store没有数据则请求，有数据则直接使用（login已加载）
-  if (!store.timingSignals || Object.keys(store.timingSignals).length === 0) {
-    store.fetchTimingSignals()
-    store.fetchPortfolioOptimize()
-    store.fetchRebalancing()
-  }
-})
 
 function getSignalClass(signal: string): string {
   if (signal === '买入') return 'buy'
