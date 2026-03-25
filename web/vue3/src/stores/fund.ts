@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import api from '@/api'
+import api, { setAuthToken, clearAuthToken } from '@/api'
 import { CACHE_CONFIG } from '@/constants'
 import type { Fund, Holding, Advice, Sector, NewsItem, User } from '@/types/api'
 
@@ -264,6 +264,10 @@ export const useFundStore = defineStore('fund', {
     async login(username: string, password: string): Promise<unknown> {
       const data = await api.login(username, password)
       if (data.success) {
+        // 保存 JWT token
+        if (data.access_token) {
+          setAuthToken(data.access_token)
+        }
         this.user = { username: data.username || username }
         this.error = null  // 清除之前的错误提示
         // 并行加载所有板块数据
@@ -287,6 +291,7 @@ export const useFundStore = defineStore('fund', {
       } catch (e) {
         console.error('Logout failed:', e)
       }
+      clearAuthToken()
       this.user = null
       this.error = null
       this.holdings = []

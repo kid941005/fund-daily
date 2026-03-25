@@ -11,6 +11,21 @@ import type {
   FormattedError
 } from '@/types/api'
 
+// Token 管理
+const TOKEN_KEY = 'fund_daily_token'
+
+export function setAuthToken(token: string): void {
+  localStorage.setItem(TOKEN_KEY, token)
+}
+
+export function getAuthToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY)
+}
+
+export function clearAuthToken(): void {
+  localStorage.removeItem(TOKEN_KEY)
+}
+
 // 请求配置
 const CONFIG = {
   timeout: 30000,
@@ -31,9 +46,15 @@ const api: AxiosInstance = axios.create({
   withCredentials: true
 })
 
-// 请求拦截器
+// 请求拦截器 - 添加 token
 api.interceptors.request.use(
-  (config) => config,
+  (config) => {
+    const token = getAuthToken()
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
   (error) => Promise.reject(error)
 )
 
