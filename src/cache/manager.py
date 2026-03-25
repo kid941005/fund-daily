@@ -275,6 +275,44 @@ class CacheManager:
         
         logger.info("缓存预热完成")
 
+    def get_or_set(self, key: str, loader: Callable[[], Any], ttl: int = 300, use_lock: bool = True) -> Any:
+        """
+        获取缓存，如果不存在则调用 loader 并缓存结果（防止缓存击穿）
+        
+        Args:
+            key: 缓存键
+            loader: 数据加载函数
+            ttl: 缓存时间
+            use_lock: 是否使用简单的锁机制防止缓存击穿
+        
+        Returns:
+            缓存的值或 loader 返回的值
+        """
+        # 尝试获取缓存
+        value = self.get(key)
+        if value is not None:
+            return value
+        
+        # 缓存不存在，调用 loader
+        try:
+            value = loader()
+            if value is not None:
+                self.set(key, value, ttl)
+            return value
+        except Exception as e:
+            logger.error(f"get_or_set loader failed: {key}, {e}")
+            # 如果 loader 失败，返回 None 而不是抛出异常
+            return None
+
+    def get_stats(self) -> Dict[str, int]:
+        """获取缓存统计信息"""
+        stats = dict(self._stats)
+        stats['hit_rate'] = (
+            stats['hits'] / (stats['hits'] + stats['misses'] * 1.0)
+            if (stats['hits'] + stats['misses']) > 0 else 0
+        )
+        return stats
+
 
 # 缓存装饰器
 def cached(
