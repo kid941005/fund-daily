@@ -5,8 +5,8 @@
     <!-- 市场择时 -->
     <section class="section">
       <h2>🎯 市场择时</h2>
-      <div v-if="loading || !hasTimingData" class="loading">
-        {{ loading ? '加载中...' : '暂无数据' }}
+      <div v-if="timingLoading || loading || !hasTimingData" class="loading">
+        {{ timingLoading || loading ? '加载中...' : '暂无数据' }}
       </div>
       <div v-else class="timing-cards">
         <!-- 综合信号 & 信心指数 -->
@@ -115,11 +115,24 @@ const sortedFunds = computed<Fund[]>(() => {
 
 const dynamicWeights = ref<Record<string, unknown> | null>(null)
 const weightsLoading = ref(false)
+const timingLoading = ref(false)
 
-onMounted(() => {
-  console.log('[Quant] onMounted, timingSignals:', JSON.stringify(store.timingSignals))
-  // 直接获取数据，不管store里有没有
-  store.fetchTimingSignals()
+onMounted(async () => {
+  console.log('[Quant] onMounted')
+  timingLoading.value = true
+  try {
+    const res = await api.getTimingSignals() as { success?: boolean; data?: { market_timing?: Record<string, unknown> } }
+    console.log('[Quant] timingSignals response:', res)
+    if (res.success && res.data?.market_timing) {
+      store.timingSignals = res.data.market_timing
+    }
+  } catch (e) {
+    console.error('[Quant] fetch timing signals failed:', e)
+  } finally {
+    timingLoading.value = false
+  }
+  
+  // 其他请求通过store
   store.fetchPortfolioOptimize()
   store.fetchRebalancing()
   fetchDynamicWeights()
