@@ -107,8 +107,39 @@ app.add_exception_handler(APIException, http_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
 
 
+# ---- Startup / Shutdown Events ----
+
+@app.on_event("startup")
+async def startup_event():
+    """Start the scheduler when the FastAPI app starts"""
+    # Only start scheduler if not running as a standalone scheduler service
+    if os.getenv("SCHEDULER_STANDALONE") != "true":
+        try:
+            from src.scheduler.manager import get_scheduler_manager
+            mgr = get_scheduler_manager()
+            if not mgr.is_running():
+                mgr.start()
+                logger.info("✅ [FastAPI] Scheduler started on app startup")
+        except Exception as e:
+            logger.warning(f"⚠️ [FastAPI] Failed to start scheduler on startup: {e}")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Stop the scheduler when the FastAPI app stops"""
+    if os.getenv("SCHEDULER_STANDALONE") != "true":
+        try:
+            from src.scheduler.manager import get_scheduler_manager
+            mgr = get_scheduler_manager()
+            if mgr.is_running():
+                mgr.stop()
+                logger.info("⏹️ [FastAPI] Scheduler stopped on app shutdown")
+        except Exception as e:
+            logger.warning(f"⚠️ [FastAPI] Failed to stop scheduler on shutdown: {e}")
+
+
 # Include routers
-from web.api_fastapi.routers import auth, funds, holdings, analysis, quant, system, external, health
+from web.api_fastapi.routers import auth, funds, holdings, analysis, quant, system, external, health, tasks, scheduler
 
 app.include_router(auth.router)
 app.include_router(funds.router)
@@ -118,6 +149,9 @@ app.include_router(quant.router)
 app.include_router(system.router)
 app.include_router(external.router)
 app.include_router(health.router)
+app.include_router(tasks.router)
+app.include_router(tasks.fund_router)
+app.include_router(scheduler.router)
 
 
 @app.get("/export", tags=["系统"])

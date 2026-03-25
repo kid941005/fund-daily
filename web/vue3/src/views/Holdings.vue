@@ -51,7 +51,7 @@
         <div v-for="holding in sortedHoldings" :key="holding.code" class="holding-item">
           <div class="holding-info">
             <span class="code">{{ holding.code }}</span>
-            <span class="name">{{ holding.name || '未知基金' }}</span>
+            <span class="name">{{ getFundData(holding.code)?.fund_name || '基金' + holding.code }}</span>
             
             <!-- 基金数据 - 始终显示，即使数据不全 -->
             <div class="fund-data">
