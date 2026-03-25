@@ -18,9 +18,14 @@ from .fetcher import (
 class FetcherAdapter(IFetcher):
     """Fetcher 函数模块的适配器"""
     
-    def fetch_fund_data(self, code: str) -> Optional[FundData]:
-        """获取基金数据"""
-        data = _fetch_fund_data(code)
+    def fetch_fund_data(self, code: str, use_cache: bool = True) -> Optional[FundData]:
+        """获取基金数据
+        
+        Args:
+            code: 基金代码
+            use_cache: 是否使用缓存，默认 True
+        """
+        data = _fetch_fund_data(code, use_cache=use_cache)
         if not data:
             return None
         return FundData(

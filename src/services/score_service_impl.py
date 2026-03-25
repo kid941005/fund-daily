@@ -47,8 +47,8 @@ class ScoreServiceImpl(IScoreService):
                 return ScoreResult(**cached_result)
         
         try:
-            # 获取数据
-            fund_data = self.fetcher.fetch_fund_data(fund_code)
+            # 获取数据（传递 use_cache 以控制缓存）
+            fund_data = self.fetcher.fetch_fund_data(fund_code, use_cache=use_cache)
             if not fund_data:
                 return ScoreResult(
                     total_score=0.0,
