@@ -57,16 +57,16 @@ def _validate_fund_code(code: str) -> str:
 
 # Request Models
 class HoldingItem(BaseModel):
-    code: Optional[str] = None
-    fund_code: Optional[str] = None
-    amount: float = 0
-    cost_basis: Optional[float] = None
-    purchase_date: Optional[str] = None
+    code: Optional[str] = Field(default=None, max_length=20)
+    fund_code: Optional[str] = Field(default=None, max_length=20)
+    amount: float = Field(default=0, ge=0, le=1000000000)  # 最大10亿
+    cost_basis: Optional[float] = Field(default=None, ge=0)
+    purchase_date: Optional[str] = Field(default=None, max_length=20)
 
 
 class BatchHoldingsRequest(BaseModel):
-    funds: List[HoldingItem]
-    action: Optional[str] = "add"
+    funds: List[HoldingItem] = Field(..., min_length=1, max_length=100)
+    action: Optional[str] = Field(default="add", max_length=20)
 
 
 class SingleHoldingRequest(BaseModel):

@@ -30,23 +30,23 @@ router = APIRouter(prefix="/api", tags=["认证"])
 
 # Request/Response Models
 class LoginRequest(BaseModel):
-    username: str
-    password: str
+    username: str = Field(..., min_length=1, max_length=50)
+    password: str = Field(..., min_length=1, max_length=128)
 
 
 class RegisterRequest(BaseModel):
-    username: str
-    password: str
-    email: Optional[str] = None
+    username: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(..., min_length=8, max_length=128)
+    email: Optional[str] = Field(default=None, max_length=100)
 
 
 class ChangePasswordRequest(BaseModel):
-    old_password: str
-    new_password: str
+    old_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8, max_length=128)
 
 
 class RefreshTokenRequest(BaseModel):
-    refresh_token: Optional[str] = None
+    refresh_token: Optional[str] = Field(default=None, max_length=500)
 
 
 def validate_password_strength(password: str) -> Tuple[bool, str]:
