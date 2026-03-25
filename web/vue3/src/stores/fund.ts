@@ -203,10 +203,9 @@ export const useFundStore = defineStore('fund', {
     async fetchTimingSignals(): Promise<void> {
       this.loading.timing = true
       try {
-        const res = await fetch('/api/quant/timing-signals')
-        const data = await res.json()
-        if (data.success) {
-          this.timingSignals = data.data?.market_timing || {}
+        const res = await api.get('/quant/timing-signals') as { success?: boolean; data?: { market_timing?: Record<string, unknown> } }
+        if (res.success) {
+          this.timingSignals = res.data?.market_timing || {}
         }
       } catch (e) {
         console.error('Failed to fetch timing signals:', e)
@@ -218,12 +217,11 @@ export const useFundStore = defineStore('fund', {
     async fetchPortfolioOptimize(): Promise<void> {
       this.loading.optimize = true
       try {
-        const res = await fetch('/api/quant/portfolio-optimize')
-        const data = await res.json()
-        if (data.success) {
+        const res = await api.get('/quant/portfolio-optimize') as { success?: boolean; data?: { allocations?: unknown[]; fund_count?: number } }
+        if (res.success) {
           this.portfolioOptimize = {
-            allocations: data.data?.allocations || [],
-            fund_count: data.data?.fund_count || 0
+            allocations: res.data?.allocations || [],
+            fund_count: res.data?.fund_count || 0
           }
         }
       } catch (e) {
@@ -236,10 +234,9 @@ export const useFundStore = defineStore('fund', {
     async fetchRebalancing(): Promise<void> {
       this.loading.rebalancing = true
       try {
-        const res = await fetch('/api/quant/rebalancing')
-        const data = await res.json()
-        if (data.success) {
-          this.rebalancing = data.data || {}
+        const res = await api.get('/quant/rebalancing') as { success?: boolean; data?: Record<string, unknown> }
+        if (res.success) {
+          this.rebalancing = res.data || {}
         }
       } catch (e) {
         console.error('Failed to fetch rebalancing:', e)
