@@ -11,8 +11,8 @@ __pycache__
 *.so
 *.egg
 *.egg-info
-dist/
-build/
+# dist/ # 不能忽略！web/vue3/dist/ 需要被 Docker 访问
+# build/
 
 # Virtual environments
 venv/
