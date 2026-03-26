@@ -3,7 +3,7 @@
 > 每日基金分析系统 - 智能持仓管理与量化分析
 
 [![GitHub Stars](https://img.shields.io/github/stars/kid941005/fund-daily?style=flat)](https://github.com/kid941005/fund-daily)
-[![Version](https://img.shields.io/badge/version-2.6.3-blue)](https://github.com/kid941005/fund-daily/releases/tag/v2.6.3)
+[![Version](https://img.shields.io/badge/version-2.7.2-blue)](https://github.com/kid941005/fund-daily/releases/tag/v2.7.2)
 [![Python](https://img.shields.io/badge/python-3.11+-green)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.100+-blue)](https://fastapi.tiangolo.com/)
 [![Vue](https://img.shields.io/badge/vue-3.3-green)](https://vuejs.org/)
@@ -61,44 +61,60 @@ fund-daily/
 ├── src/                        # 核心业务模块
 │   ├── fetcher/              # 数据获取层
 │   │   ├── fund_basic/       # 基金基础数据 + 历史净值
+│   │   ├── fund_advanced/    # 增强数据获取
 │   │   ├── market_data/      # 市场数据（板块/情绪/新闻）
-│   │   └── cache/           # 缓存管理
+│   │   └── cache/           # 缓存管理 (Redis + LRU)
 │   ├── scoring/             # 评分系统
 │   │   ├── calculator.py    # 评分计算器
 │   │   ├── config.py        # 权重配置
 │   │   ├── performance.py   # 业绩评分
-│   │   ├── valuation.py     # 估值评分
+│   │   ├── valuation.py      # 估值评分
+│   │   ├── risk.py          # 风险评分
 │   │   ├── momentum.py      # 动量评分
 │   │   └── ...
 │   ├── services/            # 业务服务层
 │   │   ├── score_service.py # 评分服务
+│   │   ├── fund_service.py  # 基金服务
 │   │   └── quant_service.py # 量化服务
-│   ├── scheduler/           # 定时任务调度
+│   ├── scheduler/           # 定时任务调度 (APScheduler)
 │   ├── advice/             # 投资建议生成
-│   ├── interfaces.py        # 接口定义（依赖注入）
-│   └── config.py           # 配置管理
+│   ├── analyzer/            # 市场分析
+│   ├── auth.py              # 认证模块
+│   ├── jwt_auth.py         # JWT 认证
+│   └── config.py           # 配置管理 (dataclass)
 │
 ├── web/                      # Web 层
-│   ├── api_fastapi/        # FastAPI 应用
+│   ├── api_fastapi/        # FastAPI 应用 (主)
 │   │   ├── main.py         # FastAPI 主应用
-│   │   └── routers/        # API 路由
-│   ├── app.py              # Flask 应用（向后兼容）
-│   └── vue3/              # Vue 3 前端源码
+│   │   ├── routers/        # API 路由
+│   │   ├── middleware/     # 中间件 (限流等)
+│   │   └── deps.py         # 依赖注入
+│   └── vue3/               # Vue 3 前端源码
 │       └── src/
 │           ├── views/       # 页面组件
-│           ├── stores/      # Pinia 状态管理
-│           └── api/        # API 调用
+│           ├── stores/       # Pinia 状态管理
+│           ├── api/         # API 调用
+│           └── types/       # TypeScript 类型
 │
 ├── db/                       # 数据层
+│   ├── pool.py             # 连接池管理
 │   ├── users.py            # 用户 CRUD
 │   ├── holdings.py         # 持仓 CRUD
 │   └── fund_ops.py         # 基金数据操作
 │
+├── scripts/                   # 脚本
+│   └── migrations/          # 数据库迁移
+│
 ├── tests/                    # 单元测试 (289)
+│
+├── docs/                     # 文档
+│   └── reports/            # 审查报告
+│
+├── nginx/                    # Nginx 配置
 │
 ├── docker-compose.yml        # Docker Compose
 ├── Dockerfile               # Docker 镜像
-└── start_fastapi.sh         # FastAPI 启动脚本
+└── .env.example            # 环境变量模板
 ```
 
 ## 🚀 快速开始
@@ -139,16 +155,23 @@ cp .env.example .env
 
 ### 4. 启动服务
 
-**FastAPI 模式（推荐）：**
+**本地开发模式：**
 ```bash
-./start_fastapi.sh 5007
+# 设置环境变量
+export FUND_DAILY_DB_PASSWORD=your_password
+
+# 启动 FastAPI 服务
+python3 -m uvicorn web.api_fastapi.main:app --host 0.0.0.0 --port 5007 --reload
 ```
 
-**或手动启动：**
+**Docker 部署模式：**
 ```bash
-export FUND_DAILY_SERVER_PORT=5007
-export FUND_DAILY_DB_PASSWORD=your_password
-python3 -m uvicorn web.api_fastapi.main:app --host 0.0.0.0 --port 5007
+# 使用 Docker Compose（推荐）
+docker-compose up -d
+
+# 或手动启动
+docker build -t fund-daily .
+docker run -p 5000:5000 --env-file .env fund-daily
 ```
 
 ### 5. 默认登录凭据
@@ -255,31 +278,66 @@ pytest tests/test_scoring.py -v
 
 ## 🛠️ 技术栈
 
-- **后端**: FastAPI + Flask (双引擎)
+- **后端**: FastAPI (Python 3.11+) + Uvicorn
 - **前端**: Vue 3 + TypeScript + Vite + Pinia + ECharts
 - **数据库**: PostgreSQL 13+
 - **缓存**: Redis + 内存缓存 (LRU)
-- **认证**: JWT (python-jose)
-- **定时任务**: APScheduler
+- **认证**: JWT (python-jose) + PBKDF2 密码哈希
+- **定时任务**: APScheduler + Redis 分布式锁
 - **测试**: pytest (289 测试用例)
 - **CI/CD**: GitHub Actions
 - **容器化**: Docker + Docker Compose
 
 ## 🔧 环境变量
 
+> ⚠️ 所有配置统一使用 `FUND_DAILY_` 前缀（向后兼容旧变量名）
+
+### 核心配置
+
 | 变量名 | 默认值 | 说明 |
 |--------|--------|------|
+| `FUND_DAILY_ENV` | development | 环境 (development/production) |
 | `FUND_DAILY_SERVER_PORT` | 5007 | 服务端口 |
+| `FUND_DAILY_DEBUG` | false | 调试模式 |
+
+### 数据库配置
+
+| 变量名 | 默认值 | 说明 |
+|--------|--------|------|
 | `FUND_DAILY_DB_HOST` | localhost | PostgreSQL 主机 |
 | `FUND_DAILY_DB_PORT` | 5432 | PostgreSQL 端口 |
 | `FUND_DAILY_DB_NAME` | fund_daily | 数据库名 |
 | `FUND_DAILY_DB_USER` | kid | 数据库用户名 |
-| `FUND_DAILY_DB_PASSWORD` | - | 数据库密码 |
-| `REDIS_HOST` | localhost | Redis 主机 |
-| `REDIS_PORT` | 6379 | Redis 端口 |
-| `FUND_DAILY_SECRET_KEY` | - | JWT 密钥 |
+| `FUND_DAILY_DB_PASSWORD` | - | ⚠️ 必须设置 |
+
+### Redis 配置
+
+| 变量名 | 默认值 | 说明 |
+|--------|--------|------|
+| `FUND_DAILY_REDIS_HOST` | localhost | Redis 主机 |
+| `FUND_DAILY_REDIS_PORT` | 6379 | Redis 端口 |
+| `FUND_DAILY_REDIS_DB` | 0 | Redis 数据库 |
+| `FUND_DAILY_REDIS_PASSWORD` | - | Redis 密码 |
+| `FUND_DAILY_REDIS_TTL` | 1800 | 缓存 TTL（秒） |
+
+### 安全配置
+
+| 变量名 | 默认值 | 说明 |
+|--------|--------|------|
+| `FUND_DAILY_SECRET_KEY` | - | ⚠️ 必须设置（会话加密） |
+| `FUND_DAILY_JWT_SECRET` | - | ⚠️ 必须设置（JWT 签名） |
+| `FUND_DAILY_JWT_EXPIRE_MINUTES` | 30 | JWT 过期时间 |
+| `FUND_DAILY_CORS_ORIGINS` | * | CORS 白名单（生产环境应配置） |
 
 ## 📝 更新日志
+
+### v2.7.x (2026-03-26) - 近期更新
+- ✅ 环境变量统一 (FUND_DAILY_ Prefix)
+- ✅ P0 严重问题修复 (6个)
+- ✅ P1 高优先级问题修复 (12个)
+- ✅ P2/P3 问题修复
+- ✅ Docker 配置优化
+- ✅ 安全加固 (密码哈希 310k 迭代, Redis fail-safe)
 
 ### v2.6.3 (2026-03-25)
 - ✅ 后端切换到 FastAPI

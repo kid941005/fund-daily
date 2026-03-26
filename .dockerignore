@@ -11,29 +11,30 @@ __pycache__
 *.so
 *.egg
 *.egg-info
-dist
-build
+dist/
+build/
 
 # Virtual environments
-venv
-env
-.venv
+venv/
+env/
+.venv/
 
 # IDE
-.vscode
-.idea
+.vscode/
+.idea/
 *.swp
 *.swo
 
 # Testing
-.pytest_cache
+.pytest_cache/
 .coverage
-htmlcov
+htmlcov/
 
 # Data
 data/
 *.db
 *.sqlite
+*.sqlite3
 
 # Logs
 *.log
@@ -43,14 +44,34 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Documentation
-docs/_build
+# Documentation build
+docs/_build/
 
-# CI/CD
+# CI/CD workflows
 .github/workflows/*.yml
-!/.github/workflows/Dockerfile
+!.github/workflows/*.yml  # 但保留 workflow 文件
 
-# Temporary
+# Temporary files
 *.tmp
 *.bak
-.cache
+.cache/
+*.cache
+
+# Project-specific
+backup/
+node_modules/
+.web/
+.env
+.env.local
+*.log
+
+# Vue.js
+web/vue3/node_modules/
+web/vue3/dist/
+web/vue3/.vite/
+web/vue3/coverage/
+
+# Editor configs (optional to include in image)
+.editorconfig
+.eslintrc*
+.prettierrc*
