@@ -99,14 +99,18 @@ class TestFetchFundData:
         assert "error" in result
 
     @patch('src.fetcher.fund_basic.fetcher._make_request')
-    def test_fetch_uses_cache(self, mock_request):
+    @patch('src.fetcher.fund_basic.fetcher.get_cache')
+    @patch('src.fetcher.fund_basic.fetcher.set_cache')
+    def test_fetch_uses_cache(self, mock_set_cache, mock_get_cache, mock_request):
         """Test that cache is used"""
         mock_request.return_value = 'jsonpgz({"fundcode":"000001","name":"测试","dwjz":"1.000","gsz":"1.010","gszzl":"1.0","gztime":"2026-03-20 10:00"});'
-
-        # First call - should hit API
+        
+        # First call: cache miss, should call API
+        mock_get_cache.return_value = None
         fetch_fund_data("000001")
-
-        # Second call - should use cache
+        
+        # Second call: cache hit, should NOT call API
+        mock_get_cache.return_value = {"fundcode": "000001", "name": "测试", "dwjz": "1.000", "gsz": "1.010"}
         fetch_fund_data("000001")
 
         # Should only call API once
