@@ -61,7 +61,9 @@ export const useFundStore = defineStore('fund', {
       rebalancing: false
     } as LoadingState,
     error: null as string | null,
-    user: null as User | null
+    user: null as User | null,
+    // 存储定时器 ID，用于清理
+    periodicTimers: [] as number[]
   }),
 
   getters: {
@@ -106,21 +108,39 @@ export const useFundStore = defineStore('fund', {
     },
 
     startPeriodicFetch(): void {
-      // 每10分钟刷新基金数据
-      setInterval(() => {
-        this.fetchFunds(true)
-      }, 10 * 60 * 1000)
+      // 存储定时器 ID，用于后续清理
+      const timers: number[] = []
 
-      // 每15分钟刷新热门板块（与后端缓存时间一致）
-      setInterval(() => {
-        this.fetchSectors()
-      }, 15 * 60 * 1000)
+      // 每10分钟刷新基金数据（带登录检查）
+      timers.push(window.setInterval(() => {
+        if (this.user) {
+          this.fetchFunds(true)
+        }
+      }, 10 * 60 * 1000))
 
-      // 每5分钟刷新市场概览和择时信号
-      setInterval(() => {
-        this.fetchAdvice()
-        this.fetchTimingSignals()
-      }, 5 * 60 * 1000)
+      // 每15分钟刷新热门板块（与后端缓存时间一致，带登录检查）
+      timers.push(window.setInterval(() => {
+        if (this.user) {
+          this.fetchSectors()
+        }
+      }, 15 * 60 * 1000))
+
+      // 每5分钟刷新市场概览和择时信号（带登录检查）
+      timers.push(window.setInterval(() => {
+        if (this.user) {
+          this.fetchAdvice()
+          this.fetchTimingSignals()
+        }
+      }, 5 * 60 * 1000))
+
+      // 保存定时器 ID
+      this.periodicTimers = timers
+    },
+
+    stopPeriodicFetch(): void {
+      // 清除所有定时器
+      this.periodicTimers.forEach(timerId => window.clearInterval(timerId))
+      this.periodicTimers = []
     },
 
     async fetchHoldings(): Promise<void> {
@@ -300,6 +320,9 @@ export const useFundStore = defineStore('fund', {
     },
 
     async logout(): Promise<void> {
+      // 停止定时轮询
+      this.stopPeriodicFetch()
+
       try {
         await api.logout()
       } catch (e) {

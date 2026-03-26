@@ -420,11 +420,18 @@ _config_lock = threading.Lock()
 
 
 def get_config() -> ConfigManager:
-    """获取配置管理器实例（线程安全的单例模式）"""
+    """获取配置管理器实例（线程安全的单例模式）
+
+    使用双重检查锁定模式(Double-Checked Locking)确保:
+    1. 首次调用时只创建一个实例
+    2. 后续调用无锁竞争（快速路径）
+    3. 实例创建过程线程安全
+    """
     global _config_instance
 
-    # 双重检查锁定模式
+    # 第一次检查：无锁快速路径
     if _config_instance is None:
+        # 第二次检查：在锁内确认
         with _config_lock:
             if _config_instance is None:
                 _config_instance = ConfigManager()

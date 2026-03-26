@@ -7,6 +7,9 @@ import hashlib
 import secrets
 from typing import Optional, Tuple
 
+# PBKDF2 迭代次数 (NIST SP 800-132 建议至少 310,000)
+PBKDF2_ITERATIONS = 310000
+
 
 def hash_password(password: str, salt: Optional[str] = None) -> str:
     """
@@ -23,7 +26,8 @@ def hash_password(password: str, salt: Optional[str] = None) -> str:
         salt = secrets.token_hex(16)
 
     # 使用PBKDF2-HMAC-SHA256进行密码哈希
-    key = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100000)  # 迭代次数
+    # NIST SP 800-132 建议至少 310,000 次迭代以防暴力破解
+    key = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), PBKDF2_ITERATIONS)
 
     # 返回 salt$hash 格式（保持与原有web/api/auth.py兼容）
     return f"{salt}${key.hex()}"
@@ -52,7 +56,7 @@ def verify_password(password: str, hashed_password: str) -> bool:
             return False
 
         # 计算输入密码的哈希
-        key = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100000)
+        key = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), PBKDF2_ITERATIONS)
 
         # 比较哈希值
         return key.hex() == stored_hash

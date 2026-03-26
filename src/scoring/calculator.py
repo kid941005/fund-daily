@@ -89,65 +89,42 @@ def calculate_total_score(
         + liquidity["score"]
     )
 
-    # 权重校验
-    validation_errors = []
+    # 先对维度分数进行截断（确保不超过权重上限，不低于0）
     dimension_scores = {
-        "valuation": valuation["score"],
-        "performance": performance["score"],
-        "risk_control": risk_control["score"],
-        "momentum": momentum["score"],
-        "sentiment": sentiment["score"],
-        "sector": sector["score"],
-        "manager": manager["score"],
-        "liquidity": liquidity["score"],
+        "valuation": max(0, min(valuation["score"], SCORE_WEIGHTS["valuation"])),
+        "performance": max(0, min(performance["score"], SCORE_WEIGHTS["performance"])),
+        "risk_control": max(0, min(risk_control["score"], SCORE_WEIGHTS["risk_control"])),
+        "momentum": max(0, min(momentum["score"], SCORE_WEIGHTS["momentum"])),
+        "sentiment": max(0, min(sentiment["score"], SCORE_WEIGHTS["sentiment"])),
+        "sector": max(0, min(sector["score"], SCORE_WEIGHTS["sector"])),
+        "manager": max(0, min(manager["score"], SCORE_WEIGHTS["manager"])),
+        "liquidity": max(0, min(liquidity["score"], SCORE_WEIGHTS["liquidity"])),
     }
 
+    # 用截断后的值更新原始字典
+    valuation["score"] = dimension_scores["valuation"]
+    performance["score"] = dimension_scores["performance"]
+    risk_control["score"] = dimension_scores["risk_control"]
+    momentum["score"] = dimension_scores["momentum"]
+    sentiment["score"] = dimension_scores["sentiment"]
+    sector["score"] = dimension_scores["sector"]
+    manager["score"] = dimension_scores["manager"]
+    liquidity["score"] = dimension_scores["liquidity"]
+
+    # 重新计算总分
+    total_score = sum(dimension_scores.values())
+
+    # 验证截断后的分数
+    validation_errors = []
     for dim, score in dimension_scores.items():
-        max_score = SCORE_WEIGHTS[dim]
-        if score > max_score:
-            validation_errors.append(f"维度'{dim}'分数{score}超过权重上限{max_score}")
         if score < 0:
             validation_errors.append(f"维度'{dim}'分数{score}为负数")
 
     if total_score < 0 or total_score > 100:
         validation_errors.append(f"总分{total_score}超出范围[0, 100]")
 
-    calculated_total = sum(dimension_scores.values())
-    if abs(calculated_total - total_score) > 0.001:
-        validation_errors.append(f"维度分数之和{calculated_total}与总分{total_score}不一致")
-
     if validation_errors:
         logger.warning(f"评分校验警告 {fund_code}: {', '.join(validation_errors)}")
-        for dim in dimension_scores:
-            max_score = SCORE_WEIGHTS[dim]
-            if dimension_scores[dim] > max_score:
-                if dim == "valuation":
-                    valuation["score"] = min(valuation["score"], max_score)
-                elif dim == "performance":
-                    performance["score"] = min(performance["score"], max_score)
-                elif dim == "risk_control":
-                    risk_control["score"] = min(risk_control["score"], max_score)
-                elif dim == "momentum":
-                    momentum["score"] = min(momentum["score"], max_score)
-                elif dim == "sentiment":
-                    sentiment["score"] = min(sentiment["score"], max_score)
-                elif dim == "sector":
-                    sector["score"] = min(sector["score"], max_score)
-                elif dim == "manager":
-                    manager["score"] = min(manager["score"], max_score)
-                elif dim == "liquidity":
-                    liquidity["score"] = min(liquidity["score"], max_score)
-
-        total_score = (
-            valuation["score"]
-            + performance["score"]
-            + risk_control["score"]
-            + momentum["score"]
-            + sentiment["score"]
-            + sector["score"]
-            + manager["score"]
-            + liquidity["score"]
-        )
 
     result = {
         "total_score": total_score,

@@ -90,8 +90,8 @@ class DistributedLock:
             )
             return bool(acquired)
         except Exception as e:
-            logger.warning(f"[Scheduler] Lock acquire failed: {e}")
-            return True  # Fail open in case of Redis issues
+            logger.error(f"[Scheduler] Lock acquire failed: {e}")
+            return False  # Fail safe - don't run if we can't confirm we have the lock
 
     def release(self, job_id: str, instance_id: str) -> bool:
         """Release lock if we own it"""
@@ -475,17 +475,28 @@ class SchedulerManager:
             import asyncio
 
             try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    # Create a new task if loop is already running
+                # 使用 get_running_loop() 检查是否有运行中的事件循环
+                # 而不是 get_event_loop()（可能在没有循环时创建新的）
+                try:
+                    loop = asyncio.get_running_loop()
+                    # 已有运行中的循环，在其中创建任务
                     asyncio.create_task(self._run_job_async(func, job_id))
                     triggered = True
-                else:
-                    triggered = loop.run_until_complete(self._run_job_async(func, job_id))
-            except RuntimeError:
-                # No event loop, run directly
-                result = func()
-                triggered = True
+                except RuntimeError:
+                    # 没有运行中的循环，创建一个新的来运行协程
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    try:
+                        triggered = loop.run_until_complete(self._run_job_async(func, job_id))
+                    finally:
+                        loop.close()
+            except Exception as e:
+                logger.error(f"❌ [Scheduler] Failed to run job {job_id}: {e}")
+                return {
+                    "success": False,
+                    "message": str(e),
+                    "triggered_at": datetime.now(),
+                }
 
             return {
                 "success": True,

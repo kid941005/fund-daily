@@ -3,6 +3,7 @@ Rate Limiter Middleware for FastAPI
 Reuses logic from Flask's rate_limiter.py
 """
 
+import threading
 import time
 import logging
 from typing import Dict, List, Tuple, Optional
@@ -20,6 +21,7 @@ class RateLimiter:
     
     def __init__(self, redis_client=None):
         self.redis_client = redis_client or self._create_redis_client()
+        self._memory_lock = threading.Lock()  # 保护内存存储的线程安全
         self.default_limits = {
             "default": "100 per minute",
             "auth": "10 per minute",
@@ -114,20 +116,22 @@ class RateLimiter:
                 results = pipeline.execute()
                 current_count = results[1]
             else:
-                # Memory storage for development
-                if not hasattr(self, '_memory_store'):
-                    self._memory_store = {}
-                
-                if key not in self._memory_store:
-                    self._memory_store[key] = []
-                
-                self._memory_store[key] = [
-                    ts for ts in self._memory_store[key]
-                    if ts > current_time - window_seconds
-                ]
-                
-                current_count = len(self._memory_store[key])
-                self._memory_store[key].append(current_time)
+                # Memory storage for development (thread-safe)
+                with self._memory_lock:
+                    if not hasattr(self, '_memory_store'):
+                        self._memory_store = {}
+                    
+                    if key not in self._memory_store:
+                        self._memory_store[key] = []
+                    
+                    # 清理过期的记录
+                    self._memory_store[key] = [
+                        ts for ts in self._memory_store[key]
+                        if ts > current_time - window_seconds
+                    ]
+                    
+                    current_count = len(self._memory_store[key])
+                    self._memory_store[key].append(current_time)
             
             remaining = max(0, max_requests - current_count)
             reset_time = current_time + window_seconds

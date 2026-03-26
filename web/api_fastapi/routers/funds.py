@@ -56,8 +56,9 @@ async def get_funds(request: Request, force: str = Query("false")):
     user_id = _get_user_id(request)
     holdings = db.get_holdings(user_id) if user_id else []
     
-    # Check force refresh
-    use_cache = force.lower() != "true"
+    # Check force refresh - force=true means disable cache (refresh)
+    force_refresh = force.lower() == "true"
+    use_cache = not force_refresh
     
     codes = [h["code"] for h in holdings if h.get("amount", 0) > 0]
     if not codes:
@@ -80,7 +81,7 @@ async def get_funds(request: Request, force: str = Query("false")):
     return {
         "success": True,
         "funds": funds_data,
-        "force_refresh": force.lower() == "true"
+        "force_refresh": force_refresh
     }
 
 

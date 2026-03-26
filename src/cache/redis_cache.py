@@ -101,12 +101,15 @@ def is_token_blacklisted(token: str) -> bool:
     """
     client = get_redis_client()
     if client is None:
-        return False
+        # Redis 不可用时，返回 True（假定已列入黑名单，安全优先）
+        logger.critical("Redis 不可用，假定 Token 已在黑名单中（安全策略）")
+        return True
     try:
         key = TOKEN_BLACKLIST_PREFIX + token
         return client.exists(key) == 1
     except Exception as e:
         logger.error(f"检查 Token 黑名单失败: {e}")
+        return True  # 失败时假定已在黑名单（安全优先）
         return False
 
 

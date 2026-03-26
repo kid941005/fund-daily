@@ -5,7 +5,7 @@
 import logging
 import threading
 import time
-from collections import defaultdict
+from collections import defaultdict, deque
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class RateLimiter:
         self.default_window = default_window
 
         # 存储每个键的请求时间戳
-        self._requests = defaultdict(list)
+        self._requests = defaultdict(deque)
         self._lock = threading.RLock()
 
     def is_allowed(self, key: str, limit: Optional[int] = None, window: Optional[int] = None) -> bool:
@@ -61,7 +61,7 @@ class RateLimiter:
 
             # 移除窗口外的旧记录
             while timestamps and timestamps[0] < window_start:
-                timestamps.pop(0)
+                timestamps.popleft()
 
             # 检查是否超过限制
             if len(timestamps) >= limit:
@@ -97,7 +97,7 @@ class RateLimiter:
 
             # 移除窗口外的旧记录
             while timestamps and timestamps[0] < window_start:
-                timestamps.pop(0)
+                timestamps.popleft()
 
             return max(0, limit - len(timestamps))
 
