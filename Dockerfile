@@ -12,7 +12,6 @@ COPY web/vue3/package*.json ./
 COPY web/vue3/*.json ./
 COPY web/vue3/src/ ./src/
 COPY web/vue3/index.html ./
-COPY web/vue3/public/ ./public/
 COPY web/vue3/vite.config.ts ./
 
 # 安装依赖并构建
