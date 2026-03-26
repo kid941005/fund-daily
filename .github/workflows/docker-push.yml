@@ -28,7 +28,20 @@ jobs:
           else
             VERSION="latest"
           fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: web/vue3/package-lock.json
+
+      - name: Build frontend
+        run: |
+          cd web/vue3
+          npm ci
+          npm run build
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -47,22 +60,22 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          no-cache: true
+          no_cache: true
           pull: true
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}
             kid941005/fund-daily:latest
-            kid941005/fund-daily:${{ steps.version.outputs.version }}                        
+            kid941005/fund-daily:${{ steps.version.outputs.version }}
           build-args: |
-            VERSION=${{ steps.version.outputs.version }}   
+            VERSION=${{ steps.version.outputs.version }}
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
