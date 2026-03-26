@@ -104,15 +104,16 @@ jobs:
         cd web/vue3
         npm ci
         npm run build
+        cd ../..
+        mkdir -p dist/frontend
+        cp -r web/vue3/dist/* dist/frontend/
     
     - name: Create deployment package
       run: |
-        mkdir -p dist
-        cp -r dist dist/frontend
         cp -r src dist/src
         cp -r db dist/db
-        cp -r web/app.py dist/
         cp -r web/api dist/api
+        cp web/app.py dist/
         cp requirements.txt dist/
         cp README.md dist/
         cp .env.example dist/.env
