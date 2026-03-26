@@ -1,5 +1,5 @@
-# Fund Daily v2.6.0 Docker Compose 配置 (FastAPI)
-# 使用 FastAPI 替代 Flask
+# Fund Daily v2.7.1 Docker Compose 配置
+# FastAPI + Vue3 + PostgreSQL + Redis
 
 services:
   # PostgreSQL 数据库 (v15 Alpine)
@@ -10,6 +10,7 @@ services:
       - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-kid}
+      # ⚠️ 生产环境必须设置强密码
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
       POSTGRES_DB: ${POSTGRES_DB:-fund_daily}
     volumes:
@@ -83,29 +84,24 @@ services:
       - FUND_DAILY_DB_PORT=5432
       - FUND_DAILY_DB_NAME=${POSTGRES_DB:-fund_daily}
       - FUND_DAILY_DB_USER=${POSTGRES_USER:-kid}
-      - FUND_DAILY_DB_PASSWORD=${POSTGRES_PASSWORD:-941005}
+      # ⚠️ 生产环境必须通过 .env 设置强密码
+      - FUND_DAILY_DB_PASSWORD=${POSTGRES_PASSWORD:-}
       
-      # Redis 配置
+      # Redis 配置（统一使用 FUND_DAILY_ 前缀）
       - FUND_DAILY_REDIS_HOST=redis
       - FUND_DAILY_REDIS_PORT=6379
       - FUND_DAILY_REDIS_DB=${REDIS_DB:-0}
       - FUND_DAILY_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - FUND_DAILY_REDIS_TTL=${REDIS_TTL:-1800}
-      # 向后兼容（旧变量名）
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=${REDIS_DB:-0}
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-      - REDIS_TTL=${REDIS_TTL:-1800}
       
       # 应用配置
-      - FUND_DAILY_SECRET_KEY=${FUND_DAILY_SECRET_KEY:-dev-secret-key-change-in-production}
+      - FUND_DAILY_SECRET_KEY=${FUND_DAILY_SECRET_KEY:-}
       - FUND_DAILY_ENV=${FUND_DAILY_ENV:-production}
       - FUND_DAILY_SERVER_HOST=0.0.0.0
       - FUND_DAILY_SERVER_PORT=5000
       
-      # JWT 配置
-      - FUND_DAILY_JWT_SECRET=${FUND_DAILY_JWT_SECRET:-jwt-secret-change-in-production}
+      # JWT 配置（⚠️ 生产环境必须设置）
+      - FUND_DAILY_JWT_SECRET=${FUND_DAILY_JWT_SECRET:-}
       - FUND_DAILY_JWT_EXPIRE_MINUTES=${FUND_DAILY_JWT_EXPIRE_MINUTES:-30}
       - FUND_DAILY_JWT_REFRESH_DAYS=${FUND_DAILY_JWT_REFRESH_DAYS:-7}
       
@@ -118,14 +114,12 @@ services:
       - FUND_DAILY_SSL_VERIFY=${FUND_DAILY_SSL_VERIFY:-true}
       
       # 日志配置
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - FUND_DAILY_LOG_LEVEL=${LOG_LEVEL:-INFO}
       
       # CORS 配置
-      # ⚠️ 开发环境允许所有来源，生产环境请在 .env 中设置具体域名
-      # 示例: FUND_DAILY_CORS_ORIGINS=https://fund.example.com,https://admin.example.com
+      # ⚠️ 生产环境请在 .env 中设置具体域名
+      # 示例: FUND_DAILY_CORS_ORIGINS=https://fund.example.com
       - FUND_DAILY_CORS_ORIGINS=${FUND_DAILY_CORS_ORIGINS:-*}
-      # 向后兼容（旧变量名）
-      - CORS_ORIGINS=${CORS_ORIGINS:-*}
     volumes:
       - ./dist:/app/dist:ro
       - ./data:/app/data
