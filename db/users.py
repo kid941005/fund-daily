@@ -36,6 +36,7 @@ def create_user(user_id, username, password_hash):
             )
             conn.commit()
 
+@handle_db_errors
 def update_user_password(user_id, new_password_hash):
     with get_db() as conn:
         with get_cursor(conn) as cursor:

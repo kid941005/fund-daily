@@ -311,8 +311,17 @@ class CorsConfig:
             errors.append("CORS 来源不能为空")
         
         # 生产环境不应允许所有来源
-        app_config = AppConfig.from_env()
-        if app_config.env == "production" and "*" in self.origins:
+        # 注意：避免在此创建新的 AppConfig 实例，使用传入的 env 参数
+        # CorsConfig.validate() 由 ConfigManager 调用时，ConfigManager 已初始化 app.config
+        # 如果需要单独验证，可以传入 env 参数
+        return errors
+
+    def validate_with_env(self, env: str) -> List[str]:
+        """带环境信息的校验（避免重复创建 AppConfig 实例）"""
+        errors = self.validate()
+        
+        # 生产环境不应允许所有来源
+        if env == "production" and "*" in self.origins:
             errors.append("生产环境不应设置 CORS 来源为 '*'，请配置具体的域名")
         
         return errors
@@ -344,7 +353,7 @@ class ConfigManager:
         all_errors.extend(self.cache.validate())
         all_errors.extend(self.server.validate())
         all_errors.extend(self.app.validate())
-        all_errors.extend(self.cors.validate())
+        all_errors.extend(self.cors.validate_with_env(self.app.env))
 
         # 如果有错误，记录并抛出异常
         if all_errors:

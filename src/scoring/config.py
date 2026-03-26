@@ -19,42 +19,15 @@ from .weights import SCORE_WEIGHTS, get_all_weights, get_total_weight, get_weigh
 
 
 def validate_weights_compat() -> Tuple[bool, str]:
-    """校验权重配置是否合法"""
-    if not SCORE_WEIGHTS:
-        return False, "权重配置为空"
-
-    total = sum(SCORE_WEIGHTS.values())
-    if total != 100:
-        return False, f"权重总和应为100，实际为{total}"
-
-    for dimension, weight in SCORE_WEIGHTS.items():
-        if not isinstance(weight, (int, float)):
-            return False, f"维度'{dimension}'的权重必须是数字"
-        if weight <= 0:
-            return False, f"维度'{dimension}'的权重必须为正数"
-        if weight > 50:
-            return False, f"维度'{dimension}'的权重过大（{weight}分），不应超过50分"
-
-    required_dimensions = [
-        "valuation",
-        "performance",
-        "risk_control",
-        "momentum",
-        "sentiment",
-        "sector",
-        "manager",
-        "liquidity",
-    ]
-    for dim in required_dimensions:
-        if dim not in SCORE_WEIGHTS:
-            return False, f"缺失必要维度: {dim}"
-
-    return True, "权重配置有效"
+    """校验权重配置是否合法（向后兼容别名，直接调用 validate_weights）"""
+    return validate_weights()
 
 
 # 启动时自动校验
 _is_valid, _error_msg = validate_weights()
 if not _is_valid:
+    import logging
+    logger = logging.getLogger(__name__)
     logger.error(f"评分权重配置错误: {_error_msg}")
     raise ValueError(f"评分权重配置错误: {_error_msg}")
 

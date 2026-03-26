@@ -12,6 +12,7 @@ def get_holdings(user_id):
             )
             return [dict(row) for row in cursor.fetchall()]
 
+@handle_db_errors
 def save_holding(user_id, code, amount, name="", buy_nav=None, buy_date=None):
     with get_db() as conn:
         with get_cursor(conn) as cursor:

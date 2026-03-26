@@ -74,10 +74,33 @@ def validate_password_strength(password: str) -> Tuple[bool, str]:
     if not any(c.isupper() for c in password):
         return False, "密码必须包含大写字母"
     
-    # 检查常见弱密码
+    # 检查常见弱密码（扩展列表）
     weak_passwords = [
-        "password", "12345678", "qwerty", "abc123",
-        "password123", "admin123", "welcome"
+        # 纯数字
+        "123456", "12345678", "123456789", "1234567890",
+        "111111", "222222", "333333", "444444", "555555", "666666", "777777", "888888", "999999", "000000",
+        "012345", "0123456", "01234567",
+        # 键盘序列
+        "qwerty", "qwertyuiop", "asdfgh", "zxcvbn", "qwerty123", "qwerty123456",
+        "abcdef", "abcdefg", "abcdefgh",
+        "password", "password1", "password123", "password1234", "password12345",
+        "passw0rd", "P@ssw0rd", "P@ssword",
+        # 常见单词
+        "admin", "admin123", "administrator", "root", "root123",
+        "welcome", "welcome123", "welcome1",
+        "login", "login123", "master", "master123",
+        "letmein", "abc123", "abcd1234",
+        "iloveyou", "princess", "football", "monkey", "dragon",
+        "shadow", "sunshine", "123123", "654321", "666666", "696969",
+        "superman", "batman", "spiderman", "harleyquinn",
+        # 用户名相关
+        "username", "user123", "test123", "guest", "guest123",
+        # 日期相关
+        "2020", "2021", "2022", "2023", "2024", "2025",
+        "2020pass", "2021pass", "2022pass",
+        # 简短密码
+        "pass", "pass1", "pass12", "pass123",
+        "temp", "temp123", "test", "test123", "demo", "demo123",
     ]
     if password.lower() in weak_passwords:
         return False, "密码过于简单，请使用更复杂的密码"
