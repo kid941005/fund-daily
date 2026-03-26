@@ -55,7 +55,9 @@ class SchedulerConfig:
                 "type": "redis",
                 "host": os.getenv("FUND_DAILY_REDIS_HOST", os.getenv("REDIS_HOST", "localhost")),
                 "port": int(os.getenv("FUND_DAILY_REDIS_PORT", os.getenv("REDIS_PORT", "6379"))),
-                "db": int(os.getenv("FUND_DAILY_REDIS_DB", os.getenv("REDIS_DB", "1"))),  # Use DB 1 for scheduler to avoid conflict
+                "db": int(
+                    os.getenv("FUND_DAILY_REDIS_DB", os.getenv("REDIS_DB", "1"))
+                ),  # Use DB 1 for scheduler to avoid conflict
                 "password": os.getenv("FUND_DAILY_REDIS_PASSWORD", os.getenv("REDIS_PASSWORD")),
                 "key_prefix": JOB_STORE_KEY,
                 "jobs_key": f"{JOB_STORE_KEY}:jobs",
@@ -87,10 +89,16 @@ class SchedulerConfig:
     instance_id: Optional[str] = None
 
     # Redis connection settings (used for both job store and locks)
-    redis_host: str = field(default_factory=lambda: os.getenv("FUND_DAILY_REDIS_HOST", os.getenv("REDIS_HOST", "localhost")))
-    redis_port: int = field(default_factory=lambda: int(os.getenv("FUND_DAILY_REDIS_PORT", os.getenv("REDIS_PORT", "6379"))))
+    redis_host: str = field(
+        default_factory=lambda: os.getenv("FUND_DAILY_REDIS_HOST", os.getenv("REDIS_HOST", "localhost"))
+    )
+    redis_port: int = field(
+        default_factory=lambda: int(os.getenv("FUND_DAILY_REDIS_PORT", os.getenv("REDIS_PORT", "6379")))
+    )
     redis_db: int = field(default_factory=lambda: int(os.getenv("FUND_DAILY_REDIS_DB", os.getenv("REDIS_DB", "1"))))
-    redis_password: Optional[str] = field(default_factory=lambda: os.getenv("FUND_DAILY_REDIS_PASSWORD", os.getenv("REDIS_PASSWORD")))
+    redis_password: Optional[str] = field(
+        default_factory=lambda: os.getenv("FUND_DAILY_REDIS_PASSWORD", os.getenv("REDIS_PASSWORD"))
+    )
 
     # Logging
     log_level: str = "INFO"
@@ -100,8 +108,13 @@ class SchedulerConfig:
         """Create config from environment variables"""
         return cls(
             timezone=os.getenv("FUND_DAILY_SCHEDULER_TIMEZONE", os.getenv("SCHEDULER_TIMEZONE", DEFAULT_TIMEZONE)),
-            cluster_enabled=os.getenv("FUND_DAILY_SCHEDULER_CLUSTER_ENABLED", os.getenv("SCHEDULER_CLUSTER_ENABLED", "true")).lower() == "true",
-            lock_ttl=int(os.getenv("FUND_DAILY_SCHEDULER_LOCK_TTL", os.getenv("SCHEDULER_LOCK_TTL", str(DEFAULT_LOCK_TTL)))),
+            cluster_enabled=os.getenv(
+                "FUND_DAILY_SCHEDULER_CLUSTER_ENABLED", os.getenv("SCHEDULER_CLUSTER_ENABLED", "true")
+            ).lower()
+            == "true",
+            lock_ttl=int(
+                os.getenv("FUND_DAILY_SCHEDULER_LOCK_TTL", os.getenv("SCHEDULER_LOCK_TTL", str(DEFAULT_LOCK_TTL)))
+            ),
             instance_id=os.getenv("FUND_DAILY_SCHEDULER_INSTANCE_ID", os.getenv("SCHEDULER_INSTANCE_ID")),
             log_level=os.getenv("FUND_DAILY_SCHEDULER_LOG_LEVEL", os.getenv("SCHEDULER_LOG_LEVEL", "INFO")),
         )

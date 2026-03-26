@@ -27,6 +27,7 @@ def validate_weights_compat() -> Tuple[bool, str]:
 _is_valid, _error_msg = validate_weights()
 if not _is_valid:
     import logging
+
     logger = logging.getLogger(__name__)
     logger.error(f"评分权重配置错误: {_error_msg}")
     raise ValueError(f"评分权重配置错误: {_error_msg}")

@@ -259,8 +259,13 @@ class AppConfig:
             log_file=os.getenv("FUND_DAILY_LOG_FILE", os.getenv("LOG_FILE")),
             debug=os.getenv("FUND_DAILY_DEBUG", os.getenv("DEBUG", "false")).lower() == "true",
             enable_ocr=os.getenv("FUND_DAILY_ENABLE_OCR", os.getenv("ENABLE_OCR", "false")).lower() == "true",
-            eastmoney_api_base=os.getenv("FUND_DAILY_EASTMONEY_API_BASE", os.getenv("EASTMONEY_API_BASE", "https://fund.eastmoney.com")),
-            prometheus_metrics_port=int(os.getenv("FUND_DAILY_PROMETHEUS_METRICS_PORT", os.getenv("PROMETHEUS_METRICS_PORT", "0"))) or None,
+            eastmoney_api_base=os.getenv(
+                "FUND_DAILY_EASTMONEY_API_BASE", os.getenv("EASTMONEY_API_BASE", "https://fund.eastmoney.com")
+            ),
+            prometheus_metrics_port=int(
+                os.getenv("FUND_DAILY_PROMETHEUS_METRICS_PORT", os.getenv("PROMETHEUS_METRICS_PORT", "0"))
+            )
+            or None,
         )
 
     def validate(self) -> List[str]:
@@ -289,9 +294,9 @@ class AppConfig:
 @dataclass
 class CorsConfig:
     """CORS 配置"""
-    
+
     origins: List[str] = field(default_factory=lambda: ["*"])
-    
+
     @classmethod
     def from_env(cls) -> "CorsConfig":
         """从环境变量创建配置"""
@@ -300,16 +305,16 @@ class CorsConfig:
             origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
         else:
             origins = ["*"]  # 开发环境默认允许所有
-        
+
         return cls(origins=origins)
-    
+
     def validate(self) -> List[str]:
         """验证配置"""
         errors = []
-        
+
         if not self.origins:
             errors.append("CORS 来源不能为空")
-        
+
         # 生产环境不应允许所有来源
         # 注意：避免在此创建新的 AppConfig 实例，使用传入的 env 参数
         # CorsConfig.validate() 由 ConfigManager 调用时，ConfigManager 已初始化 app.config
@@ -319,11 +324,11 @@ class CorsConfig:
     def validate_with_env(self, env: str) -> List[str]:
         """带环境信息的校验（避免重复创建 AppConfig 实例）"""
         errors = self.validate()
-        
+
         # 生产环境不应允许所有来源
         if env == "production" and "*" in self.origins:
             errors.append("生产环境不应设置 CORS 来源为 '*'，请配置具体的域名")
-        
+
         return errors
 
 
