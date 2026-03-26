@@ -73,7 +73,7 @@ services:
       # 服务器配置
       - FUND_DAILY_SERVER_HOST=0.0.0.0
       - FUND_DAILY_SERVER_PORT=5000
-      - FUND_DAILY_ENV=production
+      - FUND_DAILY_ENV=development
       # 安全配置（生产环境必须设置）
       - FUND_DAILY_JWT_SECRET=${FUND_DAILY_JWT_SECRET:-}
       - FUND_DAILY_SECRET_KEY=${FUND_DAILY_SECRET_KEY:-}
