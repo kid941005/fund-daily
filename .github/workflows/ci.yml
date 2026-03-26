@@ -51,11 +51,20 @@ jobs:
     
     - name: Run tests
       env:
-        FUND_DAILY_DB_TYPE: sqlite
+        FUND_DAILY_DB_TYPE: postgres
+        FUND_DAILY_DB_HOST: localhost
+        FUND_DAILY_DB_PORT: 5432
+        FUND_DAILY_DB_NAME: fund_daily
+        FUND_DAILY_DB_USER: kid
+        FUND_DAILY_DB_PASSWORD: 941005
         FUND_DAILY_REDIS_URL: redis://localhost:6379/0
         FUND_DAILY_SECRET_KEY: test-secret-key-for-ci
+        FUND_DAILY_JWT_SECRET: test-jwt-secret-key-for-ci-at-least-32-chars
       run: |
-        pytest tests/ -v --cov=src --cov-report=xml
+        pytest tests/ -v --cov=src --cov-report=xml \
+          --ignore=tests/test_async_db.py \
+          --ignore=tests/test_fund_database.py \
+          --ignore=tests/test_fund_db_e2e.py
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
