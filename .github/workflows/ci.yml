@@ -113,10 +113,10 @@ jobs:
     
     - name: Create deployment package
       run: |
-        cp -r src dist/src
-        cp -r db dist/db
-        cp -r web/api dist/api
-        cp web/app.py dist/
+        cp -r src dist/backend_src
+        cp -r db dist/backend_db
+        cp -r web/api_fastapi dist/api
+        cp web/api_fastapi/main.py dist/
         cp requirements.txt dist/
         cp README.md dist/
         cp .env.example dist/.env
@@ -135,12 +135,9 @@ jobs:
         # 创建数据目录
         mkdir -p data
         
-        # 初始化数据库
-        python3 -c "from db.database import init_db; init_db()"
-        
         # 启动服务
         echo "✅ 部署完成！"
-        echo "启动服务: python3 web/app.py"
+        echo "启动服务: python3 main.py"
         EOF
         
         chmod +x dist/deploy.sh
