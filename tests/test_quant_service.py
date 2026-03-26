@@ -91,7 +91,7 @@ class _DummyCursor:
         pass
 
     def fetchall(self):
-        return [{"code": "000003", "name": "基金C", "amount": 10.0}]
+        return [{"fund_code": "000003", "fund_name": "基金C", "amount": 10.0}]
 
     def __enter__(self):
         return self
