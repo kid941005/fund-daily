@@ -196,6 +196,11 @@ def init_db():
                 ON funds(updated_at DESC)
             """)
 
+            # 启用 pg_trgm 扩展（用于 GIN 索引加速 LIKE 查询）
+            cursor.execute("""
+                CREATE EXTENSION IF NOT EXISTS pg_trgm
+            """)
+
             # 基金名称全文搜索索引（支持 LIKE '%xxx%' 加速）
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_funds_fund_name_trgm

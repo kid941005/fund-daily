@@ -4,6 +4,7 @@
 
 -- 创建扩展（如果需要）
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- 创建用户表 (与 db/pool.py 一致)
 CREATE TABLE IF NOT EXISTS users (
