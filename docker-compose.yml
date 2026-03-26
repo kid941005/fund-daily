@@ -66,7 +66,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile.fastapi
+      dockerfile: Dockerfile
     container_name: fund-daily-backend-fastapi
     depends_on:
       postgres:
@@ -86,6 +86,12 @@ services:
       - FUND_DAILY_DB_PASSWORD=${POSTGRES_PASSWORD:-941005}
       
       # Redis 配置
+      - FUND_DAILY_REDIS_HOST=redis
+      - FUND_DAILY_REDIS_PORT=6379
+      - FUND_DAILY_REDIS_DB=${REDIS_DB:-0}
+      - FUND_DAILY_REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - FUND_DAILY_REDIS_TTL=${REDIS_TTL:-1800}
+      # 向后兼容（旧变量名）
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=${REDIS_DB:-0}
@@ -115,6 +121,8 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       
       # CORS 配置
+      - FUND_DAILY_CORS_ORIGINS=*
+      # 向后兼容（旧变量名）
       - CORS_ORIGINS=*
     volumes:
       - ./dist:/app/dist:ro

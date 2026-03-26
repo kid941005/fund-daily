@@ -75,7 +75,7 @@ class AsyncDatabase:
             port=int(os.getenv("FUND_DAILY_DB_PORT", "5432")),
             database=os.getenv("FUND_DAILY_DB_NAME", "fund_daily"),
             user=os.getenv("FUND_DAILY_DB_USER", "kid"),
-            password=os.getenv("FUND_DAILY_DB_PASSWORD", os.getenv("DB_PASSWORD", "")),
+            password=os.getenv("FUND_DAILY_DB_PASSWORD", ""),
             min_pool_size=int(os.getenv("ASYNC_POOL_MIN", "5")),
             max_pool_size=int(os.getenv("ASYNC_POOL_MAX", "20")),
         )

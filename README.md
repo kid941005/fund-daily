@@ -151,6 +151,15 @@ export FUND_DAILY_DB_PASSWORD=your_password
 python3 -m uvicorn web.api_fastapi.main:app --host 0.0.0.0 --port 5007
 ```
 
+### 5. 默认登录凭据
+
+系统初始化后会自动创建默认管理员账户：
+
+- **用户名**: `admin`
+- **密码**: `admin123`
+
+⚠️ **安全提示**: 生产环境请立即修改默认密码或创建新账户。
+
 ### 5. 访问
 
 - Web 界面: http://localhost:5007

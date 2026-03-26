@@ -1,23 +1,34 @@
 -- Fund Daily 数据库初始化脚本
 -- 在 PostgreSQL 容器启动时自动执行
+-- 注意: 使用与 db/pool.py 一致的 schema
 
 -- 创建扩展（如果需要）
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 创建用户表
+-- 创建用户表 (与 db/pool.py 一致)
 CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
+    user_id VARCHAR(64) PRIMARY KEY,
+    username VARCHAR(64) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP,
-    is_active BOOLEAN DEFAULT TRUE,
-    preferences JSONB DEFAULT '{}'::jsonb
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 创建基金表
+-- 创建持仓表 (与 db/pool.py 一致)
+CREATE TABLE IF NOT EXISTS holdings (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(64) NOT NULL,
+    code VARCHAR(16) NOT NULL,
+    name VARCHAR(255),
+    amount DECIMAL(12, 2) DEFAULT 0,
+    buy_nav DECIMAL(10, 4),
+    buy_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, code)
+);
+
+-- 创建基金基本信息表 (与 db/pool.py 一致)
 CREATE TABLE IF NOT EXISTS funds (
     id SERIAL PRIMARY KEY,
     code VARCHAR(10) UNIQUE NOT NULL,
@@ -34,88 +45,65 @@ CREATE TABLE IF NOT EXISTS funds (
     metadata JSONB DEFAULT '{}'::jsonb
 );
 
--- 创建持仓表
-CREATE TABLE IF NOT EXISTS holdings (
+-- 创建基金净值表 (与 db/pool.py 一致)
+CREATE TABLE IF NOT EXISTS fund_nav (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     fund_code VARCHAR(10) NOT NULL,
-    amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    cost_basis DECIMAL(15,4) DEFAULT 0.0000,
-    purchase_date DATE DEFAULT CURRENT_DATE,
+    nav_date DATE NOT NULL,
+    nav_value DECIMAL(10,4) NOT NULL,
+    change_rate DECIMAL(8,4),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(fund_code, nav_date)
+);
+
+-- 创建基金评分表 (与 db/pool.py 一致)
+CREATE TABLE IF NOT EXISTS fund_scores (
+    id SERIAL PRIMARY KEY,
+    fund_code VARCHAR(10) NOT NULL,
+    score_date DATE NOT NULL,
+    total_score DECIMAL(5,2) NOT NULL,
+    valuation_score DECIMAL(5,2),
+    performance_score DECIMAL(5,2),
+    risk_score DECIMAL(5,2),
+    momentum_score DECIMAL(5,2),
+    sentiment_score DECIMAL(5,2),
+    sector_score DECIMAL(5,2),
+    manager_score DECIMAL(5,2),
+    liquidity_score DECIMAL(5,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(fund_code, score_date)
+);
+
+-- 创建配置表 (与 db/pool.py 一致)
+CREATE TABLE IF NOT EXISTS config (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(64) NOT NULL,
+    config_key VARCHAR(100) NOT NULL,
+    config_value TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    notes TEXT,
-    UNIQUE(user_id, fund_code)
+    UNIQUE(user_id, config_key)
 );
 
--- 创建监控列表表
+-- 创建监控列表表 (与 db/pool.py 一致)
 CREATE TABLE IF NOT EXISTS watchlist (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    user_id VARCHAR(64) NOT NULL,
     fund_code VARCHAR(10) NOT NULL,
-    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, fund_code)
 );
 
--- 创建基金历史数据表
-CREATE TABLE IF NOT EXISTS fund_history (
+-- 创建历史记录表 (与 db/pool.py 一致)
+CREATE TABLE IF NOT EXISTS history (
     id SERIAL PRIMARY KEY,
-    fund_code VARCHAR(10) NOT NULL,
-    date DATE NOT NULL,
-    net_value DECIMAL(8,4) NOT NULL,
-    accumulated_value DECIMAL(8,4),
-    daily_growth_rate DECIMAL(6,4),
-    week_growth_rate DECIMAL(6,4),
-    month_growth_rate DECIMAL(6,4),
-    three_month_growth_rate DECIMAL(6,4),
-    six_month_growth_rate DECIMAL(6,4),
-    year_growth_rate DECIMAL(6,4),
-    year_to_date_growth_rate DECIMAL(6,4),
-    two_year_growth_rate DECIMAL(6,4),
-    three_year_growth_rate DECIMAL(6,4),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(fund_code, date)
-);
-
--- 创建用户会话表（用于JWT黑名单）
-CREATE TABLE IF NOT EXISTS user_sessions (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    token_id VARCHAR(64) UNIQUE NOT NULL,
-    expires_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    revoked_at TIMESTAMP
-);
-
--- 创建API请求日志表
-CREATE TABLE IF NOT EXISTS api_logs (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-    endpoint VARCHAR(100) NOT NULL,
-    method VARCHAR(10) NOT NULL,
-    status_code INTEGER NOT NULL,
-    response_time INTEGER,
-    ip_address INET,
-    user_agent TEXT,
+    user_id VARCHAR(64) NOT NULL,
+    action_type VARCHAR(50) NOT NULL,
+    action_data JSONB NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 创建索引以提高查询性能
-CREATE INDEX IF NOT EXISTS idx_funds_code ON funds(code);
-CREATE INDEX IF NOT EXISTS idx_funds_name ON funds(name);
-CREATE INDEX IF NOT EXISTS idx_holdings_user_id ON holdings(user_id);
-CREATE INDEX IF NOT EXISTS idx_holdings_fund_code ON holdings(fund_code);
-CREATE INDEX IF NOT EXISTS idx_watchlist_user_id ON watchlist(user_id);
-CREATE INDEX IF NOT EXISTS idx_fund_history_fund_code ON fund_history(fund_code);
-CREATE INDEX IF NOT EXISTS idx_fund_history_date ON fund_history(date);
-CREATE INDEX IF NOT EXISTS idx_fund_history_fund_code_date ON fund_history(fund_code, date);
-CREATE INDEX IF NOT EXISTS idx_user_sessions_token_id ON user_sessions(token_id);
-CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);
-CREATE INDEX IF NOT EXISTS idx_api_logs_user_id ON api_logs(user_id);
-CREATE INDEX IF NOT EXISTS idx_api_logs_created_at ON api_logs(created_at);
-
--- 创建函数和触发器
+-- 创建 updated_at 更新函数
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -134,11 +122,14 @@ CREATE TRIGGER update_funds_updated_at BEFORE UPDATE ON funds
 CREATE TRIGGER update_holdings_updated_at BEFORE UPDATE ON holdings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- 插入默认数据（可选）
-INSERT INTO users (username, email, password_hash, is_active) 
+CREATE TRIGGER update_config_updated_at BEFORE UPDATE ON config
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 插入默认管理员用户 (密码: admin123)
+-- 使用 PBKDF2-HMAC-SHA256 哈希 (salt$hash 格式)
+INSERT INTO users (user_id, username, password, created_at) 
 VALUES 
-    ('admin', 'admin@fund-daily.com', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', true),
-    ('testuser', 'test@fund-daily.com', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', true)
+    ('admin_default_id_001', 'admin', '370cab64d190f4be34627af172e5ef53$cb71ddfe90195a537e46c5c32f6a2dea44ab8402d9e81ed145828210a9dcd6e5', CURRENT_TIMESTAMP)
 ON CONFLICT (username) DO NOTHING;
 
 -- 插入示例基金数据
@@ -148,6 +139,20 @@ VALUES
     ('000002', '嘉实增长', '嘉实增长混合型证券投资基金', '混合型', '嘉实基金'),
     ('000003', '易方达消费', '易方达消费行业股票型证券投资基金', '股票型', '易方达基金')
 ON CONFLICT (code) DO NOTHING;
+
+-- 创建索引以提高查询性能
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_holdings_user_id ON holdings(user_id);
+CREATE INDEX IF NOT EXISTS idx_holdings_code ON holdings(code);
+CREATE INDEX IF NOT EXISTS idx_fund_nav_fund_code ON fund_nav(fund_code);
+CREATE INDEX IF NOT EXISTS idx_fund_nav_nav_date ON fund_nav(nav_date DESC);
+CREATE INDEX IF NOT EXISTS idx_fund_scores_fund_code ON fund_scores(fund_code);
+CREATE INDEX IF NOT EXISTS idx_fund_scores_score_date ON fund_scores(score_date DESC);
+CREATE INDEX IF NOT EXISTS idx_config_user_id ON config(user_id);
+CREATE INDEX IF NOT EXISTS idx_watchlist_user_id ON watchlist(user_id);
+CREATE INDEX IF NOT EXISTS idx_history_user_id ON history(user_id);
+CREATE INDEX IF NOT EXISTS idx_history_created_at ON history(created_at DESC);
 
 -- 创建只读用户（可选，用于监控）
 DO $$
@@ -167,5 +172,8 @@ GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO fund_daily_reader;
 -- 设置默认搜索路径
 ALTER DATABASE fund_daily SET search_path TO public;
 
--- 记录初始化完成
-COMMENT ON DATABASE fund_daily IS 'Fund Daily v2.6.0 数据库 - 初始化完成于 ' || CURRENT_TIMESTAMP;
+-- 完成消息
+DO $$
+BEGIN
+    RAISE NOTICE 'Fund Daily 数据库初始化完成';
+END $$;

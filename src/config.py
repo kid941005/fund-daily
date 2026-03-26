@@ -60,11 +60,11 @@ class RedisConfig:
     def from_env(cls) -> "RedisConfig":
         """从环境变量创建配置"""
         return cls(
-            host=os.getenv("REDIS_HOST", "localhost"),
-            port=int(os.getenv("REDIS_PORT", "6379")),
-            db=int(os.getenv("REDIS_DB", "0")),
-            password=os.getenv("REDIS_PASSWORD"),
-            ttl=int(os.getenv("REDIS_TTL", "1800")),
+            host=os.getenv("FUND_DAILY_REDIS_HOST", os.getenv("REDIS_HOST", "localhost")),
+            port=int(os.getenv("FUND_DAILY_REDIS_PORT", os.getenv("REDIS_PORT", "6379"))),
+            db=int(os.getenv("FUND_DAILY_REDIS_DB", os.getenv("REDIS_DB", "0"))),
+            password=os.getenv("FUND_DAILY_REDIS_PASSWORD", os.getenv("REDIS_PASSWORD")),
+            ttl=int(os.getenv("FUND_DAILY_REDIS_TTL", os.getenv("REDIS_TTL", "1800"))),
         )
 
     def validate(self) -> List[str]:
@@ -238,6 +238,12 @@ class AppConfig:
     admin_token: Optional[str] = None  # API网关管理员令牌
     user_token: Optional[str] = None  # API网关用户令牌
     readonly_token: Optional[str] = None  # API网关只读令牌
+    log_level: str = "INFO"
+    log_file: Optional[str] = None
+    debug: bool = False
+    enable_ocr: bool = False
+    eastmoney_api_base: str = "https://fund.eastmoney.com"
+    prometheus_metrics_port: Optional[int] = None
 
     @classmethod
     def from_env(cls) -> "AppConfig":
@@ -249,6 +255,12 @@ class AppConfig:
             admin_token=os.getenv("FUND_DAILY_ADMIN_TOKEN"),
             user_token=os.getenv("FUND_DAILY_USER_TOKEN"),
             readonly_token=os.getenv("FUND_DAILY_READONLY_TOKEN"),
+            log_level=os.getenv("FUND_DAILY_LOG_LEVEL", os.getenv("LOG_LEVEL", "INFO")),
+            log_file=os.getenv("FUND_DAILY_LOG_FILE", os.getenv("LOG_FILE")),
+            debug=os.getenv("FUND_DAILY_DEBUG", os.getenv("DEBUG", "false")).lower() == "true",
+            enable_ocr=os.getenv("FUND_DAILY_ENABLE_OCR", os.getenv("ENABLE_OCR", "false")).lower() == "true",
+            eastmoney_api_base=os.getenv("FUND_DAILY_EASTMONEY_API_BASE", os.getenv("EASTMONEY_API_BASE", "https://fund.eastmoney.com")),
+            prometheus_metrics_port=int(os.getenv("FUND_DAILY_PROMETHEUS_METRICS_PORT", os.getenv("PROMETHEUS_METRICS_PORT", "0"))) or None,
         )
 
     def validate(self) -> List[str]:
@@ -274,6 +286,38 @@ class AppConfig:
         return errors
 
 
+@dataclass
+class CorsConfig:
+    """CORS 配置"""
+    
+    origins: List[str] = field(default_factory=lambda: ["*"])
+    
+    @classmethod
+    def from_env(cls) -> "CorsConfig":
+        """从环境变量创建配置"""
+        cors_origins_str = os.getenv("FUND_DAILY_CORS_ORIGINS", os.getenv("CORS_ORIGINS", ""))
+        if cors_origins_str:
+            origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
+        else:
+            origins = ["*"]  # 开发环境默认允许所有
+        
+        return cls(origins=origins)
+    
+    def validate(self) -> List[str]:
+        """验证配置"""
+        errors = []
+        
+        if not self.origins:
+            errors.append("CORS 来源不能为空")
+        
+        # 生产环境不应允许所有来源
+        app_config = AppConfig.from_env()
+        if app_config.env == "production" and "*" in self.origins:
+            errors.append("生产环境不应设置 CORS 来源为 '*'，请配置具体的域名")
+        
+        return errors
+
+
 class ConfigManager:
     """统一配置管理器"""
 
@@ -284,6 +328,7 @@ class ConfigManager:
         self.cache = CacheConfig.from_env()
         self.server = ServerConfig.from_env()
         self.app = AppConfig.from_env()
+        self.cors = CorsConfig.from_env()
 
         # 验证所有配置
         self._validate_all()
@@ -299,6 +344,7 @@ class ConfigManager:
         all_errors.extend(self.cache.validate())
         all_errors.extend(self.server.validate())
         all_errors.extend(self.app.validate())
+        all_errors.extend(self.cors.validate())
 
         # 如果有错误，记录并抛出异常
         if all_errors:
@@ -355,6 +401,13 @@ class ConfigManager:
                 "env": self.app.env,
                 "version": self.app.version,
                 "default_funds": self.app.default_funds,
+                "log_level": self.app.log_level,
+                "debug": self.app.debug,
+                "enable_ocr": self.app.enable_ocr,
+            },
+            "cors": {
+                "origins": self.cors.origins,
+                "allow_all": "*" in self.cors.origins,
             },
         }
 

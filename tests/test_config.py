@@ -90,11 +90,11 @@ class TestRedisConfig:
     """Tests for Redis configuration"""
     
     @patch.dict(os.environ, {
-        "REDIS_HOST": "redis-host",
-        "REDIS_PORT": "6380",
-        "REDIS_DB": "2",
-        "REDIS_PASSWORD": "redis-pass",
-        "REDIS_TTL": "900"
+        "FUND_DAILY_REDIS_HOST": "redis-host",
+        "FUND_DAILY_REDIS_PORT": "6380",
+        "FUND_DAILY_REDIS_DB": "2",
+        "FUND_DAILY_REDIS_PASSWORD": "redis-pass",
+        "FUND_DAILY_REDIS_TTL": "900"
     })
     def test_from_env(self):
         """Test Redis config from environment"""
