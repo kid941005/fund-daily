@@ -105,8 +105,11 @@ jobs:
         npm ci
         npm run build
         cd ../..
+        mkdir -p frontend_dist
+        mv dist/* frontend_dist/
         mkdir -p dist/frontend
-        cp -r web/vue3/dist/* dist/frontend/
+        cp -r frontend_dist/* dist/frontend/
+        rm -rf frontend_dist
     
     - name: Create deployment package
       run: |
