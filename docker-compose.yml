@@ -1,21 +1,26 @@
-# Fund Daily v2.7.1 Docker Compose 配置
-# FastAPI + Vue3 + PostgreSQL + Redis
+# Fund Daily - 标准部署配置
+# 仅包含核心服务: FastAPI + Vue3 + PostgreSQL + Redis
+#
+# 使用方式:
+#   cp .env.example .env
+#   编辑 .env 设置密码
+#   docker-compose up -d
 
 services:
-  # PostgreSQL 数据库 (v15 Alpine)
+  # ============== 数据库 ==============
   postgres:
     image: postgres:15-alpine
     container_name: fund-daily-postgres
+    restart: unless-stopped
     env_file:
       - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-kid}
-      # ⚠️ 生产环境必须设置强密码
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
       POSTGRES_DB: ${POSTGRES_DB:-fund_daily}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
@@ -23,59 +28,35 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
-    restart: unless-stopped
-    networks:
-      - fund-daily-network
 
-  # Redis 缓存 (v7 Alpine)
+  # ============== 缓存 ==============
   redis:
     image: redis:7-alpine
     container_name: fund-daily-redis
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD:-}
     env_file:
       - .env
     volumes:
       - redis_data:/data
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     ports:
       - "${REDIS_PORT:-6379}:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-}", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
-    networks:
-      - fund-daily-network
 
-  # Vue 前端构建
-  frontend-builder:
-    build:
-      context: ./web/vue3
-      dockerfile: Dockerfile.frontend
-    container_name: fund-daily-frontend-builder
-    volumes:
-      - ./dist:/app/dist
-    environment:
-      - NODE_ENV=production
-    command: npm run build
-    networks:
-      - fund-daily-network
-
-  # FastAPI 后端应用
+  # ============== 后端 API ==============
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: fund-daily-backend-fastapi
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      frontend-builder:
-        condition: service_completed_successfully
+    container_name: fund-daily-backend
+    restart: unless-stopped
     env_file:
       - .env
     environment:
@@ -84,128 +65,55 @@ services:
       - FUND_DAILY_DB_PORT=5432
       - FUND_DAILY_DB_NAME=${POSTGRES_DB:-fund_daily}
       - FUND_DAILY_DB_USER=${POSTGRES_USER:-kid}
-      # ⚠️ 生产环境必须通过 .env 设置强密码
       - FUND_DAILY_DB_PASSWORD=${POSTGRES_PASSWORD:-}
-      
-      # Redis 配置（统一使用 FUND_DAILY_ 前缀）
+      # Redis 配置
       - FUND_DAILY_REDIS_HOST=redis
       - FUND_DAILY_REDIS_PORT=6379
       - FUND_DAILY_REDIS_DB=${REDIS_DB:-0}
       - FUND_DAILY_REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - FUND_DAILY_REDIS_TTL=${REDIS_TTL:-1800}
-      
-      # 应用配置
-      - FUND_DAILY_SECRET_KEY=${FUND_DAILY_SECRET_KEY:-}
-      - FUND_DAILY_ENV=${FUND_DAILY_ENV:-production}
+      # 服务器配置
       - FUND_DAILY_SERVER_HOST=0.0.0.0
       - FUND_DAILY_SERVER_PORT=5000
-      
-      # JWT 配置（⚠️ 生产环境必须设置）
+      - FUND_DAILY_ENV=production
+      # 安全配置（生产环境必须设置）
       - FUND_DAILY_JWT_SECRET=${FUND_DAILY_JWT_SECRET:-}
-      - FUND_DAILY_JWT_EXPIRE_MINUTES=${FUND_DAILY_JWT_EXPIRE_MINUTES:-30}
-      - FUND_DAILY_JWT_REFRESH_DAYS=${FUND_DAILY_JWT_REFRESH_DAYS:-7}
-      
-      # 缓存配置
-      - FUND_DAILY_CACHE_DURATION=${FUND_DAILY_CACHE_DURATION:-600}
-      - FUND_DAILY_REQUEST_INTERVAL=${FUND_DAILY_REQUEST_INTERVAL:-0.5}
-      
-      # 安全配置
-      - FUND_DAILY_SECURE_COOKIES=${FUND_DAILY_SECURE_COOKIES:-false}
-      - FUND_DAILY_SSL_VERIFY=${FUND_DAILY_SSL_VERIFY:-true}
-      
-      # 日志配置
-      - FUND_DAILY_LOG_LEVEL=${LOG_LEVEL:-INFO}
-      
-      # CORS 配置
-      # ⚠️ 生产环境请在 .env 中设置具体域名
-      # 示例: FUND_DAILY_CORS_ORIGINS=https://fund.example.com
-      - FUND_DAILY_CORS_ORIGINS=${FUND_DAILY_CORS_ORIGINS:-*}
+      - FUND_DAILY_SECRET_KEY=${FUND_DAILY_SECRET_KEY:-}
     volumes:
+      # 前端构建产物（需要先在本地执行 npm run build）
       - ./dist:/app/dist:ro
-      - ./data:/app/data
     ports:
       - "${FUND_DAILY_SERVER_PORT:-5000}:5000"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    restart: unless-stopped
-    networks:
-      - fund-daily-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
-  # Nginx 反向代理
-  nginx:
-    image: nginx:alpine
-    container_name: fund-daily-nginx
+  # ============== 前端 (Nginx) ==============
+  frontend:
+    build:
+      context: ./web/vue3
+      dockerfile: Dockerfile.frontend
+    container_name: fund-daily-frontend
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
     depends_on:
       - backend
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - ./dist:/usr/share/nginx/html:ro
-    restart: unless-stopped
-    networks:
-      - fund-daily-network
+    # 注意: 前端 API 地址通过环境变量或 nginx.conf 配置
 
-  # Prometheus 监控 (可选)
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: fund-daily-prometheus
-    depends_on:
-      - backend
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
-    restart: unless-stopped
-    networks:
-      - fund-daily-network
-
-  # Grafana 仪表板 (可选)
-  grafana:
-    image: grafana/grafana:latest
-    container_name: fund-daily-grafana
-    depends_on:
-      - prometheus
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
-      - GF_INSTALL_PLUGINS=grafana-piechart-panel
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
-    restart: unless-stopped
-    networks:
-      - fund-daily-network
-
+# ============== 数据卷 ==============
 volumes:
   postgres_data:
     driver: local
   redis_data:
     driver: local
-  prometheus_data:
-    driver: local
-  grafana_data:
-    driver: local
 
+# ============== 网络 ==============
 networks:
-  fund-daily-network:
+  default:
+    name: fund-daily-network
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
