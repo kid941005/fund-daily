@@ -28,9 +28,9 @@ except ImportError as e:
     logger.warning(f"数据库模块导入失败: {e}")
     HAS_DB = False
 
-# 导入原始fetcher
-from . import fetch_fund_data as original_fetch_fund_data
-from . import fetch_fund_detail as original_fetch_fund_detail
+# 导入原始fetcher（直接从子模块避免循环导入）
+from .fund_basic.fetcher import fetch_fund_data as original_fetch_fund_data
+from .fund_basic.fetcher import fetch_fund_detail as original_fetch_fund_detail
 
 
 class EnhancedFetcher:
