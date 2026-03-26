@@ -3,7 +3,10 @@ Advice module - 投资建议模块
 提供基金分析、建议生成、评分等功能
 """
 
+import logging
 from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from .generate import (
     generate_advice,

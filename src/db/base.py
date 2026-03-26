@@ -3,7 +3,7 @@ AsyncBase - SQLAlchemy 异步模型基类
 声明式基类和通用 Mixin 类
 """
 
-from datetime import datetime
+from datetime import datetime, date
 from typing import Any, Optional
 
 from sqlalchemy import (

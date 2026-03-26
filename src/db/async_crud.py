@@ -25,6 +25,11 @@ async def _get_db() -> AsyncDatabase:
     return _default_db
 
 
+async def get_async_db() -> AsyncDatabase:
+    """获取异步数据库实例（公共接口）"""
+    return await _get_db()
+
+
 async def set_async_db(db: AsyncDatabase) -> None:
     """设置全局数据库实例"""
     global _default_db
