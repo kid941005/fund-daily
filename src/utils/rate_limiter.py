@@ -169,8 +169,6 @@ _fetcher_rate_limiter = RateLimiter(default_limit=1, default_window=0.5)
 
 def wait_if_needed():
     """等待直到允许下一个请求（用于fetcher模块）"""
-    global _fetcher_rate_limiter
-    
     # 从配置获取请求间隔
     from src.config import get_config
     config = get_config()
@@ -200,6 +198,5 @@ def wait_if_needed():
 
 def update_fetcher_config(limit: int, window: float):
     """更新fetcher速率限制配置"""
-    global _fetcher_rate_limiter
     _fetcher_rate_limiter.default_limit = limit
     _fetcher_rate_limiter.default_window = window
