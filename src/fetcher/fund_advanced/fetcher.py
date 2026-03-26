@@ -1,9 +1,4 @@
 """
-
-from src.utils import cache_keys
-from ..cache import get_cache, set_cache
-logger = logging.getLogger(__name__)
-
 Fund Advanced Fetcher Functions
 """
 
@@ -11,6 +6,7 @@ import logging
 from typing import Dict, List, Optional, Any
 import requests
 import json
+import re
 
 from src.utils import cache_keys
 from ..network import _make_request

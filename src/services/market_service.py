@@ -17,6 +17,7 @@ from src.analyzer import get_market_sentiment, get_commodity_sentiment
 from src.fetcher import fetch_hot_sectors, fetch_market_news
 from src.services.metrics_service import get_metrics_service, timed_metric
 from src.cache.manager import get_cache_manager
+from src.cache.redis_cache import get_redis_client
 from src.error import (
     MarketServiceError, ErrorCode,
     market_data_fetch_failed, cache_operation_failed
