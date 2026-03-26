@@ -8,3 +8,21 @@ data2/
 node_modules/
 dpm-lock.yaml
 dist/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store
+
+# Logs and coverage
+*.log
+.pytest_cache/
+htmlcov/
+
+# Local config (may contain secrets)
+config/config.json
