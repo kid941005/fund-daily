@@ -1,9 +1,8 @@
 # Fund Daily - 标准部署配置
-# 仅包含核心服务: FastAPI + Vue3 + PostgreSQL + Redis
+# 使用预构建镜像，无需本地构建
 #
 # 使用方式:
-#   cp .env.example .env
-#   编辑 .env 设置密码
+#   curl -O https://raw.githubusercontent.com/kid941005/fund-daily/main/docker-compose.yml
 #   docker-compose up -d
 
 services:
@@ -50,11 +49,9 @@ services:
       timeout: 5s
       retries: 5
 
-  # ============== 后端 API ==============
+  # ============== 后端 API + 前端 ==============
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: kid941005/fund-daily:latest
     container_name: fund-daily-backend
     restart: unless-stopped
     env_file:
@@ -80,7 +77,7 @@ services:
       - FUND_DAILY_JWT_SECRET=${FUND_DAILY_JWT_SECRET:-}
       - FUND_DAILY_SECRET_KEY=${FUND_DAILY_SECRET_KEY:-}
     volumes:
-      # 前端构建产物（需要先在本地执行 npm run build）
+      # 前端构建产物
       - ./dist:/app/dist:ro
     ports:
       - "${FUND_DAILY_SERVER_PORT:-5000}:5000"
@@ -89,21 +86,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-
-  # ============== 前端 (Nginx) ==============
-  frontend:
-    build:
-      context: ./web/vue3
-      dockerfile: Dockerfile.frontend
-    container_name: fund-daily-frontend
-    restart: unless-stopped
-    volumes:
-      - ./data:/app/data
-    ports:
-      - "${FRONTEND_PORT:-80}:80"
-    depends_on:
-      - backend
-    # 注意: 前端 API 地址通过环境变量或 nginx.conf 配置
 
 # ============== 数据卷 ==============
 volumes:

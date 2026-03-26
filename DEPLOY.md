@@ -11,31 +11,29 @@
 ### 1. 准备环境
 
 ```bash
-# 克隆代码
-git clone https://github.com/kid941005/fund-daily.git
-cd fund-daily
+# 创建目录
+mkdir -p ~/fund-daily && cd ~/fund-daily
 
-# 复制环境变量文件
-cp .env.example .env
-```
+# 下载 docker-compose.yml
+curl -O https://raw.githubusercontent.com/kid941005/fund-daily/main/docker-compose.yml
 
-### 2. 配置密码
+# 下载数据库初始化脚本
+curl -O https://raw.githubusercontent.com/kid941005/fund-daily/main/db/init.sql
 
-编辑 `.env` 文件，设置以下必需密码：
-
-```bash
-# 必须设置强密码
+# 创建环境变量文件
+cat > .env << 'EOF'
 POSTGRES_PASSWORD=your_strong_postgres_password
 FUND_DAILY_JWT_SECRET=your_jwt_secret_key_at_least_32_characters
 FUND_DAILY_SECRET_KEY=your_secret_key_at_least_32_characters
-FUND_DAILY_DB_PASSWORD=your_postgres_password  # 与 POSTGRES_PASSWORD 相同
+FUND_DAILY_DB_PASSWORD=your_postgres_password
+EOF
 ```
 
-### 3. 构建并启动
+### 2. 启动服务
 
 ```bash
-# 构建前端并启动所有服务
-docker-compose up -d --build
+# 启动所有服务（自动拉取镜像）
+docker-compose up -d
 
 # 查看状态
 docker-compose ps
@@ -44,11 +42,11 @@ docker-compose ps
 docker-compose logs -f
 ```
 
-### 4. 访问服务
+### 3. 访问服务
 
 | 服务 | 地址 |
 |------|------|
-| 前端界面 | http://localhost:80 |
+| 前端界面 | http://localhost:5000 |
 | 后端 API | http://localhost:5000 |
 | API 文档 | http://localhost:5000/api/docs |
 
@@ -145,16 +143,14 @@ docker-compose logs frontend
 
 ## 目录结构
 
+部署后目录应包含：
+
 ```
-fund-daily/
-├── docker-compose.yml    # 编排配置
-├── .env                 # 环境变量 (需要手动创建)
-├── Dockerfile           # 后端镜像
-├── web/
-│   └── vue3/
-│       ├── Dockerfile.frontend  # 前端镜像
-│       └── dist/       # 前端构建产物 (自动生成)
-├── db/
-│   └── init.sql        # 数据库初始化脚本
-└── data/              # 运行时数据目录
+~/fund-daily/
+├── docker-compose.yml    # 编排配置（下载）
+├── .env                  # 环境变量（手动创建）
+├── init.sql              # 数据库初始化（下载）
+└── dist/                 # 前端构建产物（容器内提供）
 ```
+
+**注意**: 只需 3 个文件即可部署，无需克隆整个代码仓库。
