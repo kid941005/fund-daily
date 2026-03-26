@@ -52,6 +52,9 @@ services:
 
   # ============== 后端 API + 前端 ==============
   backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: kid941005/fund-daily:latest
     container_name: fund-daily-backend
     restart: unless-stopped
@@ -81,7 +84,7 @@ services:
       # 前端构建产物
       - ./dist:/app/dist:ro
     ports:
-      - "${FUND_DAILY_SERVER_PORT:-5007}:5000"
+      - "${FUND_DAILY_SERVER_PORT:-5000}:5000"
     depends_on:
       postgres:
         condition: service_healthy
