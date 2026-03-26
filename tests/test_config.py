@@ -170,26 +170,25 @@ class TestSecurityConfig:
         assert config.secure_cookies is False
         assert config.ssl_verify is True
     
-    def test_validate_production_missing_key(self):
-        """Test validation in production with missing secret key"""
-        config = SecurityConfig(secret_key=None, jwt=JwtConfig(secret="test-jwt-secret"))
-        errors = config.validate(is_production=True)
-        assert len(errors) == 2  # 缺少Flask密钥 + JWT密钥太短
-        assert any("必须设置 FUND_DAILY_SECRET_KEY" in error for error in errors)
-        assert any("JWT密钥长度至少32字符" in error for error in errors)
+    def test_validate_optional_key(self):
+        """Test validation - secret key is optional but JWT must be valid"""
+        config = SecurityConfig(secret_key=None, jwt=JwtConfig(secret="a-valid-jwt-secret-that-is-32chars!!"))
+        errors = config.validate()
+        assert len(errors) == 1  # 建议设置，但不强制
+        assert any("建议设置" in error for error in errors)
     
     def test_validate_short_key(self):
         """Test validation with short secret key"""
         config = SecurityConfig(secret_key="short", jwt=JwtConfig(secret="test-jwt-secret"))
-        errors = config.validate(is_production=True)
-        assert len(errors) == 2  # Flask密钥短 + JWT密钥短（生产环境要求≥32字符）
+        errors = config.validate()
+        assert len(errors) == 2  # Flask密钥短 + JWT密钥短
         assert any("至少32字符" in error for error in errors)
     
-    def test_validate_development(self):
-        """Test validation in development (no secret key required)"""
-        config = SecurityConfig(secret_key=None, jwt=JwtConfig(secret="dev-jwt-secret"))
-        errors = config.validate(is_production=False)
-        assert errors == []  # 开发环境允许无Flask密钥，但JWT密钥必须有值
+    def test_validate_valid_config(self):
+        """Test validation with valid config"""
+        config = SecurityConfig(secret_key="a-valid-secret-key-that-is-32chars!", jwt=JwtConfig(secret="a-valid-jwt-secret-that-is-32chars!!"))
+        errors = config.validate()
+        assert errors == []  # 全部有效
 
 
 class TestConfigManager:
@@ -231,19 +230,19 @@ class TestConfigManager:
         assert config.server.debug is True
         assert config.server.host == "127.0.0.1"
     
-    def test_is_production(self):
-        """Test is_production method"""
+    def test_is_development(self):
+        """Test is_development method"""
         config = ConfigManager()
         
         # Mock app.env
-        config.app.env = "production"
-        assert config.is_production() is True
-        
         config.app.env = "development"
-        assert config.is_production() is False
+        assert config.is_development() is True
+        
+        config.app.env = "production"
+        assert config.is_development() is False
         
         config.app.env = "testing"
-        assert config.is_production() is False
+        assert config.is_development() is False
     
     def test_get_database_url(self):
         """Test get_database_url method"""
