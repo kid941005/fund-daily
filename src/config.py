@@ -96,7 +96,7 @@ class JwtConfig:
     @classmethod
     def from_env(cls) -> "JwtConfig":
         secret = os.getenv("FUND_DAILY_JWT_SECRET", "")
-        
+
         # 开发环境使用默认值
         if not secret:
             secret = "dev-jwt-secret-change-in-production"
