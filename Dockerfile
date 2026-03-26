@@ -1,6 +1,6 @@
 # Fund Daily Dockerfile - Optimized
 # Multi-stage build for smaller image
-# Version: 2.7.1
+# Version: 2.7.3
 
 # Stage 1: Builder
 FROM python:3.11-slim AS builder

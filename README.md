@@ -3,7 +3,7 @@
 > 每日基金分析系统 - 智能持仓管理与量化分析
 
 [![GitHub Stars](https://img.shields.io/github/stars/kid941005/fund-daily?style=flat)](https://github.com/kid941005/fund-daily)
-[![Version](https://img.shields.io/badge/version-2.7.2-blue)](https://github.com/kid941005/fund-daily/releases/tag/v2.7.2)
+[![Version](https://img.shields.io/badge/version-2.7.3-blue)](https://github.com/kid941005/fund-daily/releases/tag/v2.7.3)
 [![Python](https://img.shields.io/badge/python-3.11+-green)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.100+-blue)](https://fastapi.tiangolo.com/)
 [![Vue](https://img.shields.io/badge/vue-3.3-green)](https://vuejs.org/)

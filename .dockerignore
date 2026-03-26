@@ -47,9 +47,8 @@ Thumbs.db
 # Documentation build
 docs/_build/
 
-# CI/CD workflows
-.github/workflows/*.yml
-!.github/workflows/*.yml  # 但保留 workflow 文件
+# CI/CD workflows (保留 workflow 文件)
+.github/workflows/
 
 # Temporary files
 *.tmp

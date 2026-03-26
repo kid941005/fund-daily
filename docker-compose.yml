@@ -1,5 +1,6 @@
 # Fund Daily - 标准部署配置
 # 使用预构建镜像，无需本地构建
+# Version: 2.7.3
 #
 # 使用方式:
 #   curl -O https://raw.githubusercontent.com/kid941005/fund-daily/main/docker-compose.yml
