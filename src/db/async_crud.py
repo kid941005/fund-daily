@@ -38,37 +38,39 @@ async def set_async_db(db: AsyncDatabase) -> None:
 
 # ==================== AsyncUserDB ====================
 
+
 class AsyncUserDB:
     """异步用户数据库操作"""
-    
+
     def __init__(self, db: Optional[AsyncDatabase] = None):
         self._db = db
-    
+
     @property
     def db(self) -> AsyncDatabase:
         """获取数据库实例"""
         return self._db if self._db else _get_db()
-    
+
     async def get_by_username(self, username: str) -> Optional[Dict[str, Any]]:
         """根据用户名获取用户"""
         sql = "SELECT * FROM users WHERE username = $1"
         return await self.db.fetch_one(sql, username)
-    
+
     async def get_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
         """根据用户ID获取用户"""
         sql = "SELECT * FROM users WHERE user_id = $1"
         return await self.db.fetch_one(sql, user_id)
-    
+
     async def verify(self, username: str, password: str) -> Optional[Dict[str, Any]]:
         """验证用户登录"""
         from src.auth import verify_password
+
         user = await self.get_by_username(username)
         if not user:
             return None
         if verify_password(password, user.get("password", "")):
             return user
         return None
-    
+
     async def create(self, user_id: str, username: str, password_hash: str) -> bool:
         """创建用户"""
         sql = """
@@ -78,7 +80,7 @@ class AsyncUserDB:
         """
         result = await self.db.execute(sql, user_id, username, password_hash)
         return "INSERT 0 1" in result or result.endswith("1")
-    
+
     async def update_password(self, user_id: str, new_password_hash: str) -> int:
         """更新密码"""
         sql = """
@@ -87,7 +89,7 @@ class AsyncUserDB:
             WHERE user_id = $1
         """
         return await self.db.execute_update(sql, user_id, new_password_hash)
-    
+
     async def list_all(self) -> List[Dict[str, Any]]:
         """列出所有用户"""
         sql = "SELECT user_id, username, created_at, updated_at FROM users ORDER BY created_at DESC"
@@ -96,16 +98,17 @@ class AsyncUserDB:
 
 # ==================== AsyncHoldingsDB ====================
 
+
 class AsyncHoldingsDB:
     """异步持仓数据库操作"""
-    
+
     def __init__(self, db: Optional[AsyncDatabase] = None):
         self._db = db
-    
+
     @property
     def db(self) -> AsyncDatabase:
         return self._db if self._db else _get_db()
-    
+
     async def get_holdings(self, user_id: str) -> List[Dict[str, Any]]:
         """获取用户持仓列表"""
         sql = """
@@ -115,7 +118,7 @@ class AsyncHoldingsDB:
             ORDER BY created_at DESC
         """
         return await self.db.fetch_all(sql, user_id)
-    
+
     async def save_holding(
         self,
         user_id: str,
@@ -138,33 +141,35 @@ class AsyncHoldingsDB:
         """
         result = await self.db.execute(sql, user_id, code, name, amount, buy_nav, buy_date)
         return "INSERT 0 1" in result or result.endswith("1")
-    
+
     async def delete_holding(self, user_id: str, code: str) -> int:
         """删除持仓"""
         sql = "DELETE FROM holdings WHERE user_id = $1 AND code = $2"
         return await self.db.execute_update(sql, user_id, code)
-    
+
     async def clear_holdings(self, user_id: str) -> int:
         """清空用户所有持仓"""
         sql = "DELETE FROM holdings WHERE user_id = $1"
         return await self.db.execute_update(sql, user_id)
-    
+
     async def save_holdings_batch(self, user_id: str, holdings: List[Dict[str, Any]]) -> int:
         """批量保存持仓"""
         if not holdings:
             return 0
-        
+
         args_list = []
         for h in holdings:
-            args_list.append((
-                user_id,
-                h.get("code", ""),
-                h.get("name", ""),
-                h.get("amount", 0),
-                h.get("buy_nav") or h.get("buyNav"),
-                h.get("buy_date") or h.get("buyDate"),
-            ))
-        
+            args_list.append(
+                (
+                    user_id,
+                    h.get("code", ""),
+                    h.get("name", ""),
+                    h.get("amount", 0),
+                    h.get("buy_nav") or h.get("buyNav"),
+                    h.get("buy_date") or h.get("buyDate"),
+                )
+            )
+
         sql = """
             INSERT INTO holdings (user_id, code, name, amount, buy_nav, buy_date)
             VALUES ($1, $2, $3, $4, $5, $6)
@@ -175,7 +180,7 @@ class AsyncHoldingsDB:
                 buy_date = EXCLUDED.buy_date,
                 updated_at = CURRENT_TIMESTAMP
         """
-        
+
         async with self.db.acquire() as conn:
             async with conn.transaction():
                 for args in args_list:
@@ -185,22 +190,23 @@ class AsyncHoldingsDB:
 
 # ==================== AsyncWatchlistDB ====================
 
+
 class AsyncWatchlistDB:
     """异步监控列表操作"""
-    
+
     def __init__(self, db: Optional[AsyncDatabase] = None):
         self._db = db
-    
+
     @property
     def db(self) -> AsyncDatabase:
         return self._db if self._db else _get_db()
-    
+
     async def get_watchlist(self, user_id: str) -> List[str]:
         """获取监控列表"""
         sql = "SELECT code FROM watchlist WHERE user_id = $1 ORDER BY created_at"
         rows = await self.db.fetch_all(sql, user_id)
         return [r["code"] for r in rows]
-    
+
     async def add_watchlist(self, user_id: str, code: str) -> bool:
         """添加监控"""
         sql = """
@@ -210,7 +216,7 @@ class AsyncWatchlistDB:
         """
         result = await self.db.execute(sql, user_id, code)
         return result != "INSERT 0 0"
-    
+
     async def remove_watchlist(self, user_id: str, code: str) -> int:
         """移除监控"""
         sql = "DELETE FROM watchlist WHERE user_id = $1 AND code = $2"
@@ -219,22 +225,23 @@ class AsyncWatchlistDB:
 
 # ==================== AsyncConfigDB ====================
 
+
 class AsyncConfigDB:
     """异步配置操作"""
-    
+
     def __init__(self, db: Optional[AsyncDatabase] = None):
         self._db = db
-    
+
     @property
     def db(self) -> AsyncDatabase:
         return self._db if self._db else _get_db()
-    
+
     async def get_config(self, user_id: str) -> Optional[Dict[str, Any]]:
         """获取用户配置"""
         sql = "SELECT config FROM config WHERE user_id = $1"
         row = await self.db.fetch_one(sql, user_id)
         return row["config"] if row else None
-    
+
     async def save_config(self, user_id: str, config: Dict[str, Any]) -> bool:
         """保存用户配置"""
         sql = """
@@ -250,18 +257,19 @@ class AsyncConfigDB:
 
 # ==================== AsyncFundsDB ====================
 
+
 class AsyncFundsDB:
     """异步基金数据库操作"""
-    
+
     def __init__(self, db: Optional[AsyncDatabase] = None):
         self._db = db
-    
+
     @property
     def db(self) -> AsyncDatabase:
         return self._db if self._db else _get_db()
-    
+
     # --- 基金基本信息 ---
-    
+
     async def save_fund_info(
         self,
         fund_code: str,
@@ -292,18 +300,17 @@ class AsyncFundsDB:
                 updated_at = CURRENT_TIMESTAMP
         """
         result = await self.db.execute(
-            sql, fund_code, fund_name, fund_type, fund_company,
-            establish_date, fund_size, manager, risk_level, rating
+            sql, fund_code, fund_name, fund_type, fund_company, establish_date, fund_size, manager, risk_level, rating
         )
         return "INSERT 0 1" in result or result.endswith("1")
-    
+
     async def get_fund_info(self, fund_code: str) -> Optional[Dict[str, Any]]:
         """获取基金基本信息"""
         sql = "SELECT * FROM funds WHERE fund_code = $1"
         return await self.db.fetch_one(sql, fund_code)
-    
+
     # --- 基金净值 ---
-    
+
     async def save_fund_nav(
         self,
         fund_code: str,
@@ -320,9 +327,10 @@ class AsyncFundsDB:
         # 先确保基金记录存在
         await self.db.execute(
             "INSERT INTO funds (fund_code, fund_name) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-            fund_code, f"基金{fund_code}"
+            fund_code,
+            f"基金{fund_code}",
         )
-        
+
         sql = """
             INSERT INTO fund_nav (
                 fund_code, nav_date, net_value, accumulated_value,
@@ -340,11 +348,19 @@ class AsyncFundsDB:
                 created_at = CURRENT_TIMESTAMP
         """
         result = await self.db.execute(
-            sql, fund_code, nav_date, net_value, accumulated_value,
-            daily_return, weekly_return, monthly_return, quarterly_return, yearly_return
+            sql,
+            fund_code,
+            nav_date,
+            net_value,
+            accumulated_value,
+            daily_return,
+            weekly_return,
+            monthly_return,
+            quarterly_return,
+            yearly_return,
         )
         return "INSERT 0 1" in result or result.endswith("1")
-    
+
     async def get_fund_nav(
         self,
         fund_code: str,
@@ -361,9 +377,9 @@ class AsyncFundsDB:
                 ORDER BY nav_date DESC LIMIT 1
             """
             return await self.db.fetch_one(sql, fund_code)
-    
+
     # --- 基金评分 ---
-    
+
     async def save_fund_score(
         self,
         fund_code: str,
@@ -379,9 +395,10 @@ class AsyncFundsDB:
         """保存基金评分"""
         await self.db.execute(
             "INSERT INTO funds (fund_code, fund_name) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-            fund_code, f"基金{fund_code}"
+            fund_code,
+            f"基金{fund_code}",
         )
-        
+
         sql = """
             INSERT INTO fund_scores (
                 fund_code, score_date, total_score,
@@ -399,12 +416,19 @@ class AsyncFundsDB:
                 created_at = CURRENT_TIMESTAMP
         """
         result = await self.db.execute(
-            sql, fund_code, score_date, total_score,
-            valuation_score, sector_score, risk_score,
-            valuation_reason, sector_reason, risk_reason
+            sql,
+            fund_code,
+            score_date,
+            total_score,
+            valuation_score,
+            sector_score,
+            risk_score,
+            valuation_reason,
+            sector_reason,
+            risk_reason,
         )
         return "INSERT 0 1" in result or result.endswith("1")
-    
+
     async def get_fund_score(
         self,
         fund_code: str,
@@ -421,9 +445,9 @@ class AsyncFundsDB:
                 ORDER BY score_date DESC LIMIT 1
             """
             return await self.db.fetch_one(sql, fund_code)
-    
+
     # --- 历史查询 ---
-    
+
     async def get_recent_funds(self, days: int = 7) -> List[Dict[str, Any]]:
         """获取最近有更新的基金"""
         sql = """
@@ -449,7 +473,7 @@ class AsyncFundsDB:
             ORDER BY f.updated_at DESC
         """
         return await self.db.fetch_all(sql, days)
-    
+
     async def search_funds(self, query: str, limit: int = 20) -> List[Dict[str, Any]]:
         """搜索基金"""
         sql = """
@@ -459,7 +483,7 @@ class AsyncFundsDB:
             LIMIT $2
         """
         return await self.db.fetch_all(sql, f"%{query}%", limit)
-    
+
     async def get_fund_history(self, fund_code: str, days: int = 30) -> Dict[str, Any]:
         """获取基金历史数据"""
         sql = """
@@ -480,57 +504,79 @@ class AsyncFundsDB:
             ORDER BY fn.nav_date DESC, fs.score_date DESC
         """
         rows = await self.db.fetch_all(sql, fund_code, days)
-        
+
         if not rows:
             return {"fund_info": None, "nav_history": [], "score_history": []}
-        
+
         first = rows[0]
         fund_info = {
-            k: v for k, v in first.items()
-            if k not in (
-                "nav_date", "net_value", "accumulated_value",
-                "daily_return", "weekly_return", "monthly_return",
-                "quarterly_return", "yearly_return",
-                "score_date", "total_score",
-                "valuation_score", "sector_score", "risk_score"
+            k: v
+            for k, v in first.items()
+            if k
+            not in (
+                "nav_date",
+                "net_value",
+                "accumulated_value",
+                "daily_return",
+                "weekly_return",
+                "monthly_return",
+                "quarterly_return",
+                "yearly_return",
+                "score_date",
+                "total_score",
+                "valuation_score",
+                "sector_score",
+                "risk_score",
             )
         }
-        
+
         nav_history = [
-            {k: v for k, v in dict(r).items()
-             if k in (
-                 "nav_date", "net_value", "accumulated_value",
-                 "daily_return", "weekly_return", "monthly_return",
-                 "quarterly_return", "yearly_return"
-             )}
-            for r in rows if r["nav_date"]
+            {
+                k: v
+                for k, v in dict(r).items()
+                if k
+                in (
+                    "nav_date",
+                    "net_value",
+                    "accumulated_value",
+                    "daily_return",
+                    "weekly_return",
+                    "monthly_return",
+                    "quarterly_return",
+                    "yearly_return",
+                )
+            }
+            for r in rows
+            if r["nav_date"]
         ]
-        
+
         seen_scores = set()
         score_history = []
         for r in rows:
             if r["score_date"] and r["score_date"] not in seen_scores:
                 seen_scores.add(r["score_date"])
-                score_history.append({
-                    "score_date": r["score_date"],
-                    "total_score": r["total_score"],
-                    "valuation_score": r["valuation_score"],
-                    "sector_score": r["sector_score"],
-                    "risk_score": r["risk_score"],
-                })
-        
+                score_history.append(
+                    {
+                        "score_date": r["score_date"],
+                        "total_score": r["total_score"],
+                        "valuation_score": r["valuation_score"],
+                        "sector_score": r["sector_score"],
+                        "risk_score": r["risk_score"],
+                    }
+                )
+
         return {
             "fund_info": fund_info,
             "nav_history": nav_history,
             "score_history": score_history,
         }
-    
+
     # --- 兼容层 ---
-    
+
     async def save_fund_data(self, fund_code: str, fund_data: Dict[str, Any]) -> bool:
         """保存完整基金数据（兼容现有API格式）"""
         today = date.today()
-        
+
         # 保存基本信息
         await self.save_fund_info(
             fund_code=fund_code,
@@ -543,7 +589,7 @@ class AsyncFundsDB:
             risk_level=fund_data.get("risk_level"),
             rating=fund_data.get("rating"),
         )
-        
+
         # 保存净值
         if "net_value" in fund_data:
             await self.save_fund_nav(
@@ -557,7 +603,7 @@ class AsyncFundsDB:
                 quarterly_return=fund_data.get("quarterly_return"),
                 yearly_return=fund_data.get("yearly_return"),
             )
-        
+
         # 保存评分
         score_100 = fund_data.get("score_100", {})
         if score_100:
@@ -572,9 +618,9 @@ class AsyncFundsDB:
                 sector_reason=score_100.get("sector", {}).get("reason"),
                 risk_reason=score_100.get("risk_control", {}).get("reason"),
             )
-        
+
         return True
-    
+
     async def get_all_holdings(self) -> List[Dict[str, Any]]:
         """获取所有持仓"""
         sql = "SELECT * FROM holdings ORDER BY user_id, code"

@@ -15,33 +15,46 @@ logger = logging.getLogger(__name__)
 # ============== 配置常量 ==============
 ADVICE_SCORE_THRESHOLDS = {"BUY": 60, "HOLD": 40, "SELL": 20}
 ADVICE_ALLOCATION_RATIOS = {
-    "HIGH": 0.375, "MEDIUM_HIGH": 0.275, "MEDIUM": 0.225,
-    "LOW": 0.175, "LOWER": 0.125, "MINIMAL": 0.075, "NONE": 0
+    "HIGH": 0.375,
+    "MEDIUM_HIGH": 0.275,
+    "MEDIUM": 0.225,
+    "LOW": 0.175,
+    "LOWER": 0.125,
+    "MINIMAL": 0.075,
+    "NONE": 0,
 }
 # 评分权重配置 - 增加区分度
 ADVICE_WEIGHT_CONFIG = {
     # 涨跌类 - 扩大差距
-    "DAILY_CHANGE": 15, "M1_CHANGE": 10, "M3_CHANGE": 8,
+    "DAILY_CHANGE": 15,
+    "M1_CHANGE": 10,
+    "M3_CHANGE": 8,
     # 动量趋势
-    "MOMENTUM": 15, "TREND": 12, 
+    "MOMENTUM": 15,
+    "TREND": 12,
     # 市场情绪
-    "MARKET_SENTIMENT": 12, "HOT_SECTOR": 15, 
+    "MARKET_SENTIMENT": 12,
+    "HOT_SECTOR": 15,
     # 商品和季节性
-    "COMMODITY": 10, "SEASONAL": 8,
+    "COMMODITY": 10,
+    "SEASONAL": 8,
     # 风险调整收益 - 扩大差距
-    "SHARPE_HIGH": 30, "SHARPE_LOW": -25, "DRAWDOWN": 15, 
+    "SHARPE_HIGH": 30,
+    "SHARPE_LOW": -25,
+    "DRAWDOWN": 15,
     # 规模和流动性
-    "SCALE": 8, "POSITION": 5
+    "SCALE": 8,
+    "POSITION": 5,
 }
 
 
 def generate_advice(funds: List[Dict]) -> Dict:
     """
     Generate investment advice based on fund performance and market indicators
-    
+
     Args:
         funds: List of analyzed fund data
-        
+
     Returns:
         dict: Investment advice
     """
@@ -71,13 +84,13 @@ def generate_advice(funds: List[Dict]) -> Dict:
 
     # 并行获取所有基金详情
     fund_codes = [f.get("fund_code") for f in funds if f.get("fund_code")]
-    
+
     def fetch_risk(code):
         try:
             return fetch_fund_detail(code)
         except Exception:
             return {}
-    
+
     # 使用线程池并行获取，最多5个线程
     with ThreadPoolExecutor(max_workers=5) as executor:
         futures = {executor.submit(fetch_risk, code): code for code in fund_codes}
@@ -116,6 +129,7 @@ def generate_advice(funds: List[Dict]) -> Dict:
     hot_sectors = []
     try:
         from ..fetcher import fetch_hot_sectors
+
         hot_sectors = fetch_hot_sectors(5) or []
     except Exception:
         pass
@@ -139,7 +153,7 @@ def generate_advice(funds: List[Dict]) -> Dict:
 
     # 核心评分计算
     score = 0
-    
+
     # 1. 市场情绪
     sentiment_map = {"乐观": 15, "偏多": 10, "平稳": 0, "偏空": -10, "恐慌": -15}
     score += sentiment_map.get(market_sentiment, 0)
@@ -187,7 +201,7 @@ def generate_advice(funds: List[Dict]) -> Dict:
             count += 1
         except Exception:
             pass
-    
+
     avg_profit_pct = total_profit / count if count > 0 else 0
 
     # 10. 技术分析
@@ -278,18 +292,18 @@ def generate_daily_report(fund_codes: List[str]) -> Dict:
     """Generate daily report for funds"""
     from ..fetcher import fetch_fund_data
     from . import analyze_fund
-    
+
     funds = []
     for code in fund_codes:
         data = fetch_fund_data(code)
         if data and not data.get("error"):
             funds.append(analyze_fund(data))
-    
+
     if not funds:
         return {"error": "No data"}
-    
+
     advice = generate_advice(funds)
-    
+
     return {
         "date": funds[0].get("date", ""),
         "funds": funds,
@@ -300,19 +314,19 @@ def generate_daily_report(fund_codes: List[str]) -> Dict:
 def format_report_for_share(report: Dict) -> str:
     """Format report for sharing"""
     lines = ["📊 基金日报", ""]
-    
+
     advice = report.get("advice", {})
     funds = report.get("funds", [])
-    
+
     lines.append(f"市场: {advice.get('market_sentiment', '平稳')}")
     lines.append(f"建议: {advice.get('action', '观望')}")
     lines.append("")
-    
+
     for f in funds[:5]:
         change = f.get("daily_change", 0)
         emoji = "📈" if change > 0 else "📉" if change < 0 else "➖"
         lines.append(f"{emoji} {f.get('fund_name', '')}: {change:+.2f}%")
-    
+
     return "\n".join(lines)
 
 
@@ -321,18 +335,18 @@ def _generate_daily_report_internal(fund_codes: List[str]) -> Dict:
     """Internal function to generate daily report"""
     from ..fetcher import fetch_fund_data
     from . import analyze_fund
-    
+
     funds = []
     for code in fund_codes:
         data = fetch_fund_data(code)
         if data and not data.get("error"):
             funds.append(analyze_fund(data))
-    
+
     if not funds:
         return {"error": "No data"}
-    
+
     advice = generate_advice(funds)
-    
+
     return {
         "date": funds[0].get("date", ""),
         "funds": funds,

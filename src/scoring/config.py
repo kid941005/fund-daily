@@ -22,11 +22,11 @@ def validate_weights_compat() -> Tuple[bool, str]:
     """校验权重配置是否合法"""
     if not SCORE_WEIGHTS:
         return False, "权重配置为空"
-    
+
     total = sum(SCORE_WEIGHTS.values())
     if total != 100:
         return False, f"权重总和应为100，实际为{total}"
-    
+
     for dimension, weight in SCORE_WEIGHTS.items():
         if not isinstance(weight, (int, float)):
             return False, f"维度'{dimension}'的权重必须是数字"
@@ -34,13 +34,21 @@ def validate_weights_compat() -> Tuple[bool, str]:
             return False, f"维度'{dimension}'的权重必须为正数"
         if weight > 50:
             return False, f"维度'{dimension}'的权重过大（{weight}分），不应超过50分"
-    
-    required_dimensions = ["valuation", "performance", "risk_control", "momentum",
-                          "sentiment", "sector", "manager", "liquidity"]
+
+    required_dimensions = [
+        "valuation",
+        "performance",
+        "risk_control",
+        "momentum",
+        "sentiment",
+        "sector",
+        "manager",
+        "liquidity",
+    ]
     for dim in required_dimensions:
         if dim not in SCORE_WEIGHTS:
             return False, f"缺失必要维度: {dim}"
-    
+
     return True, "权重配置有效"
 
 
@@ -61,6 +69,7 @@ def _get_cached_score(fund_code: str) -> Optional[Dict]:
     """获取缓存的评分"""
     try:
         from ..fetcher import get_cache
+
         return get_cache(_get_cache_key(fund_code))
     except Exception:
         return None
@@ -70,6 +79,7 @@ def _set_cached_score(fund_code: str, score: Dict) -> None:
     """设置评分缓存"""
     try:
         from ..fetcher import set_cache
+
         set_cache(_get_cache_key(fund_code), score)
     except Exception:
         pass

@@ -19,9 +19,5 @@ def calculate_liquidity_score(daily_change: float, fund_scale: float) -> Dict:
     else:
         s = 1
         r = f"涨跌{daily_change:+.2f}%，异常波动"
-    
-    return {
-        "score": s,
-        "reason": r,
-        "details": {"daily_change": daily_change}
-    }
+
+    return {"score": s, "reason": r, "details": {"daily_change": daily_change}}

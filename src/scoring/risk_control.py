@@ -12,7 +12,7 @@ def calculate_risk_control_score(risk_metrics: Dict, fund_data: Dict = None) -> 
     """
     details = {}
     scores = []
-    
+
     # 3.1 夏普比率 (6分)
     sharpe = risk_metrics.get("sharpe_ratio", 0) or 0
     if sharpe >= 1.5:
@@ -32,7 +32,7 @@ def calculate_risk_control_score(risk_metrics: Dict, fund_data: Dict = None) -> 
         r = f"夏普比率{sharpe:.2f}，很差"
     scores.append(s)
     details["sharpe"] = s
-    
+
     # 3.2 最大回撤 (5分)
     drawdown = risk_metrics.get("estimated_max_drawdown", 0) or 0
     if drawdown < 10:
@@ -49,7 +49,7 @@ def calculate_risk_control_score(risk_metrics: Dict, fund_data: Dict = None) -> 
         r = f"回撤{drawdown:.1f}%，风险较高"
     scores.append(s)
     details["drawdown"] = s
-    
+
     # 3.3 波动率 (4分)
     volatility = risk_metrics.get("volatility", 0) or 0
     if volatility < 10:
@@ -63,10 +63,6 @@ def calculate_risk_control_score(risk_metrics: Dict, fund_data: Dict = None) -> 
         r = f"波动{volatility:.1f}%，较高"
     scores.append(s)
     details["volatility"] = s
-    
+
     total = min(15, sum(scores))
-    return {
-        "score": total,
-        "reason": f"夏普{sharpe:.2f}，回撤{drawdown:.1f}%",
-        "details": details
-    }
+    return {"score": total, "reason": f"夏普{sharpe:.2f}，回撤{drawdown:.1f}%", "details": details}

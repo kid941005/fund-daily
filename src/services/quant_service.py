@@ -1,4 +1,5 @@
 """Quant-related business logic encapsulation and guarantees."""
+
 from typing import Dict, List, Optional
 import logging
 
@@ -50,12 +51,14 @@ class QuantService:
                         WHERE h.amount > 0
                     """)
                     for row in cursor.fetchall():
-                        holdings.append({
-                            "code": row["fund_code"],
-                            "name": row["fund_name"] or f"基金{row['fund_code']}",
-                            "fund_name": row["fund_name"] or f"基金{row['fund_code']}",
-                            "amount": float(row["amount"]),
-                        })
+                        holdings.append(
+                            {
+                                "code": row["fund_code"],
+                                "name": row["fund_name"] or f"基金{row['fund_code']}",
+                                "fund_name": row["fund_name"] or f"基金{row['fund_code']}",
+                                "amount": float(row["amount"]),
+                            }
+                        )
         except Exception as exc:
             logger.exception("Failed to fetch all holdings")
             raise QuantServiceError("内部错误：持仓数据加载失败", http_status=500) from exc
@@ -137,11 +140,13 @@ class QuantService:
 
         weighted_risk = (
             sum(r * w for r, w in zip(risk_scores, weights)) / sum(weights)
-            if sum(weights) > 0 else (sum(risk_scores) / len(risk_scores) if risk_scores else 4)
+            if sum(weights) > 0
+            else (sum(risk_scores) / len(risk_scores) if risk_scores else 4)
         )
         weighted_return = (
             sum(r * w for r, w in zip(returns_1y, weights)) / sum(weights)
-            if sum(weights) > 0 else (sum(returns_1y) / len(returns_1y) if returns_1y else 0)
+            if sum(weights) > 0
+            else (sum(returns_1y) / len(returns_1y) if returns_1y else 0)
         )
 
         if weighted_risk > 6:

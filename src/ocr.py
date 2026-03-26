@@ -50,7 +50,7 @@ class FundOcrParser:
             r"[￥¥]\s*([1-9]\d{0,2}(?:,\d{3})*(?:\.\d{1,2})?)",  # ¥1234.56
             r"([1-9]\d{0,2}(?:,\d{3})*(?:\.\d{1,2})?)\s*(?:元|块)",  # 1234.56元
         ]
-        
+
         for pattern in decimal_patterns:
             matches = re.findall(pattern, text)
             for match in matches:
@@ -79,7 +79,7 @@ class FundOcrParser:
                     return round(float(num), 2)
             except (ValueError, AttributeError):
                 continue
-        
+
         return None
 
     def _extract_all_amounts(self, text: str) -> List[float]:
@@ -325,7 +325,7 @@ def parse_image_easyocr(image_path: str) -> Dict:
         # Parse based on number of columns
         funds = []
         code_pattern = re.compile(r"^(\d{6})$")
-        
+
         # Pattern to detect profit/loss (has + or - sign)
         profit_pattern = re.compile(r"^[+-]?[\d,.]+$")
 
@@ -347,7 +347,7 @@ def parse_image_easyocr(image_path: str) -> Dict:
                 # Check if it looks like a number
                 elif profit_pattern.match(text) or parser._extract_amount(text):
                     numeric_items.append(text)
-            
+
             # For 3+ columns: assume last numeric is profit, second-to-last is amount
             # For 2 columns: assume last numeric is amount
             if len(numeric_items) >= 2 and num_cols >= 3:

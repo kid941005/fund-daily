@@ -13,16 +13,16 @@ logger = logging.getLogger(__name__)
 def calculate_returns_volatility(funds: List[Dict]) -> Tuple[np.ndarray, np.ndarray]:
     """
     计算基金收益率和波动率
-    
+
     Args:
         funds: 基金列表
-    
+
     Returns:
         tuple: (收益率数组, 波动率数组)
     """
     returns = []
     volatilities = []
-    
+
     for fund in funds:
         # 使用近1年收益率作为预期收益
         return_1y = fund.get("return_1y", 0)
@@ -31,7 +31,7 @@ def calculate_returns_volatility(funds: List[Dict]) -> Tuple[np.ndarray, np.ndar
         except (ValueError, TypeError, AttributeError):
             ret = 0
         returns.append(ret / 100)  # 转为小数
-        
+
         # 使用波动率或计算近似波动率
         risk = fund.get("risk_metrics", {})
         vol = risk.get("volatility", 0)
@@ -44,30 +44,30 @@ def calculate_returns_volatility(funds: List[Dict]) -> Tuple[np.ndarray, np.ndar
             except (ValueError, TypeError, AttributeError):
                 vol = 0.15  # 默认15%年化波动率
         volatilities.append(vol / 100)
-    
+
     return np.array(returns), np.array(volatilities)
 
 
 def optimize_portfolio(funds: List[Dict], target_return: float = None) -> Dict:
     """
     组合优化 - 最大化夏普比率
-    
+
     Args:
         funds: 基金列表
         target_return: 目标收益率（可选）
-    
+
     Returns:
         dict: 优化后的权重建议
     """
     if not funds or len(funds) < 2:
         return {"error": "需要至少2只基金进行优化"}
-    
+
     n = len(funds)
     returns, volatilities = calculate_returns_volatility(funds)
-    
+
     # 按评分分配权重
     scores = np.array([f.get("score_100", {}).get("total_score", 0) for f in funds])
-    
+
     if scores.sum() == 0:
         # 如果没有评分数据，使用等权重
         weights = np.array([1.0 / n] * n)
@@ -78,22 +78,24 @@ def optimize_portfolio(funds: List[Dict], target_return: float = None) -> Dict:
             weights = scores_shifted / scores_shifted.sum()
         else:
             weights = np.array([1.0 / n] * n)
-    
+
     # 构建结果
     allocations = []
     for i, fund in enumerate(funds):
         weight = float(weights[i])
         if weight > 0.01:  # 只显示权重>1%的基金
-            allocations.append({
-                "fund_code": fund.get("fund_code", ""),
-                "fund_name": fund.get("fund_name", ""),
-                "weight": round(weight * 100, 1),
-                "score": fund.get("score_100", {}).get("total_score", 0)
-            })
-    
+            allocations.append(
+                {
+                    "fund_code": fund.get("fund_code", ""),
+                    "fund_name": fund.get("fund_name", ""),
+                    "weight": round(weight * 100, 1),
+                    "score": fund.get("score_100", {}).get("total_score", 0),
+                }
+            )
+
     # 按权重排序
     allocations.sort(key=lambda x: x["weight"], reverse=True)
-    
+
     return {
         "allocations": allocations,
         "fund_count": n,
@@ -139,13 +141,11 @@ def calculate_efficient_frontier(funds: List[Dict], num_points: int = 10) -> Lis
 
         weights = weights / weights.sum()
         port_return = np.dot(weights, returns)
-        port_vol = np.sqrt(np.dot(weights, np.dot(np.diag(volatilities ** 2), weights)))
+        port_vol = np.sqrt(np.dot(weights, np.dot(np.diag(volatilities**2), weights)))
         sharpe = port_return / (port_vol + 0.001)
 
-        points.append({
-            "return": round(port_return * 100, 2),
-            "volatility": round(port_vol * 100, 2),
-            "sharpe": round(sharpe, 2)
-        })
+        points.append(
+            {"return": round(port_return * 100, 2), "volatility": round(port_vol * 100, 2), "sharpe": round(sharpe, 2)}
+        )
 
     return points

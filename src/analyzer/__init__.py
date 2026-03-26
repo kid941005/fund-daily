@@ -11,7 +11,7 @@ from src.utils.error_handling import handle_errors
 # 统一从risk.py导入风险计算
 from .risk import calculate_risk_metrics
 
-# 统一从sentiment.py导入情绪分析  
+# 统一从sentiment.py导入情绪分析
 from .sentiment import get_enhanced_market_sentiment
 
 # 从fetcher导入必要的函数（保持向后兼容）
@@ -33,7 +33,7 @@ def get_market_sentiment() -> Dict:
 def get_commodity_sentiment() -> Dict:
     """
     Get commodity sentiment analysis
-    
+
     Returns:
         dict: {
             "sentiment": "乐观"/"偏多"/"平稳"/"偏空",
@@ -42,16 +42,17 @@ def get_commodity_sentiment() -> Dict:
         }
     """
     from ..fetcher import fetch_commodity_prices
+
     prices = fetch_commodity_prices()
-    
+
     sentiment = "平稳"
     score = 3
-    
+
     if prices:
         # fetch_commodity_prices 返回 Dict[str, float]，值为价格变化百分比
         changes = [float(v) for v in prices.values() if v is not None]
         avg_change = sum(changes) / len(changes) if changes else 0
-        
+
         if avg_change > 2:
             sentiment = "乐观"
             score = 8
@@ -64,60 +65,52 @@ def get_commodity_sentiment() -> Dict:
         else:
             sentiment = "偏空"
             score = 1
-    
-    return {
-        "sentiment": sentiment,
-        "score": score,
-        "details": prices
-    }
+
+    return {"sentiment": sentiment, "score": score, "details": prices}
 
 
 @handle_errors(default_return={"expected_return": 0, "error": True}, log_level="warning")
 def calculate_expected_return(holdings: List[Dict], funds_data: List[Dict]) -> Dict:
     """
     Calculate expected return for holdings
-    
+
     Args:
         holdings: List of holdings with code and amount
         funds_data: List of fund data
-        
+
     Returns:
         dict: Expected return analysis
     """
     if not holdings or not funds_data:
         return {"expected_return": 0, "message": "无持仓数据"}
-    
+
     # 计算加权平均预期收益
     total_value = sum(h.get("amount", 0) for h in holdings)
     if total_value == 0:
         return {"expected_return": 0, "message": "持仓金额为0"}
-    
+
     # 构建基金数据字典，避免 O(n*m) 查找
     fund_dict = {f.get("fundcode"): f for f in funds_data}
-    
+
     # 简化实现：基于基金近期收益计算
     weighted_return = 0
     for h in holdings:
         code = h.get("code")
         amount = h.get("amount", 0)
         weight = amount / total_value
-        
+
         # O(1) 查找
         f = fund_dict.get(code)
         if f:
             return_1y = float(f.get("syl_1n") or 0)
             weighted_return += weight * return_1y
-    
-    return {
-        "expected_return": round(weighted_return, 2),
-        "total_value": total_value,
-        "message": "基于近1年收益计算"
-    }
+
+    return {"expected_return": round(weighted_return, 2), "total_value": total_value, "message": "基于近1年收益计算"}
 
 
 __all__ = [
     "calculate_risk_metrics",
-    "get_market_sentiment", 
+    "get_market_sentiment",
     "get_enhanced_market_sentiment",
     "get_commodity_sentiment",
     "calculate_expected_return",

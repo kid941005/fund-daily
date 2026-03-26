@@ -122,7 +122,7 @@ try:
         save_fund_data as _sync_save_fund_data,
         save_holdings as _sync_save_holdings,
     )
-    
+
     # 别名：保留原有同步接口
     get_db = _sync_get_db
     init_db = _sync_init_db
@@ -153,7 +153,7 @@ try:
     get_fund_history = _sync_get_fund_history
     save_fund_data = _sync_save_fund_data
     save_holdings = _sync_save_holdings
-    
+
     _SYNC_AVAILABLE = True
 except ImportError as e:
     logger = __import__("logging").getLogger(__name__)

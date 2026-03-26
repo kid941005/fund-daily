@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 # Try to import numpy for real calculations
 try:
     import numpy as np
+
     HAS_NUMPY = True
 except ImportError:
     HAS_NUMPY = False
@@ -45,7 +46,7 @@ def calculate_risk_metrics(month_1, month_3, year_1, fund_type: str = "") -> Dic
 
     # 1. 根据基金类型确定基础风险等级
     base_risk_score = 2
-    
+
     if fund_type:
         if "股票" in fund_type or "指数" in fund_type or "ETF" in fund_type or "LOF" in fund_type:
             base_risk_score = 7
@@ -55,11 +56,11 @@ def calculate_risk_metrics(month_1, month_3, year_1, fund_type: str = "") -> Dic
             base_risk_score = 1
         elif "货币" in fund_type:
             base_risk_score = 0
-    
+
     # 2. 基于波动性调整
     volatility = abs(m3 - m1)
     risk_score = base_risk_score
-    
+
     if volatility > 15:
         risk_score += 2
     elif volatility > 10:
@@ -69,7 +70,7 @@ def calculate_risk_metrics(month_1, month_3, year_1, fund_type: str = "") -> Dic
 
     # 3. 确定风险等级
     risk_score = max(0, min(10, risk_score))
-    
+
     if risk_score >= 7:
         risk_level = "高风险"
     elif risk_score >= 5:

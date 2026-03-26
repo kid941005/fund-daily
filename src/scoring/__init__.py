@@ -5,10 +5,7 @@ Fund Daily 评分系统
 
 from .config import validate_weights_compat
 
-from .weights import (
-    SCORE_WEIGHTS, validate_weights, get_weight,
-    get_all_weights, get_total_weight
-)
+from .weights import SCORE_WEIGHTS, validate_weights, get_weight, get_all_weights, get_total_weight
 
 from .models import ScoreInput, ScoreResult
 
@@ -30,22 +27,27 @@ from .calculator import (
 
 __all__ = [
     # weights
-    'SCORE_WEIGHTS', 'validate_weights', 'get_weight',
-    'get_all_weights', 'get_total_weight', 'validate_weights_compat',
+    "SCORE_WEIGHTS",
+    "validate_weights",
+    "get_weight",
+    "get_all_weights",
+    "get_total_weight",
+    "validate_weights_compat",
     # models
-    'ScoreInput', 'ScoreResult',
+    "ScoreInput",
+    "ScoreResult",
     # indicators
-    'calculate_valuation_score',
-    'calculate_performance_score',
-    'calculate_risk_control_score',
-    'calculate_momentum_score',
-    'calculate_sentiment_score',
-    'calculate_sector_score',
-    'calculate_manager_score',
-    'calculate_liquidity_score',
+    "calculate_valuation_score",
+    "calculate_performance_score",
+    "calculate_risk_control_score",
+    "calculate_momentum_score",
+    "calculate_sentiment_score",
+    "calculate_sector_score",
+    "calculate_manager_score",
+    "calculate_liquidity_score",
     # calculator
-    'calculate_total_score',
-    'calculate_score_v2',
-    'format_score_report',
-    'apply_ranking_bonus',
+    "calculate_total_score",
+    "calculate_score_v2",
+    "format_score_report",
+    "apply_ranking_bonus",
 ]

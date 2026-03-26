@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class CacheImpl(ICache):
     """缓存实现类"""
-    
+
     def get(self, key: str) -> Optional[Any]:
         """获取缓存"""
         try:
@@ -21,7 +21,7 @@ class CacheImpl(ICache):
         except Exception as e:
             logger.error(f"获取缓存异常: {key}, {e}")
             return None
-    
+
     def set(self, key: str, value: Any, ttl: int = None) -> bool:
         """设置缓存"""
         try:
@@ -29,7 +29,7 @@ class CacheImpl(ICache):
         except Exception as e:
             logger.error(f"设置缓存异常: {key}, {e}")
             return False
-    
+
     def delete(self, key: str) -> bool:
         """删除缓存"""
         try:
@@ -37,7 +37,7 @@ class CacheImpl(ICache):
         except Exception as e:
             logger.error(f"删除缓存异常: {key}, {e}")
             return False
-    
+
     def exists(self, key: str) -> bool:
         """检查缓存是否存在"""
         try:

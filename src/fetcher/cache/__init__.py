@@ -2,7 +2,6 @@
 Cache Fetcher Module
 """
 
-
 from .fetcher import (
     get_cache,
     set_cache,

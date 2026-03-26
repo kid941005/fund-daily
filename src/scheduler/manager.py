@@ -57,8 +57,9 @@ class DistributedLock:
 
     def _get_redis(self):
         """Get thread-local Redis connection"""
-        if not hasattr(self._local, 'redis') or self._local.redis is None:
+        if not hasattr(self._local, "redis") or self._local.redis is None:
             import redis as redis_lib
+
             self._local.redis = redis_lib.Redis(
                 host=self._redis_host,
                 port=self._redis_port,
@@ -142,7 +143,7 @@ class SchedulerManager:
 
     def __init__(self, config: Optional[SchedulerConfig] = None):
         """Initialize scheduler manager"""
-        if hasattr(self, '_initialized') and self._initialized:
+        if hasattr(self, "_initialized") and self._initialized:
             return
 
         self._initialized = True
@@ -221,20 +222,19 @@ class SchedulerManager:
 
     def _register_listeners(self):
         """Register APScheduler event listeners"""
+
         # Job executed successfully
         def on_job_executed(event):
             job_id = event.job_id
             duration_ms = (event.scheduled_run_time and event.retval) and 0 or 0
-            if event.retval is not None and hasattr(event.retval, 'total_seconds'):
+            if event.retval is not None and hasattr(event.retval, "total_seconds"):
                 duration_ms = event.retval.total_seconds() * 1000
 
             with self._stats_lock:
-                stats = self._job_stats.get(job_id, {
-                    "runs": 0, "successes": 0, "errors": 0, "durations": []
-                })
+                stats = self._job_stats.get(job_id, {"runs": 0, "successes": 0, "errors": 0, "durations": []})
                 stats["runs"] = stats.get("runs", 0) + 1
                 stats["successes"] = stats.get("successes", 0) + 1
-                if hasattr(event, 'scheduled_run_time'):
+                if hasattr(event, "scheduled_run_time"):
                     stats["last_run"] = event.scheduled_run_time
                 self._job_stats[job_id] = stats
 
@@ -243,16 +243,14 @@ class SchedulerManager:
         # Job raised an exception
         def on_job_error(event):
             job_id = event.job_id
-            exception = event.exception if hasattr(event, 'exception') else "Unknown"
+            exception = event.exception if hasattr(event, "exception") else "Unknown"
 
             with self._stats_lock:
-                stats = self._job_stats.get(job_id, {
-                    "runs": 0, "successes": 0, "errors": 0, "durations": []
-                })
+                stats = self._job_stats.get(job_id, {"runs": 0, "successes": 0, "errors": 0, "durations": []})
                 stats["runs"] = stats.get("runs", 0) + 1
                 stats["errors"] = stats.get("errors", 0) + 1
                 stats["last_error"] = str(exception)
-                if hasattr(event, 'scheduled_run_time'):
+                if hasattr(event, "scheduled_run_time"):
                     stats["last_run"] = event.scheduled_run_time
                 self._job_stats[job_id] = stats
 
@@ -288,16 +286,13 @@ class SchedulerManager:
     def _notify_job_failure(self, job_id: str, error: str):
         """Send notification when a job fails"""
         import os
+
         try:
             feishu_webhook = os.getenv("FEISHU_WEBHOOK_URL")
             if feishu_webhook:
                 import requests
-                message = {
-                    "msg_type": "text",
-                    "content": {
-                        "text": f"⚠️ [Scheduler] Job {job_id} failed:\n{error}"
-                    }
-                }
+
+                message = {"msg_type": "text", "content": {"text": f"⚠️ [Scheduler] Job {job_id} failed:\n{error}"}}
                 requests.post(feishu_webhook, json=message, timeout=5)
         except Exception:
             pass
@@ -378,15 +373,18 @@ class SchedulerManager:
                     if field in trigger_args:
                         trigger_kwargs[field] = trigger_args.pop(field)
                 from apscheduler.triggers.cron import CronTrigger
+
                 trigger_obj = CronTrigger(**trigger_kwargs)
             elif trigger == "interval":
                 for field in ["weeks", "days", "hours", "minutes", "seconds", "start_date", "end_date"]:
                     if field in trigger_args:
                         trigger_kwargs[field] = trigger_args.pop(field)
                 from apscheduler.triggers.interval import IntervalTrigger
+
                 trigger_obj = IntervalTrigger(**trigger_kwargs)
             elif trigger == "date":
                 from apscheduler.triggers.date import DateTrigger
+
                 trigger_obj = DateTrigger(run_date=trigger_args.get("run_date"))
             else:
                 logger.error(f"[Scheduler] Unknown trigger type: {trigger}")
@@ -469,11 +467,13 @@ class SchedulerManager:
             # Get the job's callable and call it directly
             func = job.func
             from functools import partial
+
             if isinstance(func, partial):
                 func = func.func
 
             # Run async function or regular function
             import asyncio
+
             try:
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
@@ -505,9 +505,10 @@ class SchedulerManager:
     async def _run_job_async(self, func, job_id: str):
         """Run a job function asynchronously"""
         try:
-            if callable(func) and hasattr(func, '__wrapped__'):
+            if callable(func) and hasattr(func, "__wrapped__"):
                 # Check if it's an async function
                 import asyncio
+
                 result = await func()
                 return result
             else:
@@ -551,12 +552,15 @@ class SchedulerManager:
 
             if trigger_type == "cron":
                 from apscheduler.triggers.cron import CronTrigger
+
                 trigger_obj = CronTrigger(**trigger_args)
             elif trigger_type == "interval":
                 from apscheduler.triggers.interval import IntervalTrigger
+
                 trigger_obj = IntervalTrigger(**trigger_args)
             elif trigger_type == "date":
                 from apscheduler.triggers.date import DateTrigger
+
                 trigger_obj = DateTrigger(run_date=trigger_args.get("run_date"))
             else:
                 return False
@@ -583,6 +587,7 @@ class SchedulerManager:
             try:
                 # Import the function
                 import importlib
+
                 module_path, func_name = meta.func_ref.rsplit(".", 1)
                 module = importlib.import_module(module_path)
                 func = getattr(module, func_name)
@@ -590,9 +595,11 @@ class SchedulerManager:
                 # Build trigger
                 if meta.trigger_type == "cron":
                     from apscheduler.triggers.cron import CronTrigger
+
                     trigger_obj = CronTrigger(**meta.trigger_args)
                 elif meta.trigger_type == "interval":
                     from apscheduler.triggers.interval import IntervalTrigger
+
                     trigger_obj = IntervalTrigger(**meta.trigger_args)
                 else:
                     logger.warning(f"[Scheduler] Unknown trigger for {job_id}: {meta.trigger_type}")

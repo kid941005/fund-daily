@@ -11,14 +11,15 @@ import re
 from src.utils import cache_keys
 from ..network import _make_request
 from ..cache import get_cache, set_cache
-logger = logging.getLogger(__name__)
 
+logger = logging.getLogger(__name__)
 
 
 import logging
 from typing import Dict, List, Optional, Any
 import requests
 import json
+
 
 def calculate_technical_from_history(closes: List[float]) -> Dict:
     """
@@ -47,6 +48,7 @@ def calculate_technical_from_history(closes: List[float]) -> Dict:
     rsi = calculate_rsi(closes, 14)
 
     return {"ma5": ma5, "ma10": ma10, "ma20": ma20, "macd": macd, "rsi": rsi}
+
 
 def fetch_fund_manager(fund_code: str) -> Optional[Dict]:
     """
@@ -98,6 +100,7 @@ def fetch_fund_manager(fund_code: str) -> Optional[Dict]:
         logger.warning(f"Parse manager error: {e}")
 
     return None
+
 
 def fetch_fund_scale(fund_code: str) -> float:
     """

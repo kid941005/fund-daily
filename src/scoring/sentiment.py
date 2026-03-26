@@ -16,11 +16,11 @@ def calculate_sentiment_score(market_sentiment: str, market_score: int) -> Dict:
         "偏空": 2,
         "恐慌": 0,
     }
-    
+
     score = sentiment_map.get(market_sentiment, 5)
-    
+
     return {
         "score": score,
         "reason": f"市场{market_sentiment}",
-        "details": {"sentiment": market_sentiment, "score": market_score}
+        "details": {"sentiment": market_sentiment, "score": market_score},
     }

@@ -11,6 +11,7 @@ import requests
 import json
 
 from src.config import get_config
+
 logger = logging.getLogger(__name__)
 
 
@@ -30,12 +31,13 @@ def _make_request(url: str, timeout: int = 10) -> Optional[str]:
     """Make HTTP request with error handling and rate limiting"""
     # 使用线程安全的速率限制器
     from src.utils.rate_limiter import wait_if_needed
+
     wait_if_needed()
 
     try:
         # 获取SSL上下文
         ctx = _get_ssl_context()
-        
+
         req = urllib.request.Request(
             url,
             headers={

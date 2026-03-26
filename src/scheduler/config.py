@@ -9,7 +9,6 @@ from dataclasses import dataclass, field
 from typing import Optional, List
 from datetime import timezone, timedelta
 
-
 # Default timezone for China market
 DEFAULT_TIMEZONE = "Asia/Shanghai"
 
@@ -50,37 +49,37 @@ class SchedulerConfig:
     timezone: str = DEFAULT_TIMEZONE
 
     # Job store persistence
-    job_stores: dict = field(default_factory=lambda: {
-        "default": {
-            "type": "redis",
-            "host": os.getenv("REDIS_HOST", "localhost"),
-            "port": int(os.getenv("REDIS_PORT", "6379")),
-            "db": int(os.getenv("REDIS_DB", "1")),  # Use DB 1 for scheduler to avoid conflict
-            "password": os.getenv("REDIS_PASSWORD"),
-            "key_prefix": JOB_STORE_KEY,
-            "jobs_key": f"{JOB_STORE_KEY}:jobs",
-            "run_times_key": f"{JOB_STORE_KEY}:run_times",
+    job_stores: dict = field(
+        default_factory=lambda: {
+            "default": {
+                "type": "redis",
+                "host": os.getenv("REDIS_HOST", "localhost"),
+                "port": int(os.getenv("REDIS_PORT", "6379")),
+                "db": int(os.getenv("REDIS_DB", "1")),  # Use DB 1 for scheduler to avoid conflict
+                "password": os.getenv("REDIS_PASSWORD"),
+                "key_prefix": JOB_STORE_KEY,
+                "jobs_key": f"{JOB_STORE_KEY}:jobs",
+                "run_times_key": f"{JOB_STORE_KEY}:run_times",
+            }
         }
-    })
+    )
 
     # Executors configuration
-    executors: dict = field(default_factory=lambda: {
-        "default": {
-            "type": "threadpool",
-            "max_workers": 5
-        },
-        "processpool": {
-            "type": "processpool",
-            "max_workers": 3
+    executors: dict = field(
+        default_factory=lambda: {
+            "default": {"type": "threadpool", "max_workers": 5},
+            "processpool": {"type": "processpool", "max_workers": 3},
         }
-    })
+    )
 
     # Job defaults
-    job_defaults: dict = field(default_factory=lambda: {
-        "coalesce": True,
-        "max_instances": 1,
-        "misfire_grace_time": 60,
-    })
+    job_defaults: dict = field(
+        default_factory=lambda: {
+            "coalesce": True,
+            "max_instances": 1,
+            "misfire_grace_time": 60,
+        }
+    )
 
     # Cluster support
     cluster_enabled: bool = True
@@ -112,6 +111,7 @@ class SchedulerConfig:
         if self.instance_id:
             return self.instance_id
         import socket
+
         hostname = socket.gethostname()
         pid = os.getpid()
         self.instance_id = f"{hostname}:{pid}"

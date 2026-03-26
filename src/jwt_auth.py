@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 # 生产环境禁止使用不安全的默认密钥
 try:
     from src.config import get_config
+
     _config = get_config()
     JWT_SECRET = _config.security.jwt.secret
     JWT_ALGORITHM = _config.security.jwt.algorithm
@@ -34,7 +35,7 @@ except Exception:
         if _is_production:
             raise RuntimeError(
                 "FUND_DAILY_JWT_SECRET 未配置！生产环境必须设置有效的 JWT 密钥。"
-                "生成命令: python -c \"import secrets; print(secrets.token_hex(32))\""
+                '生成命令: python -c "import secrets; print(secrets.token_hex(32))"'
             )
         # 开发环境使用不安全默认值但记录警告
         JWT_SECRET = "fund-daily-jwt-secret-change-in-production"
@@ -59,26 +60,26 @@ def _get_utc_now() -> datetime:
 def create_access_token(user_id: str, username: str) -> str:
     """
     创建访问令牌 (Access Token)
-    
+
     Args:
         user_id: 用户ID
         username: 用户名
-        
+
     Returns:
         JWT token 字符串
     """
     now = _get_utc_now()
     expire = now + timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
-    
+
     payload = {
         "sub": user_id,
         "username": username,
         "type": TokenType.ACCESS,
         "iat": now,
         "exp": expire,
-        "iss": "fund-daily"
+        "iss": "fund-daily",
     }
-    
+
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     logger.debug(f"Created access token for user {username}, expires at {expire}")
     return token
@@ -88,26 +89,26 @@ def create_refresh_token(user_id: str, username: str) -> str:
     """
     创建刷新令牌 (Refresh Token)
     有效期更长，用于获取新的 access token
-    
+
     Args:
         user_id: 用户ID
         username: 用户名
-        
+
     Returns:
         JWT refresh token 字符串
     """
     now = _get_utc_now()
     expire = now + timedelta(days=JWT_REFRESH_TOKEN_EXPIRE_DAYS)
-    
+
     payload = {
         "sub": user_id,
         "username": username,
         "type": TokenType.REFRESH,
         "iat": now,
         "exp": expire,
-        "iss": "fund-daily"
+        "iss": "fund-daily",
     }
-    
+
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     logger.debug(f"Created refresh token for user {username}, expires at {expire}")
     return token
@@ -116,7 +117,7 @@ def create_refresh_token(user_id: str, username: str) -> str:
 def create_token_pair(user_id: str, username: str) -> Dict[str, Any]:
     """
     创建令牌对 (access + refresh)
-    
+
     Returns:
         包含 access_token, refresh_token, expires_in 的字典
     """
@@ -128,40 +129,40 @@ def create_token_pair(user_id: str, username: str) -> Dict[str, Any]:
     }
 
 
-def verify_token(token: str, expected_type: str = TokenType.ACCESS) -> Tuple[bool, Optional[Dict[str, Any]], Optional[str]]:
+def verify_token(
+    token: str, expected_type: str = TokenType.ACCESS
+) -> Tuple[bool, Optional[Dict[str, Any]], Optional[str]]:
     """
     验证 JWT token
-    
+
     Args:
         token: JWT token 字符串
         expected_type: 期望的 token 类型
-        
+
     Returns:
         (is_valid, payload, error_message)
     """
     try:
         # 检查 Token 黑名单
         from src.cache.redis_cache import is_token_blacklisted
+
         if is_token_blacklisted(token):
             return False, None, "Token has been revoked"
-        
+
         payload = jwt.decode(
-            token,
-            JWT_SECRET,
-            algorithms=[JWT_ALGORITHM],
-            options={"require": ["sub", "type", "exp", "iat"]}
+            token, JWT_SECRET, algorithms=[JWT_ALGORITHM], options={"require": ["sub", "type", "exp", "iat"]}
         )
-        
+
         # 验证 token 类型
         if payload.get("type") != expected_type:
             return False, None, f"Token type mismatch: expected {expected_type}"
-        
+
         # 验证签发者
         if payload.get("iss") != "fund-daily":
             return False, None, "Invalid token issuer"
-        
+
         return True, payload, None
-        
+
     except jwt.ExpiredSignatureError:
         return False, None, "Token has expired"
     except jwt.InvalidTokenError as e:
@@ -181,35 +182,28 @@ def verify_refresh_token(token: str) -> Tuple[bool, Optional[Dict[str, Any]], Op
 def decode_token_unsafe(token: str) -> Optional[Dict[str, Any]]:
     """
     不验证签名，仅解析 payload（用于日志/调试）
-    
+
     WARNING: 不要用于认证决策！
     """
     try:
         return jwt.decode(
-            token,
-            JWT_SECRET,
-            algorithms=[JWT_ALGORITHM],
-            options={"verify_signature": False, "verify_exp": False}
+            token, JWT_SECRET, algorithms=[JWT_ALGORITHM], options={"verify_signature": False, "verify_exp": False}
         )
     except Exception:
         return None
 
 
-
-
-
-
 def get_user_from_token(token: str) -> Tuple[bool, Optional[str], Optional[str]]:
     """
     从 token 中提取用户信息
-    
+
     Returns:
         (is_valid, user_id, error_message)
     """
     is_valid, payload, error = verify_access_token(token)
     if not is_valid:
         return False, None, error
-    
+
     return True, payload.get("sub"), None
 
 

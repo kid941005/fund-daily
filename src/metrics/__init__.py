@@ -12,7 +12,7 @@ from .collector import (
 
 __all__ = [
     "RequestCounter",
-    "RequestLatency", 
+    "RequestLatency",
     "CacheHits",
     "ScoreCalculations",
     "get_metrics",

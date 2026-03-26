@@ -12,14 +12,14 @@ def calculate_momentum_score(fund_data: Dict = None) -> Dict:
     """
     details = {}
     scores = []
-    
+
     if not fund_data:
         return {"score": 5, "reason": "无数据", "details": {}}
-    
+
     # 4.1 短期动量 (8分)
     return_1m = float(fund_data.get("return_1m", 0) or 0)
     daily_change = float(fund_data.get("daily_change", 0) or 0)
-    
+
     # 动量评分
     if return_1m > 10 and daily_change > 2:
         s = 8
@@ -41,7 +41,7 @@ def calculate_momentum_score(fund_data: Dict = None) -> Dict:
         r = "大幅下跌"
     scores.append(s)
     details["momentum"] = s
-    
+
     # 4.2 趋势强度 (7分)
     # 比较近1月和近3月
     return_3m = float(fund_data.get("return_3m", 0) or 0)
@@ -65,10 +65,6 @@ def calculate_momentum_score(fund_data: Dict = None) -> Dict:
         r = "趋势不明"
     scores.append(s)
     details["trend"] = s
-    
+
     total = min(15, sum(scores))
-    return {
-        "score": total,
-        "reason": f"动量{r}，趋势{r}",
-        "details": details
-    }
+    return {"score": total, "reason": f"动量{r}，趋势{r}", "details": details}

@@ -9,7 +9,7 @@ from .rebalancing import calculate_rebalancing, generate_trade_orders
 
 __all__ = [
     "get_timing_signals",
-    "analyze_market_timing", 
+    "analyze_market_timing",
     "optimize_portfolio",
     "calculate_efficient_frontier",
     "calculate_rebalancing",

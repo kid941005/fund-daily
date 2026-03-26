@@ -70,10 +70,11 @@ async def close_async_dependencies() -> None:
 
 # ==================== FastAPI 依赖 ====================
 
+
 async def get_async_database() -> AsyncDatabase:
     """
     FastAPI 依赖：获取异步数据库实例
-    
+
     用法:
         @app.get("/users")
         async def get_users(db: AsyncDatabase = Depends(get_async_database)):
@@ -86,7 +87,7 @@ async def get_async_database() -> AsyncDatabase:
 async def get_async_db_connection():
     """
     FastAPI 依赖：获取异步数据库连接（with transaction）
-    
+
     用法:
         @app.post("/users")
         async def create_user(conn = Depends(get_async_db_connection)):
@@ -99,6 +100,7 @@ async def get_async_db_connection():
 
 
 # ==================== CRUD 依赖 ====================
+
 
 async def get_async_user_db(
     db: AsyncDatabase = Depends(get_async_database),
@@ -137,6 +139,7 @@ async def get_async_funds_db(
 
 # ==================== Repository 依赖 ====================
 
+
 async def get_user_repository(
     db: AsyncDatabase = Depends(get_async_database),
 ) -> UserRepository:
@@ -144,6 +147,7 @@ async def get_user_repository(
     # Repository 需要 AsyncSession，这里暂时用简化的方式
     # 如需完整 ORM 支持，请使用 SQLAlchemy async session
     from sqlalchemy.ext.asyncio import AsyncSession
+
     async with db.acquire() as conn:
         session = AsyncSession(bind=conn, expire_on_commit=False)
         yield UserRepository(session)
@@ -151,27 +155,28 @@ async def get_user_repository(
 
 # ==================== 生命周期管理 ====================
 
+
 @asynccontextmanager
 async def lifespan_async_db(
     config: Optional[AsyncDatabaseConfig] = None,
 ) -> AsyncIterator[AsyncDatabase]:
     """
     异步数据库上下文管理器（用于 lifespan）
-    
+
     用法:
         async with lifespan_async_db() as db:
             await db.execute("INSERT ...")
     """
     global _async_db_instance
-    
+
     if config:
         _async_db_instance = AsyncDatabase.from_config(config)
     else:
         _async_db_instance = await get_async_db()
-    
+
     await _async_db_instance.initialize()
     await _async_db_instance.warmup()
-    
+
     try:
         yield _async_db_instance
     finally:
@@ -181,27 +186,28 @@ async def lifespan_async_db(
 
 # ==================== 请求级数据库会话 ====================
 
+
 class AsyncDatabaseSession:
     """
     请求级数据库会话
     自动管理连接获取和释放
     """
-    
+
     def __init__(self, db: Optional[AsyncDatabase] = None):
         self._db = db
         self._conn = None
-    
+
     async def __aenter__(self) -> "AsyncDatabaseSession":
         if self._db is None:
             self._db = await get_global_async_db()
         self._conn = await self._db._pool.acquire()
         return self
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if self._conn and self._db and self._db._pool:
             await self._db._pool.release(self._conn)
         self._conn = None
-    
+
     @property
     def conn(self):
         """获取连接"""
@@ -211,7 +217,7 @@ class AsyncDatabaseSession:
 async def get_db_session() -> AsyncIterator[AsyncDatabaseSession]:
     """
     FastAPI 依赖：获取请求级数据库会话
-    
+
     用法:
         @app.get("/users")
         async def get_users(session: AsyncDatabaseSession = Depends(get_db_session)):
@@ -228,19 +234,20 @@ async def get_db_session() -> AsyncIterator[AsyncDatabaseSession]:
 
 # ==================== 中间件/背景任务 ====================
 
+
 class AsyncDatabaseMiddleware:
     """
     异步数据库中间件（用于需要全局数据库访问的场景）
     """
-    
+
     def __init__(self, app, config: Optional[AsyncDatabaseConfig] = None):
         self.app = app
         self.config = config
-    
+
     async def __call__(self, scope, receive, send):
         if scope["type"] == "lifespan":
             startup = scope.get("state", {}).get("startup", False)
-            
+
             async def receive_and_wait():
                 message = await receive()
                 if message["type"] == "lifespan.startup.complete":
@@ -248,20 +255,20 @@ class AsyncDatabaseMiddleware:
                 elif message["type"] == "lifespan.shutdown.complete":
                     scope["state"]["shutdown"] = True
                 return message
-            
+
             scope["receive"] = receive_and_wait
-            
+
             # Initialize on startup
             await init_async_dependencies()
-            
+
             # Wait for shutdown signal
             message = await receive()
             while message["type"] not in ("lifespan.shutdown.complete", "lifespan.startup.failure"):
                 message = await receive()
-            
+
             # Cleanup on shutdown
             await close_async_dependencies()
-        
+
         await self.app(scope, receive, send)
 
 

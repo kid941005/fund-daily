@@ -8,6 +8,7 @@
   评分 60-70 → 增仓至1.5倍
   评分 >= 70  → 增仓至2倍
 """
+
 import logging
 from typing import Dict, List
 from datetime import datetime
@@ -26,13 +27,7 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
         score = f.get("score_100", {}).get("total_score", 0)
         amount = f.get("amount", 0)
         pct = amount / total_amount * 100 if total_amount > 0 else 0
-        scored.append({
-            "fund": f,
-            "score": score,
-            "amount": amount,
-            "pct": pct,
-            "action": "持有"
-        })
+        scored.append({"fund": f, "score": score, "amount": amount, "pct": pct, "action": "持有"})
 
     # 按评分排序
     scored.sort(key=lambda x: x["score"], reverse=True)
@@ -91,41 +86,47 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
                 reason = f"评分{score}分（<30分），建议清仓"
             else:
                 reason = f"评分{score}分（30-50分），建议减持至一半"
-            trades.append({
-                "fund_code": fund.get("fund_code", ""),
-                "fund_name": fund.get("fund_name", ""),
-                "score": score,
-                "action": action,
-                "current_amount": round(current_amount, 2),
-                "current_pct": round(item["pct"], 1),
-                "target_amount": round(target_amount, 2),
-                "target_pct": round(item["target_pct"], 1),
-                "reason": reason
-            })
+            trades.append(
+                {
+                    "fund_code": fund.get("fund_code", ""),
+                    "fund_name": fund.get("fund_name", ""),
+                    "score": score,
+                    "action": action,
+                    "current_amount": round(current_amount, 2),
+                    "current_pct": round(item["pct"], 1),
+                    "target_amount": round(target_amount, 2),
+                    "target_pct": round(item["target_pct"], 1),
+                    "reason": reason,
+                }
+            )
         elif action == "买入" and target_amount > current_amount:
-            trades.append({
-                "fund_code": fund.get("fund_code", ""),
-                "fund_name": fund.get("fund_name", ""),
-                "score": item["score"],
-                "action": action,
-                "current_amount": round(current_amount, 2),
-                "current_pct": round(item["pct"], 1),
-                "target_amount": round(target_amount, 2),
-                "target_pct": round(item["target_pct"], 1),
-                "reason": f"评分{item['score']}分（>=60分），建议增持"
-            })
+            trades.append(
+                {
+                    "fund_code": fund.get("fund_code", ""),
+                    "fund_name": fund.get("fund_name", ""),
+                    "score": item["score"],
+                    "action": action,
+                    "current_amount": round(current_amount, 2),
+                    "current_pct": round(item["pct"], 1),
+                    "target_amount": round(target_amount, 2),
+                    "target_pct": round(item["target_pct"], 1),
+                    "reason": f"评分{item['score']}分（>=60分），建议增持",
+                }
+            )
         elif action == "持有":
-            trades.append({
-                "fund_code": fund.get("fund_code", ""),
-                "fund_name": fund.get("fund_name", ""),
-                "score": item["score"],
-                "action": action,
-                "current_amount": round(current_amount, 2),
-                "current_pct": round(item["pct"], 1),
-                "target_amount": round(target_amount, 2),
-                "target_pct": round(item["target_pct"], 1),
-                "reason": f"评分{item['score']}分（30-60分），建议持有"
-            })
+            trades.append(
+                {
+                    "fund_code": fund.get("fund_code", ""),
+                    "fund_name": fund.get("fund_name", ""),
+                    "score": item["score"],
+                    "action": action,
+                    "current_amount": round(current_amount, 2),
+                    "current_pct": round(item["pct"], 1),
+                    "target_amount": round(target_amount, 2),
+                    "target_pct": round(item["target_pct"], 1),
+                    "reason": f"评分{item['score']}分（30-60分），建议持有",
+                }
+            )
 
     # 统计
     sell_items = [item for item in scored if item["action"] == "卖出"]
@@ -138,7 +139,7 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
         "sell_count": len(sell_items),
         "hold_count": len([t for t in trades if t["action"] == "持有"]),
         "sell_amount": round(sell_amount, 2),
-        "buy_amount": round(buy_amount, 2)
+        "buy_amount": round(buy_amount, 2),
     }
 
     return {
@@ -146,7 +147,7 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
         "fund_count": len(scored),
         "trades": trades,
         "summary": summary,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 
 
@@ -161,20 +162,24 @@ def generate_trade_orders(rebalancing: Dict) -> List[Dict]:
         target = trade.get("target_amount", 0)
 
         if action == "卖出":
-            orders.append({
-                "fund_code": trade["fund_code"],
-                "fund_name": trade["fund_name"],
-                "action": "卖出",
-                "amount": round(current - target, 2),
-                "reason": trade.get("reason", "")
-            })
+            orders.append(
+                {
+                    "fund_code": trade["fund_code"],
+                    "fund_name": trade["fund_name"],
+                    "action": "卖出",
+                    "amount": round(current - target, 2),
+                    "reason": trade.get("reason", ""),
+                }
+            )
         elif action == "买入":
-            orders.append({
-                "fund_code": trade["fund_code"],
-                "fund_name": trade["fund_name"],
-                "action": "买入",
-                "amount": round(target - current, 2),
-                "reason": trade.get("reason", "")
-            })
+            orders.append(
+                {
+                    "fund_code": trade["fund_code"],
+                    "fund_name": trade["fund_name"],
+                    "action": "买入",
+                    "amount": round(target - current, 2),
+                    "reason": trade.get("reason", ""),
+                }
+            )
 
     return orders

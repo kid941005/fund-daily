@@ -23,10 +23,9 @@ from src.scoring.utils import normalize_returns
 # 保留原有函数以保持兼容性
 
 
-
 def analyze_fund(fund_data: Dict, use_cache: bool = True) -> Dict:
     """Analyze fund data
-    
+
     Args:
         fund_data: Fund data dictionary
         use_cache: Whether to use cache for scoring (default True)
@@ -40,7 +39,11 @@ def analyze_fund(fund_data: Dict, use_cache: bool = True) -> Dict:
     fund_code = fund_data.get("code", "")
     name = fund_data.get("name", "Unknown")
     nav = fund_data.get("nav", 0) or fund_data.get("dwjz", "N/A")
-    estimated_change = float(fund_data.get("estimated_change", 0) or fund_data.get("estimated_change_percent", 0) or fund_data.get("gszzl", 0))
+    estimated_change = float(
+        fund_data.get("estimated_change", 0)
+        or fund_data.get("estimated_change_percent", 0)
+        or fund_data.get("gszzl", 0)
+    )
     estimated_nav = fund_data.get("estimated_nav", "N/A")
 
     trend = "up" if estimated_change > 0 else "down" if estimated_change < 0 else "flat"
@@ -61,6 +64,7 @@ def analyze_fund(fund_data: Dict, use_cache: bool = True) -> Dict:
     score_100 = {}
     try:
         from . import generate_100_score
+
         score_100 = generate_100_score(fund_code, estimated_change, use_cache=use_cache) or {}
     except Exception as e:
         logger.error(f"Error generating score for {fund_code}: {e}")
@@ -80,7 +84,7 @@ def analyze_fund(fund_data: Dict, use_cache: bool = True) -> Dict:
 
 def get_fund_detail_info(code: str, use_cache: bool = True) -> Dict:
     """Get detailed fund information
-    
+
     Args:
         code: Fund code
         use_cache: Whether to use cache, default True
@@ -188,17 +192,24 @@ def calculate_rsi(closes: List[float], period: int = 14) -> Optional[float]:
 
 def analyze_technical_indicators(fund_code: str) -> Dict:
     """Analyze technical indicators"""
-    return {"ma5": None, "ma10": None, "ma20": None, "macd": {"trend": "neutral"}, "rsi": None, "recommendation": "hold"}
+    return {
+        "ma5": None,
+        "ma10": None,
+        "ma20": None,
+        "macd": {"trend": "neutral"},
+        "rsi": None,
+        "recommendation": "hold",
+    }
 
 
 def generate_100_score(fund_code: str, daily_change: float = 0.0, use_cache: bool = True) -> Dict:
     """Generate 100-point score - 使用统一评分服务"""
     try:
         from src.services.score_service import get_score_service
-        
+
         service = get_score_service()
         scoring = service.calculate_score(fund_code, use_cache=use_cache)
-        
+
         # 保持向后兼容，确保返回格式一致
         return scoring
     except Exception as e:

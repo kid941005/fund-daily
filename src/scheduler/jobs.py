@@ -15,7 +15,7 @@ import traceback
 logger = logging.getLogger(__name__)
 
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def batch_process(
@@ -23,31 +23,31 @@ def batch_process(
     processor: Callable[[T], Any],
     batch_size: int = 10,
     max_workers: int = 5,
-    progress_callback: Callable[[int, int], None] = None
+    progress_callback: Callable[[int, int], None] = None,
 ) -> Dict[str, List[Any]]:
     """
     分批处理任务
-    
+
     Args:
         items: 待处理的数据列表
         processor: 处理函数
         batch_size: 每批大小
         max_workers: 最大并发数
         progress_callback: 进度回调函数 (current, total)
-    
+
     Returns:
         {"success": [...], "failed": [...]}
     """
     results = {"success": [], "failed": []}
     total = len(items)
-    
+
     for batch_start in range(0, total, batch_size):
         batch_end = min(batch_start + batch_size, total)
         batch = items[batch_start:batch_end]
-        
+
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_item = {executor.submit(processor, item): item for item in batch}
-            
+
             for future in as_completed(future_to_item):
                 item = future_to_item[future]
                 try:
@@ -56,17 +56,18 @@ def batch_process(
                 except Exception as e:
                     logger.warning(f"处理失败 {item}: {e}")
                     results["failed"].append({"item": item, "error": str(e)})
-        
+
         if progress_callback:
             progress_callback(batch_end, total)
-        
+
         logger.debug(f"批次完成: {batch_end}/{total}")
-    
+
     return results
 
 
 class ScheduledJobType(str, Enum):
     """Predefined scheduled job types"""
+
     FUND_FETCH = "fund_fetch"
     NAV_UPDATE = "nav_update"
     SCORE_CALC = "score_calc"
@@ -76,6 +77,7 @@ class ScheduledJobType(str, Enum):
 
 
 # ---- Job Metadata Registry ----
+
 
 class JobMetadata:
     """Metadata for a scheduled job"""
@@ -117,10 +119,12 @@ def _register_job(meta: JobMetadata):
 
 # ---- Job Definitions ----
 
+
 def _get_fund_codes(user_id: Optional[str] = None) -> List[str]:
     """Get list of fund codes to process"""
     try:
         from db import database_pg as db
+
         if user_id:
             holdings = db.get_holdings(user_id)
         else:
@@ -142,6 +146,7 @@ def _is_trading_day() -> bool:
 # ---- Daily NAV Update Job ----
 # Runs every trading day at 16:00 (30 minutes after market close)
 
+
 def _daily_nav_update_sync():
     """Daily NAV update - synchronous core"""
     logger.info("🔄 [Scheduler] Starting daily NAV update")
@@ -158,6 +163,7 @@ def _daily_nav_update_sync():
 
     try:
         from src.fetcher.enhanced_fetcher import EnhancedFetcher
+
         fetcher = EnhancedFetcher()
     except ImportError as e:
         logger.error(f"[Scheduler] Failed to import EnhancedFetcher: {e}")
@@ -194,10 +200,7 @@ async def daily_nav_update():
         codes = _get_fund_codes()
 
         # Submit NAV update task
-        task_id = manager.submit(
-            task_type=TaskType.NAV_UPDATE.value,
-            params={"codes": codes, "days": 7}
-        )
+        task_id = manager.submit(task_type=TaskType.NAV_UPDATE.value, params={"codes": codes, "days": 7})
         logger.info(f"📋 [Scheduler] NAV update task submitted: {task_id}")
         return {"task_id": task_id, "funds": len(codes)}
 
@@ -206,21 +209,24 @@ async def daily_nav_update():
         raise
 
 
-_daily_nav_update_job = _register_job(JobMetadata(
-    job_id="daily_nav_update",
-    name="每日净值更新",
-    description="每个交易日 16:00 自动抓取基金净值数据",
-    trigger_type="cron",
-    trigger_args={"hour": 16, "minute": 0, "day_of_week": "mon-fri"},
-    func_ref="src.scheduler.jobs.daily_nav_update",
-    enabled=True,
-    misfire_grace_time=60,
-    max_instances=1,
-))
+_daily_nav_update_job = _register_job(
+    JobMetadata(
+        job_id="daily_nav_update",
+        name="每日净值更新",
+        description="每个交易日 16:00 自动抓取基金净值数据",
+        trigger_type="cron",
+        trigger_args={"hour": 16, "minute": 0, "day_of_week": "mon-fri"},
+        func_ref="src.scheduler.jobs.daily_nav_update",
+        enabled=True,
+        misfire_grace_time=60,
+        max_instances=1,
+    )
+)
 
 
 # ---- Weekly Score Calculation Job ----
 # Runs every Monday at 09:00
+
 
 async def weekly_score_calculation():
     """
@@ -239,10 +245,7 @@ async def weekly_score_calculation():
         manager = BackgroundTaskManager.get_instance()
         codes = _get_fund_codes()
 
-        task_id = manager.submit(
-            task_type=TaskType.SCORE_CALC.value,
-            params={"codes": codes, "force": True}
-        )
+        task_id = manager.submit(task_type=TaskType.SCORE_CALC.value, params={"codes": codes, "force": True})
         logger.info(f"📋 [Scheduler] Score calculation task submitted: {task_id}")
         return {"task_id": task_id, "funds": len(codes)}
 
@@ -251,21 +254,24 @@ async def weekly_score_calculation():
         raise
 
 
-_register_job(JobMetadata(
-    job_id="weekly_score_calculation",
-    name="每周评分计算",
-    description="每周一 09:00 重新计算所有基金评分",
-    trigger_type="cron",
-    trigger_args={"hour": 9, "minute": 0, "day_of_week": 0},
-    func_ref="src.scheduler.jobs.weekly_score_calculation",
-    enabled=True,
-    misfire_grace_time=120,
-    max_instances=1,
-))
+_register_job(
+    JobMetadata(
+        job_id="weekly_score_calculation",
+        name="每周评分计算",
+        description="每周一 09:00 重新计算所有基金评分",
+        trigger_type="cron",
+        trigger_args={"hour": 9, "minute": 0, "day_of_week": 0},
+        func_ref="src.scheduler.jobs.weekly_score_calculation",
+        enabled=True,
+        misfire_grace_time=120,
+        max_instances=1,
+    )
+)
 
 
 # ---- Market Open Reminder Job ----
 # Runs every trading day at 08:55
+
 
 async def market_open_reminder():
     """
@@ -300,12 +306,11 @@ def _send_market_reminder():
         try:
             import requests
             from datetime import datetime
+
             today = datetime.now().strftime("%Y年%m月%d日")
             message = {
                 "msg_type": "text",
-                "content": {
-                    "text": f"📈 [{today}] A股市场即将开盘！\n请做好准备，今天也要加油！"
-                }
+                "content": {"text": f"📈 [{today}] A股市场即将开盘！\n请做好准备，今天也要加油！"},
             }
             requests.post(feishu_webhook, json=message, timeout=5)
             logger.info("[Scheduler] Feishu reminder sent")
@@ -316,21 +321,24 @@ def _send_market_reminder():
     logger.info("[Scheduler] No notification channel configured, skipping")
 
 
-_register_job(JobMetadata(
-    job_id="market_open_reminder",
-    name="开市提醒",
-    description="每个交易日 08:55 发送开市提醒",
-    trigger_type="cron",
-    trigger_args={"hour": 8, "minute": 55, "day_of_week": "mon-fri"},
-    func_ref="src.scheduler.jobs.market_open_reminder",
-    enabled=True,
-    misfire_grace_time=30,
-    max_instances=1,
-))
+_register_job(
+    JobMetadata(
+        job_id="market_open_reminder",
+        name="开市提醒",
+        description="每个交易日 08:55 发送开市提醒",
+        trigger_type="cron",
+        trigger_args={"hour": 8, "minute": 55, "day_of_week": "mon-fri"},
+        func_ref="src.scheduler.jobs.market_open_reminder",
+        enabled=True,
+        misfire_grace_time=30,
+        max_instances=1,
+    )
+)
 
 
 # ---- Cache Warmup Job ----
 # Runs every 30 minutes
+
 
 async def cache_warmup():
     """
@@ -344,10 +352,7 @@ async def cache_warmup():
     try:
         manager = BackgroundTaskManager.get_instance()
 
-        task_id = manager.submit(
-            task_type=TaskType.CACHE_WARM.value,
-            params={"type": "all"}
-        )
+        task_id = manager.submit(task_type=TaskType.CACHE_WARM.value, params={"type": "all"})
         logger.info(f"📋 [Scheduler] Cache warmup task submitted: {task_id}")
         return {"task_id": task_id}
 
@@ -356,21 +361,24 @@ async def cache_warmup():
         raise
 
 
-_register_job(JobMetadata(
-    job_id="cache_warmup",
-    name="缓存预热",
-    description="每 30 分钟预热缓存，提高 API 响应速度",
-    trigger_type="interval",
-    trigger_args={"minutes": 30},
-    func_ref="src.scheduler.jobs.cache_warmup",
-    enabled=True,
-    misfire_grace_time=60,
-    max_instances=1,
-))
+_register_job(
+    JobMetadata(
+        job_id="cache_warmup",
+        name="缓存预热",
+        description="每 30 分钟预热缓存，提高 API 响应速度",
+        trigger_type="interval",
+        trigger_args={"minutes": 30},
+        func_ref="src.scheduler.jobs.cache_warmup",
+        enabled=True,
+        misfire_grace_time=60,
+        max_instances=1,
+    )
+)
 
 
 # ---- Cleanup Old Data Job ----
 # Runs daily at 23:00
+
 
 async def cleanup_old_data():
     """
@@ -387,6 +395,7 @@ async def cleanup_old_data():
     # Cleanup old cache entries
     try:
         from src.cache.manager import CacheManager
+
         cache_mgr = CacheManager.get_instance()
         cache_mgr.cleanup_expired()
         cleaned["cache_entries"] = 1
@@ -397,6 +406,7 @@ async def cleanup_old_data():
     # Cleanup old completed tasks (older than 7 days)
     try:
         from src.tasks.background import BackgroundTaskManager, TaskStatus
+
         task_mgr = BackgroundTaskManager.get_instance()
         # This would need a cleanup method in the task manager
         # For now, just log
@@ -408,6 +418,7 @@ async def cleanup_old_data():
     # Cleanup old NAV history (keep last 2 years)
     try:
         from db import database_pg as db
+
         logger.info("[Scheduler] NAV history cleanup would be done here")
     except Exception as e:
         logger.warning(f"[Scheduler] NAV cleanup failed: {e}")
@@ -418,21 +429,24 @@ async def cleanup_old_data():
     return cleaned
 
 
-_register_job(JobMetadata(
-    job_id="cleanup_old_data",
-    name="清理过期数据",
-    description="每日 23:00 清理过期缓存和旧数据",
-    trigger_type="cron",
-    trigger_args={"hour": 23, "minute": 0},
-    func_ref="src.scheduler.jobs.cleanup_old_data",
-    enabled=True,
-    misfire_grace_time=300,
-    max_instances=1,
-))
+_register_job(
+    JobMetadata(
+        job_id="cleanup_old_data",
+        name="清理过期数据",
+        description="每日 23:00 清理过期缓存和旧数据",
+        trigger_type="cron",
+        trigger_args={"hour": 23, "minute": 0},
+        func_ref="src.scheduler.jobs.cleanup_old_data",
+        enabled=True,
+        misfire_grace_time=300,
+        max_instances=1,
+    )
+)
 
 
 # ---- Fund Data Fetch Job ----
 # Runs every 2 hours during trading hours
+
 
 async def fund_data_fetch():
     """
@@ -446,10 +460,7 @@ async def fund_data_fetch():
         manager = BackgroundTaskManager.get_instance()
         codes = _get_fund_codes()
 
-        task_id = manager.submit(
-            task_type=TaskType.FUND_FETCH.value,
-            params={"codes": codes, "force": False}
-        )
+        task_id = manager.submit(task_type=TaskType.FUND_FETCH.value, params={"codes": codes, "force": False})
         logger.info(f"📋 [Scheduler] Fund fetch task submitted: {task_id}")
         return {"task_id": task_id, "funds": len(codes)}
 
@@ -458,17 +469,19 @@ async def fund_data_fetch():
         raise
 
 
-_register_job(JobMetadata(
-    job_id="fund_data_fetch",
-    name="基金数据抓取",
-    description="每 2 小时抓取基金基本信息",
-    trigger_type="interval",
-    trigger_args={"hours": 2},
-    func_ref="src.scheduler.jobs.fund_data_fetch",
-    enabled=True,
-    misfire_grace_time=120,
-    max_instances=1,
-))
+_register_job(
+    JobMetadata(
+        job_id="fund_data_fetch",
+        name="基金数据抓取",
+        description="每 2 小时抓取基金基本信息",
+        trigger_type="interval",
+        trigger_args={"hours": 2},
+        func_ref="src.scheduler.jobs.fund_data_fetch",
+        enabled=True,
+        misfire_grace_time=120,
+        max_instances=1,
+    )
+)
 
 
 def get_scheduled_job(job_id: str) -> Optional[JobMetadata]:

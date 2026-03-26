@@ -11,25 +11,20 @@ from typing import Optional, Tuple
 def hash_password(password: str, salt: Optional[str] = None) -> str:
     """
     哈希密码
-    
+
     Args:
         password: 原始密码
         salt: 盐值，如果为None则生成随机盐
-        
+
     Returns:
         哈希后的密码字符串 (格式: salt$hash)
     """
     if salt is None:
         salt = secrets.token_hex(16)
-    
+
     # 使用PBKDF2-HMAC-SHA256进行密码哈希
-    key = hashlib.pbkdf2_hmac(
-        "sha256",
-        password.encode(),
-        salt.encode(),
-        100000  # 迭代次数
-    )
-    
+    key = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100000)  # 迭代次数
+
     # 返回 salt$hash 格式（保持与原有web/api/auth.py兼容）
     return f"{salt}${key.hex()}"
 
@@ -37,11 +32,11 @@ def hash_password(password: str, salt: Optional[str] = None) -> str:
 def verify_password(password: str, hashed_password: str) -> bool:
     """
     验证密码
-    
+
     Args:
         password: 待验证的密码
         hashed_password: 存储的哈希密码 (格式: salt$hash)
-        
+
     Returns:
         密码是否正确
     """
@@ -55,15 +50,10 @@ def verify_password(password: str, hashed_password: str) -> bool:
             salt, stored_hash = hashed_password.split(":", 1)
         else:
             return False
-        
+
         # 计算输入密码的哈希
-        key = hashlib.pbkdf2_hmac(
-            "sha256",
-            password.encode(),
-            salt.encode(),
-            100000
-        )
-        
+        key = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100000)
+
         # 比较哈希值
         return key.hex() == stored_hash
     except (ValueError, AttributeError):
@@ -74,7 +64,7 @@ def verify_password(password: str, hashed_password: str) -> bool:
 def generate_salt() -> str:
     """
     生成随机盐值
-    
+
     Returns:
         16字节的随机十六进制盐值
     """

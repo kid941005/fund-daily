@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 
 class TriggerType(str, Enum):
     """Job trigger types"""
+
     DATE = "date"
     INTERVAL = "interval"
     CRON = "cron"
@@ -20,6 +21,7 @@ class TriggerType(str, Enum):
 
 class JobState(str, Enum):
     """Job state"""
+
     PENDING = "pending"
     RUNNING = "running"
     PAUSED = "paused"
@@ -28,8 +30,10 @@ class JobState(str, Enum):
 
 # ---- Request Models ----
 
+
 class JobRescheduleRequest(BaseModel):
     """Request to reschedule a job"""
+
     trigger: Optional[str] = Field(None, description="Trigger type: date, interval, cron")
     # Cron fields
     year: Optional[str] = Field(None, description="Year (4-digit)")
@@ -54,13 +58,16 @@ class JobRescheduleRequest(BaseModel):
 
 class JobRunRequest(BaseModel):
     """Request to run a job immediately"""
+
     force: bool = Field(False, description="Force run even if disabled")
 
 
 # ---- Response Models ----
 
+
 class JobResponse(BaseModel):
     """Single job information"""
+
     id: str = Field(..., description="Job ID")
     name: str = Field(..., description="Job name/description")
     trigger: str = Field(..., description="Trigger type")
@@ -85,6 +92,7 @@ class JobResponse(BaseModel):
 
 class SchedulerStatusResponse(BaseModel):
     """Overall scheduler status"""
+
     running: bool = Field(..., description="Whether scheduler is running")
     current_time: datetime = Field(..., description="Current server time")
     timezone: str = Field(..., description="Scheduler timezone")
@@ -95,6 +103,7 @@ class SchedulerStatusResponse(BaseModel):
 
 class SchedulerJobsListResponse(BaseModel):
     """Response containing list of jobs"""
+
     jobs: List[JobResponse] = Field(default_factory=list)
     running: bool = Field(..., description="Whether scheduler is running")
     current_time: datetime = Field(..., description="Current server time")
@@ -104,6 +113,7 @@ class SchedulerJobsListResponse(BaseModel):
 
 class JobRunResponse(BaseModel):
     """Response from a job run request"""
+
     job_id: str
     success: bool
     message: str
@@ -112,6 +122,7 @@ class JobRunResponse(BaseModel):
 
 class JobPauseResponse(BaseModel):
     """Response from a job pause request"""
+
     job_id: str
     success: bool
     message: str
@@ -119,6 +130,7 @@ class JobPauseResponse(BaseModel):
 
 class JobResumeResponse(BaseModel):
     """Response from a job resume request"""
+
     job_id: str
     success: bool
     message: str
@@ -126,6 +138,7 @@ class JobResumeResponse(BaseModel):
 
 class JobRescheduleResponse(BaseModel):
     """Response from a job reschedule request"""
+
     job_id: str
     success: bool
     message: str
@@ -133,6 +146,7 @@ class JobRescheduleResponse(BaseModel):
 
 
 # ---- Helper Functions ----
+
 
 def jobs_to_response(jobs: List[Any], running: bool, current_time: datetime) -> SchedulerJobsListResponse:
     """Convert APScheduler job list to API response"""
@@ -142,24 +156,25 @@ def jobs_to_response(jobs: List[Any], running: bool, current_time: datetime) -> 
     for job in jobs:
         try:
             next_run = job.next_run_time
-            if hasattr(next_run, 'replace'):
+            if hasattr(next_run, "replace"):
                 # Handle tz-aware vs tz-naive
                 if next_run.tzinfo is None and current_time.tzinfo is not None:
                     from datetime import timezone as tz
+
                     next_run = next_run.replace(tzinfo=tz.utc)
         except Exception:
             next_run = None
 
         # Determine state
         state = JobState.PENDING
-        if hasattr(job, 'pending'):
+        if hasattr(job, "pending"):
             if job.pending:
                 state = JobState.PENDING
             else:
                 state = JobState.RUNNING
 
-        if hasattr(job, 'trigger') and job.trigger:
-            trigger_type = getattr(job.trigger, 'type', str(job.trigger))
+        if hasattr(job, "trigger") and job.trigger:
+            trigger_type = getattr(job.trigger, "type", str(job.trigger))
         else:
             trigger_type = "unknown"
 
@@ -168,16 +183,16 @@ def jobs_to_response(jobs: List[Any], running: bool, current_time: datetime) -> 
 
         job_response = JobResponse(
             id=job.id,
-            name=getattr(job, 'name', job.id),
+            name=getattr(job, "name", job.id),
             trigger=trigger_type,
             trigger_args=trigger_args,
             next_run_time=next_run,
-            misfire_grace_time=job.misfire_grace_time if hasattr(job, 'misfire_grace_time') else 60,
-            max_instances=job.max_instances if hasattr(job, 'max_instances') else 1,
-            coalesce=job.coalesce if hasattr(job, 'coalesce') else True,
+            misfire_grace_time=job.misfire_grace_time if hasattr(job, "misfire_grace_time") else 60,
+            max_instances=job.max_instances if hasattr(job, "max_instances") else 1,
+            coalesce=job.coalesce if hasattr(job, "coalesce") else True,
             state=state,
-            func_ref=getattr(job, 'func_ref', None),
-            kwargs=getattr(job, 'kwargs', {}),
+            func_ref=getattr(job, "func_ref", None),
+            kwargs=getattr(job, "kwargs", {}),
         )
         job_responses.append(job_response)
         pending += 1
@@ -196,25 +211,25 @@ def _extract_trigger_args(trigger) -> Dict[str, Any]:
     if trigger is None:
         return {}
 
-    trigger_type = getattr(trigger, 'type', 'unknown')
+    trigger_type = getattr(trigger, "type", "unknown")
     args = {"type": trigger_type}
 
     if trigger_type == "cron":
-        for field_name in ['year', 'month', 'day', 'week', 'day_of_week', 'hour', 'minute', 'second']:
+        for field_name in ["year", "month", "day", "week", "day_of_week", "hour", "minute", "second"]:
             val = getattr(trigger, field_name, None)
             if val is not None:
                 args[field_name] = val
     elif trigger_type == "interval":
-        for field_name in ['weeks', 'days', 'hours', 'minutes', 'seconds', 'start_date', 'end_date']:
+        for field_name in ["weeks", "days", "hours", "minutes", "seconds", "start_date", "end_date"]:
             val = getattr(trigger, field_name, None)
             if val is not None:
-                if hasattr(val, 'total_seconds'):
+                if hasattr(val, "total_seconds"):
                     args[field_name] = val.total_seconds()
                 else:
                     args[field_name] = val
     elif trigger_type == "date":
-        val = getattr(trigger, 'run_date', None)
+        val = getattr(trigger, "run_date", None)
         if val:
-            args['run_date'] = str(val)
+            args["run_date"] = str(val)
 
     return args

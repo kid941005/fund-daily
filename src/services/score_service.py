@@ -14,21 +14,22 @@ logger = logging.getLogger(__name__)
 
 class ScoreService:
     """统一的评分服务（兼容性适配器）"""
-    
+
     def __init__(self, cache_enabled: bool = True):
         self.cache_enabled = cache_enabled
-        
+
         # 使用新的依赖注入实现
         from src.interfaces import create_score_service
+
         self._impl = create_score_service()
-    
+
     @handle_errors(default_return={"total_score": 0, "grade": "N/A", "error": True}, log_level="error")
     def calculate_score(self, fund_code: str, use_cache: bool = True) -> Dict[str, Any]:
         """计算基金评分（兼容旧接口）"""
         try:
             # 调用新的实现
             result = self._impl.calculate_score(fund_code, use_cache)
-            
+
             # 转换为旧格式
             return {
                 "total_score": result.total_score,
@@ -36,7 +37,7 @@ class ScoreService:
                 "grade": result.grade,
                 "details": result.details,
                 "fund_code": fund_code,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
         except Exception as e:
             logger.error(f"计算评分失败: {fund_code}, {e}")
@@ -46,15 +47,15 @@ class ScoreService:
                 "grade": "E",
                 "details": {"error": str(e)},
                 "fund_code": fund_code,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-    
+
     def batch_calculate_scores(self, fund_codes: List[str]) -> Dict[str, Dict[str, Any]]:
         """批量计算评分（兼容旧接口）"""
         try:
             # 调用新的实现
             results = self._impl.batch_calculate_scores(fund_codes)
-            
+
             # 转换为旧格式
             formatted_results = {}
             for code, result in results.items():
@@ -64,9 +65,9 @@ class ScoreService:
                     "grade": result.grade,
                     "details": result.details,
                     "fund_code": code,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
-            
+
             return formatted_results
         except Exception as e:
             logger.error(f"批量计算评分失败: {e}")

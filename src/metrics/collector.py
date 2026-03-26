@@ -9,33 +9,25 @@ from typing import Callable
 # Lazy import to avoid hard dependency
 _metrics = None
 
+
 def get_metrics():
     """Get or create metrics instance"""
     global _metrics
     if _metrics is None:
         try:
             from prometheus_client import Counter, Histogram, Gauge, CollectorRegistry, REGISTRY
+
             _metrics = {
                 "registry": REGISTRY,
                 "request_counter": Counter(
-                    "fund_daily_requests_total",
-                    "Total requests",
-                    ["method", "endpoint", "status"]
+                    "fund_daily_requests_total", "Total requests", ["method", "endpoint", "status"]
                 ),
                 "request_latency": Histogram(
-                    "fund_daily_request_duration_seconds",
-                    "Request latency",
-                    ["method", "endpoint"]
+                    "fund_daily_request_duration_seconds", "Request latency", ["method", "endpoint"]
                 ),
-                "cache_hits": Counter(
-                    "fund_daily_cache_hits_total",
-                    "Cache hits",
-                    ["cache_type"]
-                ),
+                "cache_hits": Counter("fund_daily_cache_hits_total", "Cache hits", ["cache_type"]),
                 "score_calculations": Counter(
-                    "fund_daily_score_calculations_total",
-                    "Score calculations",
-                    ["fund_code"]
+                    "fund_daily_score_calculations_total", "Score calculations", ["fund_code"]
                 ),
             }
         except ImportError:
@@ -73,6 +65,7 @@ def track_score_calculation(fund_code: str):
 
 def timed(metric_name: str = "default"):
     """Decorator to time a function"""
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -83,9 +76,8 @@ def timed(metric_name: str = "default"):
                 duration = time.time() - start
                 metrics = get_metrics()
                 if metrics and "request_latency" in metrics:
-                    metrics["request_latency"].labels(
-                        method="INTERNAL",
-                        endpoint=metric_name
-                    ).observe(duration)
+                    metrics["request_latency"].labels(method="INTERNAL", endpoint=metric_name).observe(duration)
+
         return wrapper
+
     return decorator

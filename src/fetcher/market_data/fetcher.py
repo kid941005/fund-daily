@@ -12,6 +12,7 @@ from src.utils import cache_keys
 from src.utils.error_handling import handle_network_errors
 from ..network import _make_request
 from ..cache import get_cache, set_cache
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,7 +27,7 @@ def fetch_market_news(limit: int = 8) -> List[Dict]:
         list of news items
     """
     cache_key = cache_keys.cache_keys.market_news(limit)
-    
+
     # 检查缓存
     cached = get_cache(cache_key)
     if cached is not None:
@@ -43,7 +44,7 @@ def fetch_market_news(limit: int = 8) -> List[Dict]:
             # 解析JSON（东方财富返回格式：var ajaxResult={...}）
             json_str = content.strip()
             if json_str.startswith("var ajaxResult="):
-                json_str = json_str[len("var ajaxResult="):]
+                json_str = json_str[len("var ajaxResult=") :]
             data = json.loads(json_str)
             raw_list = data.get("LivesList", []) or []
             news_list = [
@@ -56,7 +57,7 @@ def fetch_market_news(limit: int = 8) -> List[Dict]:
                 }
                 for item in raw_list[:limit]
             ]
-            
+
             # 缓存结果
             set_cache(cache_key, news_list)
             return news_list
@@ -79,7 +80,7 @@ def fetch_hot_sectors(limit: int = 10) -> List[Dict]:
         list of hot sectors
     """
     cache_key = cache_keys.cache_keys.hot_sectors(limit)
-    
+
     # 检查缓存
     cached = get_cache(cache_key)
     if cached is not None:
@@ -100,12 +101,12 @@ def fetch_hot_sectors(limit: int = 10) -> List[Dict]:
         "fs": "m:90+t:2+f:!50",
         "fields": "f1,f2,f3,f4,f12,f13,f14,f152,f227,f228,f229,f230,f231,f232,f233,f234,f235,f236,f237,f238",
         "ut": "fa5fd1943c7b386f172d6893dbfba10b",
-        "wbp2u": "|0|0|0|web"
+        "wbp2u": "|0|0|0|web",
     }
-    
+
     query_string = urllib.parse.urlencode(params)
     url = f"{base_url}?{query_string}"
-    
+
     content = _make_request(url)
 
     if content:
@@ -121,7 +122,7 @@ def fetch_hot_sectors(limit: int = 10) -> List[Dict]:
                 }
                 for s in raw_sectors
             ]
-            
+
             # 缓存结果
             set_cache(cache_key, sectors)
             return sectors
@@ -141,7 +142,7 @@ def fetch_commodity_prices() -> Dict[str, float]:
         dict of commodity prices
     """
     cache_key = cache_keys.cache_keys.market_sentiment("commodity")
-    
+
     # 检查缓存
     cached = get_cache(cache_key)
     if cached is not None:
@@ -151,13 +152,8 @@ def fetch_commodity_prices() -> Dict[str, float]:
 
     # 这里可以添加实际的商品价格API
     # 目前返回模拟数据
-    prices = {
-        "gold": 1950.50,
-        "oil": 75.30,
-        "silver": 23.15,
-        "copper": 3.85
-    }
-    
+    prices = {"gold": 1950.50, "oil": 75.30, "silver": 23.15, "copper": 3.85}
+
     # 缓存结果
     set_cache(cache_key, prices)
     return prices
