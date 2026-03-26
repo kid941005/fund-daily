@@ -46,9 +46,9 @@ docker-compose logs -f
 
 | 服务 | 地址 |
 |------|------|
-| 前端界面 | http://localhost:5000 |
-| 后端 API | http://localhost:5000 |
-| API 文档 | http://localhost:5000/api/docs |
+| 前端界面 | http://localhost:5007 |
+| 后端 API | http://localhost:5007 |
+| API 文档 | http://localhost:5007/api/docs |
 
 ## 生产环境部署
 

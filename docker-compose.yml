@@ -80,7 +80,7 @@ services:
       # 前端构建产物
       - ./dist:/app/dist:ro
     ports:
-      - "${FUND_DAILY_SERVER_PORT:-5000}:5000"
+      - "${FUND_DAILY_SERVER_PORT:-5007}:5000"
     depends_on:
       postgres:
         condition: service_healthy
