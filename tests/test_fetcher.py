@@ -99,8 +99,8 @@ class TestFetchFundData:
         assert "error" in result
 
     @patch('src.fetcher.fund_basic.fetcher._make_request')
-    @patch('src.fetcher.fund_basic.fetcher.get_cache')
-    @patch('src.fetcher.fund_basic.fetcher.set_cache')
+    @patch('src.fetcher.cache.fetcher.get_cache')
+    @patch('src.fetcher.cache.fetcher.set_cache')
     def test_fetch_uses_cache(self, mock_set_cache, mock_get_cache, mock_request):
         """Test that cache is used"""
         mock_request.return_value = 'jsonpgz({"fundcode":"000001","name":"测试","dwjz":"1.000","gsz":"1.010","gszzl":"1.0","gztime":"2026-03-20 10:00"});'
