@@ -43,17 +43,17 @@ class QuantService:
                 with db.get_cursor(conn) as cursor:
                     # 关联 funds 表获取基金名称
                     cursor.execute("""
-                        SELECT h.fund_code, COALESCE(f.name, CONCAT('基金', h.fund_code)) as fund_name, 
-                               h.amount, f.full_name
+                        SELECT h.fund_code, COALESCE(f.fund_name, CONCAT('基金', h.fund_code)) as fund_name,
+                               h.amount
                         FROM holdings h
-                        LEFT JOIN funds f ON h.fund_code = f.code
+                        LEFT JOIN funds f ON h.fund_code = f.fund_code
                         WHERE h.amount > 0
                     """)
                     for row in cursor.fetchall():
                         holdings.append({
                             "code": row["fund_code"],
                             "name": row["fund_name"] or f"基金{row['fund_code']}",
-                            "fund_name": row["full_name"] or row["fund_name"] or f"基金{row['fund_code']}",
+                            "fund_name": row["fund_name"] or f"基金{row['fund_code']}",
                             "amount": float(row["amount"]),
                         })
         except Exception as exc:
