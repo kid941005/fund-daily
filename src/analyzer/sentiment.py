@@ -3,8 +3,8 @@ Enhanced market sentiment analysis
 """
 
 import logging
-from typing import Dict, List
 from datetime import datetime
+from typing import Dict, List
 
 from ..fetcher import fetch_hot_sectors, fetch_market_news
 

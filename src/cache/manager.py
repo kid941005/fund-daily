@@ -3,12 +3,12 @@
 提供多级缓存、缓存穿透保护、缓存雪崩防护
 """
 
-import logging
-import time
-import random
 import hashlib
-from typing import Any, Optional, Callable, Dict, Tuple
+import logging
+import random
+import time
 from functools import wraps
+from typing import Any, Callable, Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class CacheManager:
             logger.warning("内存缓存不可用")
 
         try:
-            from .redis_cache import redis_get, redis_set, redis_delete
+            from .redis_cache import redis_delete, redis_get, redis_set
 
             self._redis_get = redis_get
             self._redis_set = redis_set

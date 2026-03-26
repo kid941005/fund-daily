@@ -7,22 +7,22 @@ cluster deployments, and integration with the background task system.
 
 import logging
 import threading
-import uuid
 import time
-from datetime import datetime, timezone, timedelta
-from typing import Optional, Dict, Any, List, Callable
+import uuid
+from datetime import datetime, timedelta, timezone
+from typing import Any, Callable, Dict, List, Optional
 
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.events import (
-    EVENT_JOB_EXECUTED,
     EVENT_JOB_ERROR,
+    EVENT_JOB_EXECUTED,
     EVENT_JOB_MISSED,
     EVENT_JOB_SUBMITTED,
 )
-from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
+from apscheduler.executors.pool import ProcessPoolExecutor, ThreadPoolExecutor
+from apscheduler.jobstores.redis import RedisJobStore
+from apscheduler.schedulers.background import BackgroundScheduler
 
-from .config import SchedulerConfig, get_scheduler_config, DEFAULT_TIMEZONE
+from .config import DEFAULT_TIMEZONE, SchedulerConfig, get_scheduler_config
 from .jobs import (
     SCHEDULED_JOBS,
     get_scheduled_job,

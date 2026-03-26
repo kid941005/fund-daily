@@ -8,16 +8,16 @@ Provides:
 - TaskType: Task type enum
 """
 
+import asyncio
 import json
-import uuid
 import logging
 import threading
-import asyncio
-from enum import Enum
-from datetime import datetime
-from typing import Optional, Dict, Any, Callable, List
-from dataclasses import dataclass, field, asdict
+import uuid
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -115,6 +115,7 @@ class BackgroundTaskManager:
         """Initialize Redis connection"""
         try:
             import redis
+
             from src.config import get_config
 
             config = get_config().redis

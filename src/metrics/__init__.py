@@ -3,9 +3,9 @@ Prometheus Metrics Module
 """
 
 from .collector import (
+    CacheHits,
     RequestCounter,
     RequestLatency,
-    CacheHits,
     ScoreCalculations,
     get_metrics,
 )

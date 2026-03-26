@@ -4,13 +4,12 @@
 """
 
 import logging
-from typing import Dict, Any
-from .interfaces import IAnalyzer, FundData
-from .analyzer import (
-    calculate_risk_metrics as original_calculate_risk_metrics,
-    get_market_sentiment as original_get_market_sentiment,
-    get_commodity_sentiment as original_get_commodity_sentiment,
-)
+from typing import Any, Dict
+
+from .analyzer import calculate_risk_metrics as original_calculate_risk_metrics
+from .analyzer import get_commodity_sentiment as original_get_commodity_sentiment
+from .analyzer import get_market_sentiment as original_get_market_sentiment
+from .interfaces import FundData, IAnalyzer
 
 logger = logging.getLogger(__name__)
 

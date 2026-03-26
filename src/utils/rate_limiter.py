@@ -2,11 +2,11 @@
 线程安全的速率限制器
 """
 
-import time
-import threading
 import logging
-from typing import Optional
+import threading
+import time
 from collections import defaultdict
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 

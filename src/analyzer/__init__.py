@@ -8,18 +8,18 @@ from typing import Dict, List
 
 from src.utils.error_handling import handle_errors
 
+# 从fetcher导入必要的函数（保持向后兼容）
+from ..fetcher import (
+    fetch_commodity_prices,
+    fetch_hot_sectors,
+    fetch_market_news,
+)
+
 # 统一从risk.py导入风险计算
 from .risk import calculate_risk_metrics
 
 # 统一从sentiment.py导入情绪分析
 from .sentiment import get_enhanced_market_sentiment
-
-# 从fetcher导入必要的函数（保持向后兼容）
-from ..fetcher import (
-    fetch_hot_sectors,
-    fetch_market_news,
-    fetch_commodity_prices,
-)
 
 logger = logging.getLogger(__name__)
 

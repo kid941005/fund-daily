@@ -5,8 +5,8 @@ Pydantic models for scheduler API requests and responses.
 """
 
 from datetime import datetime
-from typing import Optional, List, Dict, Any
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 

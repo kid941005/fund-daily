@@ -8,17 +8,18 @@ from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+from src.scoring.utils import normalize_returns
+
+from ..analyzer import calculate_risk_metrics, get_commodity_sentiment, get_market_sentiment
+from ..fetcher import fetch_fund_data, fetch_fund_detail, fetch_fund_manager, fetch_fund_scale
+from .generate import ADVICE_ALLOCATION_RATIOS as ALLOCATION_RATIOS
+from .generate import ADVICE_SCORE_THRESHOLDS as SCORE_THRESHOLDS
+from .generate import ADVICE_WEIGHT_CONFIG as WEIGHT_CONFIG
 from .generate import (
+    format_report_for_share,
     generate_advice,
     generate_daily_report,
-    format_report_for_share,
-    ADVICE_SCORE_THRESHOLDS as SCORE_THRESHOLDS,
-    ADVICE_ALLOCATION_RATIOS as ALLOCATION_RATIOS,
-    ADVICE_WEIGHT_CONFIG as WEIGHT_CONFIG,
 )
-from ..fetcher import fetch_fund_data, fetch_fund_detail, fetch_fund_manager, fetch_fund_scale
-from ..analyzer import calculate_risk_metrics, get_market_sentiment, get_commodity_sentiment
-from src.scoring.utils import normalize_returns
 
 # 保留原有函数以保持兼容性
 

@@ -3,11 +3,11 @@
 """
 
 import logging
-from typing import Dict, Optional, List
 from datetime import datetime
+from typing import Dict, List, Optional
 
-from ..interfaces import IFetcher, IAnalyzer, IScorer, ICache, IScoreService, FundData, MarketData, ScoreResult
 from ..config import get_config
+from ..interfaces import FundData, IAnalyzer, ICache, IFetcher, IScorer, IScoreService, MarketData, ScoreResult
 
 logger = logging.getLogger(__name__)
 

@@ -5,7 +5,7 @@ Handles batch calculation tasks like score calculation.
 """
 
 import logging
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 from ..background import TaskContext, TaskType
 from ..task_registry import register_task

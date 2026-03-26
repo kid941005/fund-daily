@@ -6,8 +6,8 @@
 """
 
 import logging
-from typing import Any, Callable, Optional, Type, Union
 from functools import wraps
+from typing import Any, Callable, Optional, Type, Union
 
 logger = logging.getLogger(__name__)
 

@@ -4,10 +4,10 @@ Improved fund screenshot recognition with robust parsing
 Supports both EasyOCR and rule-based parsing
 """
 
-import re
 import logging
-from typing import List, Dict, Optional
+import re
 from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -250,8 +250,8 @@ def parse_image_easyocr(image_path: str) -> Dict:
     Returns:
         dict: Parsed fund data
     """
-    from PIL import Image, ImageEnhance
     import numpy as np
+    from PIL import Image, ImageEnhance
 
     if not EASYOCR_AVAILABLE:
         return {

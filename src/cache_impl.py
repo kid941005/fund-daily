@@ -4,9 +4,10 @@
 """
 
 import logging
-from typing import Optional, Any
+from typing import Any, Optional
+
+from .cache.redis_cache import redis_delete, redis_get, redis_set
 from .interfaces import ICache
-from .cache.redis_cache import redis_get, redis_set, redis_delete
 
 logger = logging.getLogger(__name__)
 

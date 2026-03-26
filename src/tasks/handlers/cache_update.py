@@ -5,7 +5,7 @@ Handles cache warmup and update tasks.
 """
 
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
 from ..background import TaskContext, TaskType
 from ..task_registry import register_task

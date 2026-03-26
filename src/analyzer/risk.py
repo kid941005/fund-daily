@@ -3,8 +3,8 @@ Risk calculation module
 提供基金风险指标计算
 """
 
-import re
 import logging
+import re
 from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)

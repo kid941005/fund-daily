@@ -4,8 +4,8 @@
 """
 
 import logging
-from typing import Dict, List
 from datetime import datetime
+from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -102,8 +102,8 @@ def get_timing_signals(fund_codes: List[str]) -> Dict:
     Returns:
         dict: 择时信号结果
     """
-    from ..fetcher import fetch_market_news, fetch_hot_sectors
-    from ..analyzer import get_market_sentiment, get_commodity_sentiment
+    from ..analyzer import get_commodity_sentiment, get_market_sentiment
+    from ..fetcher import fetch_hot_sectors, fetch_market_news
 
     # 获取市场数据
     market = get_market_sentiment()

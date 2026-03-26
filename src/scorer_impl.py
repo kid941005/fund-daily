@@ -4,8 +4,9 @@
 """
 
 import logging
-from typing import Dict, Any, Union
-from .interfaces import IScorer, FundData, MarketData, ScoreResult
+from typing import Any, Dict, Union
+
+from .interfaces import FundData, IScorer, MarketData, ScoreResult
 from .scoring import calculate_total_score
 from .scoring.utils import normalize_returns as original_normalize_returns
 

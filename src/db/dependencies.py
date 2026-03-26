@@ -5,33 +5,33 @@ FastAPI 依赖注入模块
 
 import logging
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, Optional, Callable
+from typing import AsyncIterator, Callable, Optional
 
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .async_crud import (
+    AsyncConfigDB,
+    AsyncFundsDB,
+    AsyncHoldingsDB,
+    AsyncUserDB,
+    AsyncWatchlistDB,
+)
 from .async_database import (
     AsyncDatabase,
     AsyncDatabaseConfig,
-    get_async_db,
     close_async_db,
-)
-from .async_crud import (
-    AsyncUserDB,
-    AsyncHoldingsDB,
-    AsyncWatchlistDB,
-    AsyncConfigDB,
-    AsyncFundsDB,
+    get_async_db,
 )
 from .repositories import (
-    UserRepository,
-    HoldingsRepository,
-    FundsRepository,
+    ConfigRepository,
     FundNavRepository,
     FundScoreRepository,
-    ConfigRepository,
-    WatchlistRepository,
+    FundsRepository,
     HistoryRepository,
+    HoldingsRepository,
+    UserRepository,
+    WatchlistRepository,
 )
 
 logger = logging.getLogger(__name__)

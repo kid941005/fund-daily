@@ -3,7 +3,7 @@ Data models for Fund Daily
 """
 
 from dataclasses import dataclass
-from typing import Optional, List, Dict
+from typing import Dict, List, Optional
 
 
 @dataclass

@@ -3,12 +3,12 @@
 """
 
 import logging
-from typing import Dict, List, Optional
-from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
+from typing import Dict, List, Optional
 
+from ..analyzer import calculate_risk_metrics, get_commodity_sentiment, get_market_sentiment
 from ..fetcher import fetch_fund_data, fetch_fund_detail, fetch_fund_manager, fetch_fund_scale
-from ..analyzer import calculate_risk_metrics, get_market_sentiment, get_commodity_sentiment
 
 logger = logging.getLogger(__name__)
 

@@ -6,11 +6,11 @@ AsyncDatabase - 异步 PostgreSQL 数据库模块
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from typing import Any, Optional, List, Dict, Union, AsyncIterator
 from dataclasses import dataclass
+from typing import Any, AsyncIterator, Dict, List, Optional, Union
 
 import asyncpg
-from asyncpg import Pool, Connection, Record
+from asyncpg import Connection, Pool, Record
 
 logger = logging.getLogger(__name__)
 

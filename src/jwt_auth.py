@@ -3,10 +3,10 @@ JWT Token 认证模块
 支持 token 生成、验证、刷新
 """
 
-import os
 import logging
+import os
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, Any, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import jwt
 

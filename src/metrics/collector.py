@@ -15,7 +15,7 @@ def get_metrics():
     global _metrics
     if _metrics is None:
         try:
-            from prometheus_client import Counter, Histogram, Gauge, CollectorRegistry, REGISTRY
+            from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram
 
             _metrics = {
                 "registry": REGISTRY,

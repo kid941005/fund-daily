@@ -3,16 +3,15 @@ Fetcher 适配器
 将函数式接口适配为类接口（兼容 IFetcher）
 """
 
-from typing import Dict, Any, Optional, List
-from .interfaces import IFetcher, FundData
-from .fetcher import (
-    fetch_fund_data as _fetch_fund_data,
-    fetch_fund_detail as _fetch_fund_detail,
-    fetch_fund_manager as _fetch_fund_manager,
-    fetch_fund_scale as _fetch_fund_scale,
-    fetch_hot_sectors as _fetch_hot_sectors,
-    fetch_market_news as _fetch_market_news,
-)
+from typing import Any, Dict, List, Optional
+
+from .fetcher import fetch_fund_data as _fetch_fund_data
+from .fetcher import fetch_fund_detail as _fetch_fund_detail
+from .fetcher import fetch_fund_manager as _fetch_fund_manager
+from .fetcher import fetch_fund_scale as _fetch_fund_scale
+from .fetcher import fetch_hot_sectors as _fetch_hot_sectors
+from .fetcher import fetch_market_news as _fetch_market_news
+from .interfaces import FundData, IFetcher
 
 
 class FetcherAdapter(IFetcher):

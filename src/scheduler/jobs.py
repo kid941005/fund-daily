@@ -6,11 +6,11 @@ Each job class wraps a task handler with scheduling metadata.
 """
 
 import logging
-from typing import Dict, Any, Optional, List, Callable, TypeVar
+import traceback
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from enum import Enum
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import traceback
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -304,8 +304,9 @@ def _send_market_reminder():
     feishu_webhook = os.getenv("FEISHU_WEBHOOK_URL")
     if feishu_webhook:
         try:
-            import requests
             from datetime import datetime
+
+            import requests
 
             today = datetime.now().strftime("%Y年%m月%d日")
             message = {

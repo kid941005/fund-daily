@@ -2,15 +2,17 @@
 Fund Basic Fetcher Functions
 """
 
-import logging
-from typing import Dict, List, Optional, Any
-import requests
 import json
+import logging
+from typing import Any, Dict, List, Optional
+
+import requests
 
 from src.utils import cache_keys
 from src.utils.error_handling import handle_network_errors
-from ..network import _make_request
+
 from ..cache import get_cache, set_cache
+from ..network import _make_request
 
 logger = logging.getLogger(__name__)
 

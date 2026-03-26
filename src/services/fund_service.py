@@ -9,28 +9,35 @@
 """
 
 import logging
-from typing import List, Dict, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Tuple
 
-from src.utils.error_handling import handle_errors, handle_network_errors
-from src.fetcher import fetch_fund_data, fetch_fund_detail, fetch_fund_manager, fetch_fund_scale
-from src.fetcher import fetch_fund_data_enhanced, fetch_fund_detail_enhanced
 from src.advice import analyze_fund, generate_advice
-from src.analyzer import get_market_sentiment, get_commodity_sentiment
-from src.fetcher import fetch_hot_sectors, fetch_market_news
-from src.services.score_service import get_score_service
-from src.services.metrics_service import get_metrics_service, timed_metric
+from src.analyzer import get_commodity_sentiment, get_market_sentiment
 from src.cache.manager import get_cache_manager
 from src.error import (
+    ErrorCode,
     FundServiceError,
     MarketServiceError,
-    ErrorCode,
-    fund_not_found,
-    fund_data_fetch_failed,
-    market_data_fetch_failed,
     cache_operation_failed,
+    fund_data_fetch_failed,
+    fund_not_found,
+    market_data_fetch_failed,
 )
+from src.fetcher import (
+    fetch_fund_data,
+    fetch_fund_data_enhanced,
+    fetch_fund_detail,
+    fetch_fund_detail_enhanced,
+    fetch_fund_manager,
+    fetch_fund_scale,
+    fetch_hot_sectors,
+    fetch_market_news,
+)
+from src.services.metrics_service import get_metrics_service, timed_metric
+from src.services.score_service import get_score_service
+from src.utils.error_handling import handle_errors, handle_network_errors
 
 logger = logging.getLogger(__name__)
 

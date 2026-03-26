@@ -1,7 +1,7 @@
 """Quant-related business logic encapsulation and guarantees."""
 
-from typing import Dict, List, Optional
 import logging
+from typing import Dict, List, Optional
 
 from db import database_pg as db
 from src.quant import (

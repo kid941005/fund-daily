@@ -3,10 +3,10 @@ LRU缓存实现
 防止内存泄漏，支持缓存大小限制和LRU驱逐策略
 """
 
-import time
 import logging
-from typing import Any, Optional, Dict
+import time
 from collections import OrderedDict
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

@@ -4,6 +4,7 @@
 """
 
 from typing import Dict
+
 from src.analyzer import get_market_sentiment
 
 # 市场周期定义

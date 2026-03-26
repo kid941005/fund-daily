@@ -3,24 +3,24 @@
 优先从PostgreSQL数据库获取数据，数据库没有或数据过期时再从外部API获取
 """
 
-import logging
-from datetime import datetime, date, timedelta
-from typing import Dict, Optional, Any
 import json
+import logging
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
 # 导入数据库函数
 try:
     from db import (
-        save_fund_info,
-        save_fund_nav,
-        save_fund_score,
-        save_fund_data,
+        get_fund_history,
         get_fund_info,
         get_fund_nav,
         get_fund_score,
-        get_fund_history,
+        save_fund_data,
+        save_fund_info,
+        save_fund_nav,
+        save_fund_score,
     )
 
     HAS_DB = True

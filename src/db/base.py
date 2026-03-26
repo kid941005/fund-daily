@@ -3,26 +3,26 @@ AsyncBase - SQLAlchemy 异步模型基类
 声明式基类和通用 Mixin 类
 """
 
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import Any, Optional
 
 from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    BigInteger,
-    Numeric,
-    Boolean,
-    DateTime,
-    Date,
-    Text,
     JSON,
-    Index,
+    BigInteger,
+    Boolean,
+    Column,
+    Date,
+    DateTime,
     ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
     func,
 )
+from sqlalchemy.ext.asyncio import AsyncAttrs, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine, AsyncAttrs
 
 
 class Base(AsyncAttrs, DeclarativeBase):

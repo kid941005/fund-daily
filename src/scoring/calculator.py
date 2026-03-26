@@ -7,10 +7,11 @@ import logging
 from typing import Dict, List, Optional
 
 from src.utils.error_handling import handle_errors
+
 from .config import SCORE_WEIGHTS, _get_cached_score, _set_cached_score
-from .weights import validate_weights
 from .models import ScoreInput
 from .utils import get_grade  # 统一使用 utils.py 的等级函数
+from .weights import validate_weights
 
 logger = logging.getLogger(__name__)
 
@@ -43,14 +44,14 @@ def calculate_total_score(
             return cached
 
     # 导入各维度评分函数
-    from .valuation import calculate_valuation_score
+    from .liquidity import calculate_liquidity_score
+    from .manager import calculate_manager_score
+    from .momentum import calculate_momentum_score
     from .performance import calculate_performance_score
     from .risk_control import calculate_risk_control_score
-    from .momentum import calculate_momentum_score
-    from .sentiment import calculate_sentiment_score
     from .sector import calculate_sector_score
-    from .manager import calculate_manager_score
-    from .liquidity import calculate_liquidity_score
+    from .sentiment import calculate_sentiment_score
+    from .valuation import calculate_valuation_score
 
     # 1. 估值面 (25分)
     valuation = calculate_valuation_score(fund_detail, fund_data)

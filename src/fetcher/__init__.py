@@ -4,10 +4,6 @@ Fund Data Fetcher - Main Facade Module
 
 # 导入所有子模块
 from .cache import *
-from .network import *
-from .fund_basic import *
-from .market_data import *
-from .fund_advanced import *
 from .enhanced_fetcher import (
     EnhancedFetcher,
     fetch_fund_data_enhanced,
@@ -15,6 +11,10 @@ from .enhanced_fetcher import (
     get_enhanced_fetcher,
     get_fund_history_enhanced,
 )
+from .fund_advanced import *
+from .fund_basic import *
+from .market_data import *
+from .network import *
 
 HAS_ENHANCED_FETCHER = True
 

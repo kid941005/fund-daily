@@ -5,7 +5,8 @@
 提供统一的缓存键生成函数，避免重复的缓存键生成逻辑。
 """
 
-from typing import Optional, Union, List
+from typing import List, Optional, Union
+
 from src.constants import CACHE_PREFIXES
 
 

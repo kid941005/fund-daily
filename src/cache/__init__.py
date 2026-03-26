@@ -4,17 +4,17 @@
 
 from .manager import (
     CacheManager,
-    get_cache_manager,
     cached,
+    get_cache_manager,
 )
 
 # 向后兼容导出（不推荐使用）
 from .redis_cache import (
+    get_redis_client,
+    redis_clear,
+    redis_delete,
     redis_get,
     redis_set,
-    redis_delete,
-    redis_clear,
-    get_redis_client,
 )
 
 

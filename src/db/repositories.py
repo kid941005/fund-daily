@@ -6,22 +6,22 @@ Repositories - Repository 模式实现
 import json
 import logging
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional, TypeVar, Generic
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 
-from sqlalchemy import select, update, delete, func, and_, or_
+from sqlalchemy import and_, delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from .base import (
     Base,
-    User,
-    Holding,
+    Config,
     Fund,
     FundNav,
     FundScore,
-    Config,
-    Watchlist,
     History,
+    Holding,
+    User,
+    Watchlist,
     get_async_session,
 )
 

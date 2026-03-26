@@ -3,8 +3,8 @@
 用于封装评分函数的参数，减少参数数量
 """
 
-from typing import Dict, List, Optional
 from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 
 @dataclass

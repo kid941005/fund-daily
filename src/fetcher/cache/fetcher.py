@@ -2,13 +2,14 @@
 Cache Fetcher Functions
 """
 
-import logging
-from typing import Dict, List, Optional, Any
-import requests
 import json
+import logging
+from typing import Any, Dict, List, Optional
 
-from src.config import get_config
+import requests
+
 from src.cache.manager import get_cache_manager
+from src.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,8 @@ _cache_manager = get_cache_manager()
 
 # Redis支持检查
 try:
-    from src.cache.redis_cache import redis_get, redis_set, redis_clear as redis_clear
+    from src.cache.redis_cache import redis_clear as redis_clear
+    from src.cache.redis_cache import redis_get, redis_set
 
     HAS_REDIS = True
 except ImportError:
