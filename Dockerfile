@@ -1,45 +1,6 @@
-# Fund Daily Dockerfile - 包含前后端
-# Multi-stage build: 前端构建 + 后端运行
-# Version: 2.7.4
+# Fund Daily Dockerfile - 前后端一体
+# Version: 2.7.10
 
-# ============== Stage 1: 前端构建 ==============
-FROM node:18-alpine AS frontend-builder
-
-WORKDIR /app
-
-# 复制前端代码
-COPY web/vue3/package*.json ./
-COPY web/vue3/*.json ./
-COPY web/vue3/src/ ./src/
-COPY web/vue3/index.html ./
-COPY web/vue3/vite.config.ts ./
-
-# 安装依赖并构建
-RUN npm ci && npm run build
-
-# ============== Stage 2: 后端构建 ==============
-FROM python:3.11-slim AS builder
-
-WORKDIR /app
-
-# 安装构建依赖
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1 \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# 安装 Python 依赖
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# 可选：CPU-only PyTorch
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu || true
-
-# ============== Stage 3: 运行时 ==============
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -51,9 +12,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 从 builder 复制 Python 包
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# 安装 Python 依赖
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 可选：CPU-only PyTorch
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu || true
 
 # 复制应用代码
 COPY src/ ./src/
@@ -64,8 +28,8 @@ COPY config/ ./config/
 COPY VERSION .
 COPY cron.sh ./
 
-# 从前端构建阶段复制 dist 目录
-COPY --from=frontend-builder /app/dist ./dist
+# 复制预构建的前端（由 GitHub Actions 构建）
+COPY web/vue3/dist ./dist
 
 # 创建目录
 RUN mkdir -p /app/data /app/web
