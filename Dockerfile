@@ -29,7 +29,7 @@ COPY VERSION .
 COPY cron.sh ./
 
 # 复制预构建的前端（由 GitHub Actions 构建）
-COPY web/vue3/dist ./dist
+COPY dist ./dist
 
 # 创建目录
 RUN mkdir -p /app/data /app/web
