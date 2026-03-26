@@ -59,7 +59,6 @@ RUN mkdir -p /app/data
 
 # Environment variables
 ENV PYTHONUNBUFFERED=1 \
-    FLASK_APP=web/app.py \
     FUND_DAILY_DB_TYPE=postgres \
     FUND_DAILY_DB_HOST=postgres \
     FUND_DAILY_DB_PORT=5432 \

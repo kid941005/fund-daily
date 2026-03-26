@@ -10,7 +10,7 @@ services:
       - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-kid}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-941005}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
       POSTGRES_DB: ${POSTGRES_DB:-fund_daily}
     volumes:
       - postgres_data:/var/lib/postgresql/data

@@ -9,6 +9,7 @@ from datetime import date, timedelta
 from typing import Optional
 
 import pytest
+import pytest_asyncio
 
 # 确保 src 在路径中
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -24,7 +25,7 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session")
 async def async_db():
     """创建异步数据库实例"""
     from src.db.async_database import AsyncDatabase, AsyncDatabaseConfig
@@ -61,7 +62,7 @@ async def async_holdings_db(async_db):
     return AsyncHoldingsDB(async_db)
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def async_user_db(async_db):
     """创建 AsyncUserDB"""
     from src.db.async_crud import AsyncUserDB

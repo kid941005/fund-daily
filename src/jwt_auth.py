@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 # ============== Config ==============
 # 优先使用配置管理器，否则使用环境变量
+# 生产环境禁止使用不安全的默认密钥
 try:
     from src.config import get_config
     _config = get_config()
@@ -25,7 +26,20 @@ try:
     JWT_REFRESH_TOKEN_EXPIRE_DAYS = _config.security.jwt.refresh_token_expire_days
     logger.info("JWT配置: 使用配置管理器")
 except Exception:
-    JWT_SECRET = os.environ.get("FUND_DAILY_JWT_SECRET", "fund-daily-jwt-secret-change-in-production")
+    # 回退到环境变量
+    JWT_SECRET = os.environ.get("FUND_DAILY_JWT_SECRET", "")
+    if not JWT_SECRET:
+        # 生产环境必须配置 JWT 密钥，禁止静默使用默认密钥
+        _is_production = os.environ.get("FUND_DAILY_ENV") == "production"
+        if _is_production:
+            raise RuntimeError(
+                "FUND_DAILY_JWT_SECRET 未配置！生产环境必须设置有效的 JWT 密钥。"
+                "生成命令: python -c \"import secrets; print(secrets.token_hex(32))\""
+            )
+        # 开发环境使用不安全默认值但记录警告
+        JWT_SECRET = "fund-daily-jwt-secret-change-in-production"
+        logger.warning("JWT使用不安全默认值，仅限开发环境使用！")
+
     JWT_ALGORITHM = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("FUND_DAILY_JWT_EXPIRE_MINUTES", 60))
     JWT_REFRESH_TOKEN_EXPIRE_DAYS = int(os.environ.get("FUND_DAILY_JWT_REFRESH_DAYS", 7))
