@@ -153,7 +153,7 @@ def create_tokens_for_user(user_id: str, username: str) -> dict:
 
 def set_session_cookie(response: JSONResponse, user_id: str, username: str):
     """Set session cookie on response (for backward compatibility)"""
-    from config import get_fastapi_config
+    from .config import get_fastapi_config
     config = get_fastapi_config()
     
     response.set_cookie(

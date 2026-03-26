@@ -121,9 +121,11 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       
       # CORS 配置
-      - FUND_DAILY_CORS_ORIGINS=*
+      # ⚠️ 开发环境允许所有来源，生产环境请在 .env 中设置具体域名
+      # 示例: FUND_DAILY_CORS_ORIGINS=https://fund.example.com,https://admin.example.com
+      - FUND_DAILY_CORS_ORIGINS=${FUND_DAILY_CORS_ORIGINS:-*}
       # 向后兼容（旧变量名）
-      - CORS_ORIGINS=*
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
     volumes:
       - ./dist:/app/dist:ro
       - ./data:/app/data

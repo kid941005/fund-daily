@@ -1,5 +1,8 @@
 """基金数据操作模块"""
+import logging
 from .pool import get_db, get_cursor
+
+logger = logging.getLogger(__name__)
 
 def save_fund_info(fund_code, fund_name, fund_type=None, fund_company=None, 
                    establish_date=None, fund_size=None, manager=None, 

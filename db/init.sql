@@ -31,14 +31,16 @@ CREATE TABLE IF NOT EXISTS holdings (
 -- 创建基金基本信息表 (与 db/pool.py 一致)
 CREATE TABLE IF NOT EXISTS funds (
     id SERIAL PRIMARY KEY,
-    code VARCHAR(10) UNIQUE NOT NULL,
-    name VARCHAR(100) NOT NULL,
+    fund_code VARCHAR(20) UNIQUE NOT NULL,
+    fund_name VARCHAR(200) NOT NULL,
     full_name VARCHAR(200),
     fund_type VARCHAR(50),
+    fund_company VARCHAR(100),
     manager VARCHAR(100),
     established_date DATE,
     net_assets DECIMAL(20,2),
     risk_level VARCHAR(20),
+    rating VARCHAR(10),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_updated TIMESTAMP,
@@ -133,12 +135,12 @@ VALUES
 ON CONFLICT (username) DO NOTHING;
 
 -- 插入示例基金数据
-INSERT INTO funds (code, name, full_name, fund_type, manager) 
+INSERT INTO funds (fund_code, fund_name, full_name, fund_type, manager) 
 VALUES 
     ('000001', '华夏成长', '华夏成长混合型证券投资基金', '混合型', '华夏基金'),
     ('000002', '嘉实增长', '嘉实增长混合型证券投资基金', '混合型', '嘉实基金'),
     ('000003', '易方达消费', '易方达消费行业股票型证券投资基金', '股票型', '易方达基金')
-ON CONFLICT (code) DO NOTHING;
+ON CONFLICT (fund_code) DO NOTHING;
 
 -- 创建索引以提高查询性能
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);

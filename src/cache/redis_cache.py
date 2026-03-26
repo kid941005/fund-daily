@@ -199,7 +199,9 @@ def increment_login_fail_count(username: str, lockout_seconds: int = 900) -> int
     """
     client = get_redis_client()
     if client is None:
-        return 0
+        # Redis 不可用时，记录严重错误并返回锁定阈值（安全优先）
+        logger.critical(f"Redis 不可用，无法记录登录失败次数，用户 {username} 被锁定")
+        return 999  # 返回高值以触发账户锁定
     try:
         key = LOGIN_FAIL_PREFIX + username
         pipe = client.pipeline()
@@ -217,7 +219,7 @@ def increment_login_fail_count(username: str, lockout_seconds: int = 900) -> int
         return new_count
     except Exception as e:
         logger.error(f"增加登录失败次数失败: {e}")
-        return 0
+        return 999  # 失败时返回高值（安全优先）
 
 
 def reset_login_fail_count(username: str) -> bool:
@@ -232,6 +234,8 @@ def reset_login_fail_count(username: str) -> bool:
     """
     client = get_redis_client()
     if client is None:
+        # Redis 不可用时，返回 False 阻止登录（安全优先）
+        logger.critical("Redis 不可用，拒绝重置登录失败计数（安全策略）")
         return False
     try:
         key = LOGIN_FAIL_PREFIX + username
@@ -256,13 +260,15 @@ def is_account_locked(username: str) -> bool:
     """
     client = get_redis_client()
     if client is None:
-        return False
+        # Redis 不可用时，返回 True（锁定）以保护账户（安全优先）
+        logger.critical("Redis 不可用，假定账户已锁定（安全策略）")
+        return True
     try:
         key = LOGIN_FAIL_PREFIX + username + ":locked"
         return client.exists(key) == 1
     except Exception as e:
         logger.error(f"检查账户锁定状态失败: {e}")
-        return False
+        return True  # 失败时假定已锁定（安全优先）
 
 
 def redis_clear() -> bool:

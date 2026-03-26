@@ -226,18 +226,26 @@ class CacheManager:
 
     def get_stats(self) -> Dict[str, int]:
         """获取缓存统计"""
+        stats = dict(self._stats)
+        
         # 添加内存缓存统计
         if self._has_memory_cache:
             mem_stats = self._memory_cache.get_stats()
-            self._stats.update(
+            stats.update(
                 {
                     "memory_hits": mem_stats.get("hits", 0),
                     "memory_misses": mem_stats.get("misses", 0),
                     "memory_evictions": mem_stats.get("evictions", 0),
                 }
             )
+        
+        # 计算命中率
+        stats["hit_rate"] = (
+            stats["hits"] / (stats["hits"] + stats["misses"] * 1.0) 
+            if (stats["hits"] + stats["misses"]) > 0 else 0
+        )
 
-        return self._stats.copy()
+        return stats
 
     def reset_stats(self):
         """重置统计"""
@@ -292,14 +300,6 @@ class CacheManager:
             logger.error(f"get_or_set loader failed: {key}, {e}")
             # 如果 loader 失败，返回 None 而不是抛出异常
             return None
-
-    def get_stats(self) -> Dict[str, int]:
-        """获取缓存统计信息"""
-        stats = dict(self._stats)
-        stats["hit_rate"] = (
-            stats["hits"] / (stats["hits"] + stats["misses"] * 1.0) if (stats["hits"] + stats["misses"]) > 0 else 0
-        )
-        return stats
 
 
 # 缓存装饰器
