@@ -30,14 +30,7 @@ except Exception:
     # 回退到环境变量
     JWT_SECRET = os.environ.get("FUND_DAILY_JWT_SECRET", "")
     if not JWT_SECRET:
-        # 生产环境必须配置 JWT 密钥，禁止静默使用默认密钥
-        _is_production = os.environ.get("FUND_DAILY_ENV") == "production"
-        if _is_production:
-            raise RuntimeError(
-                "FUND_DAILY_JWT_SECRET 未配置！生产环境必须设置有效的 JWT 密钥。"
-                '生成命令: python -c "import secrets; print(secrets.token_hex(32))"'
-            )
-        # 开发环境使用不安全默认值但记录警告
+        # 使用默认值（开发环境）
         JWT_SECRET = "fund-daily-jwt-secret-change-in-production"
         logger.warning("JWT使用不安全默认值，仅限开发环境使用！")
 
