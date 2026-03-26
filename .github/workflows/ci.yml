@@ -108,7 +108,7 @@ jobs:
     - name: Create deployment package
       run: |
         mkdir -p dist
-        cp -r web/dist dist/frontend
+        cp -r dist dist/frontend
         cp -r src dist/src
         cp -r db dist/db
         cp -r web/app.py dist/
