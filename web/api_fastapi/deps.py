@@ -4,19 +4,15 @@ Handles authentication (Session + JWT)
 """
 
 import logging
-from datetime import datetime
 from typing import Optional, Tuple
 
-from fastapi import Cookie, Depends, HTTPException, Request
+from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from src.error import ErrorCode, create_error_response
 from src.jwt_auth import (
-    create_access_token,
-    create_refresh_token,
     create_token_pair,
     verify_access_token,
-    verify_refresh_token,
 )
 
 logger = logging.getLogger(__name__)

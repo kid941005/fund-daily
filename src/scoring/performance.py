@@ -2,7 +2,7 @@
 业绩表现评分模块
 """
 
-from typing import Dict, Optional
+from typing import Dict
 
 
 def calculate_performance_score(fund_data: Dict = None) -> Dict:

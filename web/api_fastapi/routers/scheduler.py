@@ -89,8 +89,6 @@ async def get_job(job_id: str):
     if job is None:
         raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
 
-    from src.scheduler.api import JobState, _extract_trigger_args
-
     jobs_list = [job]
     response = jobs_to_response(jobs_list, manager.is_running(), _get_current_time())
 

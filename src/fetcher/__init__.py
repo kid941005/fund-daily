@@ -1,9 +1,9 @@
 """
 Fund Data Fetcher - Main Facade Module
+统一入口：提供基金数据获取、市场数据、缓存操作等公共 API
 """
 
-# 导入所有子模块
-from .cache import *
+from .cache.ops import clear_cache, get_cache, get_cache_stats, set_cache
 from .enhanced_fetcher import (
     EnhancedFetcher,
     fetch_fund_data_enhanced,
@@ -11,33 +11,51 @@ from .enhanced_fetcher import (
     get_enhanced_fetcher,
     get_fund_history_enhanced,
 )
-from .fund_advanced import *
-from .fund_basic import *
-from .market_data import *
-from .network import *
+from .fund_advanced.advanced import (
+    calculate_technical_from_history,
+    fetch_fund_manager,
+    fetch_fund_scale,
+)
+from .fund_basic.basic import (
+    fetch_fund_data,
+    fetch_fund_detail,
+    fetch_fund_nav_history,
+)
+from .market_data.market import (
+    fetch_commodity_prices,
+    fetch_hot_sectors,
+    fetch_market_news,
+)
+from .network.client import _get_ssl_context, _make_request
 
 HAS_ENHANCED_FETCHER = True
 
 __all__ = [
-    "_get_ssl_context",
-    "_make_request",
-    "calculate_technical_from_history",
+    # 缓存
+    "get_cache",
+    "set_cache",
     "clear_cache",
-    "fetch_commodity_prices",
+    "get_cache_stats",
+    # 基础数据
     "fetch_fund_data",
-    "fetch_fund_data_enhanced",
     "fetch_fund_detail",
+    "fetch_fund_nav_history",
+    # 高级数据
+    "fetch_fund_data_enhanced",
     "fetch_fund_detail_enhanced",
     "fetch_fund_manager",
-    "fetch_fund_nav_history",
     "fetch_fund_scale",
-    "fetch_hot_sectors",
-    "fetch_market_news",
-    "get_cache",
-    "get_cache_stats",
-    "get_enhanced_fetcher",
     "get_fund_history_enhanced",
-    "set_cache",
+    "calculate_technical_from_history",
     "EnhancedFetcher",
+    "get_enhanced_fetcher",
+    # 市场数据
+    "fetch_market_news",
+    "fetch_hot_sectors",
+    "fetch_commodity_prices",
+    # 网络
+    "_get_ssl_context",
+    "_make_request",
+    # 标志
     "HAS_ENHANCED_FETCHER",
 ]

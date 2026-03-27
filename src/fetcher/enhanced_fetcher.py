@@ -3,10 +3,9 @@
 优先从PostgreSQL数据库获取数据，数据库没有或数据过期时再从外部API获取
 """
 
-import json
 import logging
-from datetime import date, datetime, timedelta
-from typing import Any, Dict, Optional
+from datetime import date, datetime
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 

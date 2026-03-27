@@ -6,8 +6,7 @@ APScheduler configuration including timezone, job stores, and executors.
 
 import os
 from dataclasses import dataclass, field
-from datetime import timedelta, timezone
-from typing import List, Optional
+from typing import Optional
 
 # Default timezone for China market
 DEFAULT_TIMEZONE = "Asia/Shanghai"

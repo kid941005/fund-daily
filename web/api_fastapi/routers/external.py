@@ -6,7 +6,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 

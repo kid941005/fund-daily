@@ -3,11 +3,9 @@ Error Handler Middleware for FastAPI
 """
 
 import logging
-from typing import Union
 
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.error import ErrorCode, create_error_response
 

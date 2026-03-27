@@ -11,7 +11,6 @@ from src.utils.error_handling import handle_errors
 from .config import SCORE_WEIGHTS, _get_cached_score, _set_cached_score
 from .models import ScoreInput
 from .utils import get_grade  # 统一使用 utils.py 的等级函数
-from .weights import validate_weights
 
 logger = logging.getLogger(__name__)
 

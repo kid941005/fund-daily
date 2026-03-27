@@ -2,7 +2,7 @@
 动量趋势评分模块
 """
 
-from typing import Dict, Optional
+from typing import Dict
 
 
 def calculate_momentum_score(fund_data: Dict = None) -> Dict:

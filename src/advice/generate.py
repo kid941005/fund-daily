@@ -4,11 +4,10 @@
 
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-from ..analyzer import calculate_risk_metrics, get_commodity_sentiment, get_market_sentiment
-from ..fetcher import fetch_fund_data, fetch_fund_detail, fetch_fund_manager, fetch_fund_scale
+from ..analyzer import get_commodity_sentiment, get_market_sentiment
+from ..fetcher import fetch_fund_data, fetch_fund_detail
 
 logger = logging.getLogger(__name__)
 
@@ -290,7 +289,6 @@ __all__ = ["generate_advice", "ADVICE_SCORE_THRESHOLDS", "ADVICE_ALLOCATION_RATI
 # ============== 额外函数 ==============
 def generate_daily_report(fund_codes: List[str]) -> Dict:
     """Generate daily report for funds"""
-    from ..fetcher import fetch_fund_data
     from . import analyze_fund
 
     funds = []
@@ -333,7 +331,6 @@ def format_report_for_share(report: Dict) -> str:
 # 修复循环导入
 def _generate_daily_report_internal(fund_codes: List[str]) -> Dict:
     """Internal function to generate daily report"""
-    from ..fetcher import fetch_fund_data
     from . import analyze_fund
 
     funds = []

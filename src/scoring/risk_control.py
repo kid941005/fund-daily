@@ -2,7 +2,7 @@
 风险控制评分模块
 """
 
-from typing import Dict, Optional
+from typing import Dict
 
 
 def calculate_risk_control_score(risk_metrics: Dict, fund_data: Dict = None) -> Dict:

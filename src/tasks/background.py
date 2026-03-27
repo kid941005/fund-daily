@@ -8,13 +8,12 @@ Provides:
 - TaskType: Task type enum
 """
 
-import asyncio
 import json
 import logging
 import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict, dataclass, field
+from dataclasses import field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional

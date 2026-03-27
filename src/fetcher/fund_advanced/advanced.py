@@ -2,12 +2,9 @@
 Fund Advanced Fetcher Functions
 """
 
-import json
 import logging
 import re
-from typing import Any, Dict, List, Optional
-
-import requests
+from typing import Dict, List, Optional
 
 from src.utils import cache_keys
 
@@ -17,11 +14,7 @@ from ..network import _make_request
 logger = logging.getLogger(__name__)
 
 
-import json
 import logging
-from typing import Any, Dict, List, Optional
-
-import requests
 
 
 def calculate_technical_from_history(closes: List[float]) -> Dict:
@@ -37,7 +30,7 @@ def calculate_technical_from_history(closes: List[float]) -> Dict:
     if len(closes) < 5:
         return {"ma5": None, "ma10": None, "ma20": None, "macd": {}, "rsi": None}
 
-    from src.advice import calculate_ma, calculate_macd, calculate_rsi
+    from src.utils.technical import calculate_ma, calculate_macd, calculate_rsi
 
     # Calculate moving averages
     ma5 = calculate_ma(closes, 5)

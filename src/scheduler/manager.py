@@ -7,8 +7,6 @@ cluster deployments, and integration with the background task system.
 
 import logging
 import threading
-import time
-import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional
 
@@ -22,11 +20,9 @@ from apscheduler.executors.pool import ProcessPoolExecutor, ThreadPoolExecutor
 from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from .config import DEFAULT_TIMEZONE, SchedulerConfig, get_scheduler_config
+from .config import SchedulerConfig, get_scheduler_config
 from .jobs import (
     SCHEDULED_JOBS,
-    get_scheduled_job,
-    list_scheduled_jobs,
 )
 
 logger = logging.getLogger(__name__)
@@ -518,7 +514,6 @@ class SchedulerManager:
         try:
             if callable(func) and hasattr(func, "__wrapped__"):
                 # Check if it's an async function
-                import asyncio
 
                 result = await func()
                 return result
@@ -588,7 +583,6 @@ class SchedulerManager:
 
     def _add_predefined_jobs(self):
         """Add all predefined scheduled jobs from the registry"""
-        import asyncio
 
         for job_id, meta in SCHEDULED_JOBS.items():
             if not meta.enabled:

@@ -326,7 +326,6 @@ def get_fund_history(fund_code, days=30):
 
 def save_fund_data(fund_code, fund_data):
     """保存完整的基金数据（兼容现有API格式）"""
-    import json
     from datetime import date
 
     try:

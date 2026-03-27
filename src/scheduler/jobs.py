@@ -6,9 +6,8 @@ Each job class wraps a task handler with scheduling metadata.
 """
 
 import logging
-import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, TypeVar
 
@@ -406,7 +405,7 @@ async def cleanup_old_data():
 
     # Cleanup old completed tasks (older than 7 days)
     try:
-        from src.tasks.background import BackgroundTaskManager, TaskStatus
+        from src.tasks.background import BackgroundTaskManager
 
         task_mgr = BackgroundTaskManager.get_instance()
         # This would need a cleanup method in the task manager
@@ -418,7 +417,6 @@ async def cleanup_old_data():
 
     # Cleanup old NAV history (keep last 2 years)
     try:
-        from db import database_pg as db
 
         logger.info("[Scheduler] NAV history cleanup would be done here")
     except Exception as e:

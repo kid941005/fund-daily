@@ -2,7 +2,7 @@
 估值评分模块
 """
 
-from typing import Dict, Optional
+from typing import Dict
 
 
 def calculate_valuation_score(fund_detail: Dict, fund_data: Dict = None) -> Dict:

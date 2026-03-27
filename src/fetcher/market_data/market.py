@@ -5,12 +5,9 @@ Market Data Fetcher Functions
 import json
 import logging
 import urllib.parse
-from typing import Any, Dict, List, Optional
-
-import requests
+from typing import Dict, List
 
 from src.utils import cache_keys
-from src.utils.error_handling import handle_network_errors
 
 from ..cache import get_cache, set_cache
 from ..network import _make_request

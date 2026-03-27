@@ -2,11 +2,8 @@
 Cache Fetcher Functions
 """
 
-import json
 import logging
-from typing import Any, Dict, List, Optional
-
-import requests
+from typing import Any, Optional
 
 from src.cache.manager import get_cache_manager
 from src.config import get_config

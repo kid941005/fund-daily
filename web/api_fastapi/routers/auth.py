@@ -13,15 +13,12 @@ from pydantic import BaseModel, Field
 from db import database_pg as db
 from src.auth import hash_password as _hash_password
 from src.auth import verify_password as _verify_password
-from src.error import ErrorCode
 from src.jwt_auth import (
     create_access_token,
-    create_refresh_token,
     create_token_pair,
     verify_access_token,
     verify_refresh_token,
 )
-from web.api_fastapi.deps import AuthenticatedUser, get_current_user
 from web.api_fastapi.middleware.rate_limiter import check_rate_limit
 
 logger = logging.getLogger(__name__)

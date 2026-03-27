@@ -7,7 +7,7 @@ Integrates the background task system with the FastAPI application.
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from src.tasks.api import (

@@ -9,12 +9,11 @@ from datetime import datetime
 from typing import Optional
 
 import psutil
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from db import database_pg as db
-from src.advice import generate_advice
 from src.error import ErrorCode, create_error_response
 from src.fetcher import fetch_hot_sectors, fetch_market_news
 from src.jwt_auth import verify_access_token

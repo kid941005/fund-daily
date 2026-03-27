@@ -15,7 +15,7 @@ SCORE_CACHE_TTL = CACHE_TTL.get("score_data", 600)
 SCORE_CACHE_PREFIX = CACHE_PREFIXES.get("scoring", "fund_score:v2:")
 
 # ============== 评分权重配置 ==============
-from .weights import SCORE_WEIGHTS, get_all_weights, get_total_weight, get_weight, validate_weights
+from .weights import validate_weights
 
 
 def validate_weights_compat() -> Tuple[bool, str]:

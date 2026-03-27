@@ -2,7 +2,7 @@
 板块景气评分模块
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 def calculate_sector_score(

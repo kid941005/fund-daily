@@ -5,7 +5,7 @@
 
 import hashlib
 import secrets
-from typing import Optional, Tuple
+from typing import Optional
 
 # PBKDF2 迭代次数 (NIST SP 800-132 建议至少 310,000)
 PBKDF2_ITERATIONS = 310000

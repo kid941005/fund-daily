@@ -41,7 +41,6 @@ def get_commodity_sentiment() -> Dict:
             "details": {...}
         }
     """
-    from ..fetcher import fetch_commodity_prices
 
     prices = fetch_commodity_prices()
 

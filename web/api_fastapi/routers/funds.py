@@ -7,16 +7,14 @@ import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 
 from db import database_pg as db
 from src.advice import analyze_fund, generate_100_score, get_fund_detail_info
 from src.error import ErrorCode, create_error_response
-from src.fetcher import fetch_fund_data, fetch_hot_sectors, fetch_market_news
-from src.jwt_auth import create_token_pair, verify_access_token
-from web.api_fastapi.deps import AuthenticatedUser, get_current_user
+from src.fetcher import fetch_fund_data
+from src.jwt_auth import verify_access_token
 from web.api_fastapi.middleware.rate_limiter import check_rate_limit
 
 logger = logging.getLogger(__name__)

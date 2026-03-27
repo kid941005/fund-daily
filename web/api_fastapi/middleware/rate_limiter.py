@@ -6,11 +6,9 @@ Reuses logic from Flask's rate_limiter.py
 import logging
 import threading
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
-from fastapi import HTTPException, Request
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import JSONResponse
+from fastapi import Request
 
 import redis
 

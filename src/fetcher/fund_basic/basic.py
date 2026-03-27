@@ -4,9 +4,7 @@ Fund Basic Fetcher Functions
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
-
-import requests
+from typing import Dict, List
 
 from src.utils import cache_keys
 from src.utils.error_handling import handle_network_errors

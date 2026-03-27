@@ -5,10 +5,8 @@ PostgreSQL Database Module for Fund Daily
 """
 
 import logging
-import os
 from contextlib import contextmanager
 
-import psycopg2
 from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 

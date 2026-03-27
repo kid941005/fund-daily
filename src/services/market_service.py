@@ -9,14 +9,13 @@
 """
 
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from typing import Dict, List
 
 from src.analyzer import get_commodity_sentiment, get_market_sentiment
 from src.cache.manager import get_cache_manager
 from src.cache.redis_cache import get_redis_client
-from src.error import ErrorCode, MarketServiceError, cache_operation_failed, market_data_fetch_failed
 from src.fetcher import fetch_hot_sectors, fetch_market_news
 from src.services.metrics_service import get_metrics_service, timed_metric
 

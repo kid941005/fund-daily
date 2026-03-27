@@ -2,14 +2,11 @@
 Network Fetcher Functions
 """
 
-import json
 import logging
 import ssl
 import urllib.error
 import urllib.request
-from typing import Any, Dict, List, Optional
-
-import requests
+from typing import Optional
 
 from src.config import get_config
 
