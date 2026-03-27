@@ -102,13 +102,7 @@ fund-daily/
 │   ├── holdings.py         # 持仓 CRUD
 │   └── fund_ops.py         # 基金数据操作
 │
-├── scripts/                   # 脚本
-│   └── migrations/          # 数据库迁移
-│
-├── tests/                    # 单元测试 (289)
-│
-├── docs/                     # 文档
-│   └── reports/            # 审查报告
+├── tests/                    # 单元测试 (221)
 │
 ├── nginx/                    # Nginx 配置
 │
