@@ -210,7 +210,7 @@ class CacheConfig:
 class ServerConfig:
     """服务器配置"""
 
-    port: int = 5000
+    port: int = 5007
     debug: bool = False
     host: str = "0.0.0.0"
 
