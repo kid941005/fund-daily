@@ -20,7 +20,8 @@ from src.tasks.api import (
     task_to_response,
     tasks_to_list_response,
 )
-from src.tasks.background import BackgroundTaskManager, TaskStatus, TaskType
+from src.tasks.background import BackgroundTaskManager
+from src.tasks.models import TaskStatus, TaskType
 
 logger = logging.getLogger(__name__)
 
