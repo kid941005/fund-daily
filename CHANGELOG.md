@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.7.10] - 2026-03-27
+
+### Fixed
+- Docker Compose .env 缺失变量 (POSTGRES_PASSWORD, REDIS_PASSWORD, REDIS_DB, FUND_DAILY_DB_PASSWORD)
+- Docker Compose 默认端口 5000 → 5007（统一项目惯例）
+- .env.example / .env.dev 与最新代码同步
+- README 版本号 (2.7.3 → 2.7.10)、测试数 (289 → 268)、PostgreSQL 版本 (13+ → 15+) 一致性修复
+- README 端口描述不一致问题
+
+### Changed
+- FUND_DAILY_SECRET_KEY 使用 secrets.token_hex 生成真实随机值
+
+## [2.7.0] - 2026-03-26
+
+### Fixed
+- P0 严重问题修复 (6个): DB Schema 不一致、缺少 logger 导入、导入路径错误、方法重复定义、CORS 安全、Redis 降级缺陷
+- P1 高优先级修复 (12个): JWT 黑名单、分布式锁、缓存语义、分数截断、内存存储线程安全、锁粒度、PBKDF2 迭代、异步任务异常、前端轮询登录检查
+- P2/P3 问题修复 (23个): 双重校验、弱密码检查、CORS 配置优化等
+- Docker 配置完善: 环境变量统一、docker-compose.yml 修复、CI Linting
+
+### Changed
+- Docker 镜像多阶段构建优化
+- CI 自动格式化 (black/isort)
+
 ## [2.6.3] - 2026-03-25
 
 ### Added

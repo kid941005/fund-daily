@@ -72,11 +72,11 @@ services:
       - FUND_DAILY_REDIS_TTL=1800
       - FUND_DAILY_CACHE_DURATION=1800
       - FUND_DAILY_SERVER_HOST=0.0.0.0
-      - FUND_DAILY_SERVER_PORT=5000
+      - FUND_DAILY_SERVER_PORT=5007
     volumes:
       - ./dist:/app/dist:ro
     ports:
-      - "${FUND_DAILY_SERVER_PORT:-5000}:5000"
+      - "${FUND_DAILY_SERVER_PORT:-5007}:5007"
     depends_on:
       postgres:
         condition: service_healthy

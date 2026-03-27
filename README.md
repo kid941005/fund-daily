@@ -3,11 +3,11 @@
 > 每日基金分析系统 - 智能持仓管理与量化分析
 
 [![GitHub Stars](https://img.shields.io/github/stars/kid941005/fund-daily?style=flat)](https://github.com/kid941005/fund-daily)
-[![Version](https://img.shields.io/badge/version-2.7.3-blue)](https://github.com/kid941005/fund-daily/releases/tag/v2.7.3)
+[![Version](https://img.shields.io/badge/version-2.7.10-blue)](https://github.com/kid941005/fund-daily/releases/tag/v2.7.10)
 [![Python](https://img.shields.io/badge/python-3.11+-green)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.100+-blue)](https://fastapi.tiangolo.com/)
 [![Vue](https://img.shields.io/badge/vue-3.3-green)](https://vuejs.org/)
-[![Tests](https://img.shields.io/badge/tests-289-green)](https://github.com/kid941005/fund-daily)
+[![Tests](https://img.shields.io/badge/tests-268-green)](https://github.com/kid941005/fund-daily)
 [![Docker](https://img.shields.io/badge/docker-ready-blue)](https://www.docker.com/)
 
 ## ✨ 特性
@@ -122,7 +122,7 @@ fund-daily/
 ### 环境要求
 
 - Python 3.11+
-- PostgreSQL 13+
+- PostgreSQL 15+
 - Redis 6+
 - Node.js 18+ (前端开发)
 
@@ -171,7 +171,7 @@ docker-compose up -d
 
 # 或手动启动
 docker build -t fund-daily .
-docker run -p 5000:5000 --env-file .env fund-daily
+docker run -p 5007:5007 --env-file .env fund-daily
 ```
 
 ### 5. 默认登录凭据
@@ -185,7 +185,7 @@ docker run -p 5000:5000 --env-file .env fund-daily
 
 ### 5. 访问
 
-- Web 界面: http://localhost:5007
+- Web 界面: http://localhost:5007 (Docker 模式下)
 - API 文档: http://localhost:5007/docs
 
 ## 🐳 Docker 部署
@@ -297,7 +297,7 @@ pytest tests/test_scoring.py -v
 | 变量名 | 默认值 | 说明 |
 |--------|--------|------|
 | `FUND_DAILY_ENV` | development | 环境 (development/production) |
-| `FUND_DAILY_SERVER_PORT` | 5007 | 服务端口 |
+| `FUND_DAILY_SERVER_PORT` | 5007 | 服务端口（Docker 默认 5007，本地开发直接启动为 5007）|
 | `FUND_DAILY_DEBUG` | false | 调试模式 |
 
 ### 数据库配置
@@ -330,6 +330,13 @@ pytest tests/test_scoring.py -v
 | `FUND_DAILY_CORS_ORIGINS` | * | CORS 白名单（生产环境应配置） |
 
 ## 📝 更新日志
+
+### v2.7.10 (2026-03-27) - Docker 配置修复
+- ✅ 补全 .env 缺失变量 (POSTGRES_PASSWORD, REDIS_PASSWORD, REDIS_DB, FUND_DAILY_DB_PASSWORD)
+- ✅ 生成真实 FUND_DAILY_SECRET_KEY
+- ✅ 统一 docker-compose 默认端口 5007
+- ✅ 同步 .env / .env.example / .env.dev 一致性
+- ✅ README 版本号/测试数/端口一致性修复
 
 ### v2.7.x (2026-03-26) - 近期更新
 - ✅ 环境变量统一 (FUND_DAILY_ Prefix)
