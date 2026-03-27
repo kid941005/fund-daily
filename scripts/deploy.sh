@@ -189,7 +189,7 @@ server {
     
     # API代理
     location /api {
-        proxy_pass http://localhost:5000;
+        proxy_pass http://localhost:5007;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -243,9 +243,9 @@ echo -e "    sudo systemctl start $APP_NAME"
 echo -e "    sudo systemctl enable $APP_NAME"
 echo -e ""
 echo -e "${BLUE}🌐 访问应用${NC}"
-echo -e "  Web界面: http://localhost:5000"
-echo -e "  API文档: http://localhost:5000/api/docs"
-echo -e "  性能监控: http://localhost:5000/api/metrics/enhanced"
+echo -e "  Web界面: http://localhost:5007"
+echo -e "  API文档: http://localhost:5007/api/docs"
+echo -e "  性能监控: http://localhost:5007/api/metrics/enhanced"
 echo -e ""
 echo -e "${YELLOW}⚠️ 注意事项${NC}"
 echo -e "  1. 修改 $ENV_FILE 中的敏感配置"

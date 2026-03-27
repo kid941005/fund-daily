@@ -155,7 +155,7 @@ if pgrep -f "python.*app.py" > /dev/null; then
     
     # 测试健康端点
     if command -v curl >/dev/null 2>&1; then
-        HEALTH_RESPONSE=$(curl -s http://localhost:5000/api/health 2>/dev/null || echo "{}")
+        HEALTH_RESPONSE=$(curl -s http://localhost:5007/api/health 2>/dev/null || echo "{}")
         if echo "$HEALTH_RESPONSE" | grep -q "healthy"; then
             echo -e "  ✅ 健康检查通过"
         else
@@ -181,6 +181,6 @@ echo -e "运行以下命令启动服务:"
 echo -e "  cd /home/kid/fund-daily"
 echo -e "  python3 web/app.py"
 echo -e "\n访问以下地址:"
-echo -e "  🌐 Web界面: http://localhost:5000"
-echo -e "  📚 API文档: http://localhost:5000/api/docs"
-echo -e "  📊 性能监控: http://localhost:5000/api/metrics/enhanced"
+echo -e "  🌐 Web界面: http://localhost:5007"
+echo -e "  📚 API文档: http://localhost:5007/api/docs"
+echo -e "  📊 性能监控: http://localhost:5007/api/metrics/enhanced"

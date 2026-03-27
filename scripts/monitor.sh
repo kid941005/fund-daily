@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 
 # 配置
 APP_NAME="fund-daily"
-APP_URL="http://localhost:5000"
+APP_URL="http://localhost:5007"
 METRICS_URL="$APP_URL/api/metrics/enhanced"
 HEALTH_URL="$APP_URL/api/health"
 DOCS_URL="$APP_URL/api/docs"
