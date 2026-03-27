@@ -3,6 +3,21 @@
 解决配置分散问题，提供类型安全和验证
 """
 
+import os as _os
+
+def _get_version() -> str:
+    """从 VERSION 文件读取当前版本"""
+    try:
+        version_file = _os.path.join(_os.path.dirname(__file__), "..", "VERSION")
+        with open(version_file, "r") as f:
+            return f.read().strip()
+    except Exception:
+        return "2.7.10"
+
+
+_CURRENT_VERSION = _get_version()
+
+
 import logging
 import os
 from dataclasses import dataclass, field
@@ -204,7 +219,7 @@ class ServerConfig:
     def from_env(cls) -> "ServerConfig":
         """从环境变量创建配置"""
         return cls(
-            port=int(os.getenv("FUND_DAILY_SERVER_PORT", os.getenv("PORT", "5000"))),
+            port=int(os.getenv("FUND_DAILY_SERVER_PORT", os.getenv("PORT", "5007"))),
             debug=os.getenv("FLASK_DEBUG", "false").lower() == "true",
             host=os.getenv("FLASK_HOST", "0.0.0.0"),
         )
@@ -224,7 +239,7 @@ class AppConfig:
     """应用配置"""
 
     env: str = "development"  # development, production, testing
-    version: str = "2.6.0"
+    version: str = _CURRENT_VERSION
     default_funds: List[str] = field(default_factory=lambda: ["000001", "110022", "161725"])
     admin_token: Optional[str] = None  # API网关管理员令牌
     user_token: Optional[str] = None  # API网关用户令牌
@@ -241,7 +256,7 @@ class AppConfig:
         """从环境变量创建配置"""
         return cls(
             env=os.getenv("FUND_DAILY_ENV", "development"),
-            version=os.getenv("FUND_DAILY_VERSION", "2.6.0"),
+            version=os.getenv("FUND_DAILY_VERSION", _CURRENT_VERSION),
             default_funds=os.getenv("FUND_DAILY_DEFAULT_FUNDS", "000001,110022,161725").split(","),
             admin_token=os.getenv("FUND_DAILY_ADMIN_TOKEN"),
             user_token=os.getenv("FUND_DAILY_USER_TOKEN"),
@@ -302,16 +317,6 @@ class CorsConfig:
         # CorsConfig.validate() 由 ConfigManager 调用时，ConfigManager 已初始化 app.config
         # 如果需要单独验证，可以传入 env 参数
         return errors
-
-    def validate(self) -> List[str]:
-        """验证配置"""
-        errors = []
-
-        if not self.origins:
-            errors.append("CORS 来源不能为空")
-
-        return errors
-
 
 class ConfigManager:
     """统一配置管理器"""
