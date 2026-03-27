@@ -19,6 +19,7 @@ try:
         get_fund_info,
         get_fund_nav,
         get_fund_score,
+        save_fund_data,
     )
 
     HAS_DB = True
