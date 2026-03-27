@@ -105,12 +105,18 @@ class ScoreService:
             commodity_sentiment = "平稳"
 
         # 4. 提取评分所需字段
-        raw_data = fund_data.get("data", {}) if isinstance(fund_data, dict) else {}
-        fund_detail = raw_data.get("detail", {})
+        # fetch_fund_data 返回的字段在顶层（code/name/return_1y/estimated_change_percent 等）
+        # calculate_total_score 读取 fund_detail.return_1y / return_3m / return_6m / return_1m
+        fund_detail = {
+            "return_1y": fund_data.get("return_1y"),
+            "return_3m": fund_data.get("return_3m"),
+            "return_6m": fund_data.get("return_6m"),
+            "return_1m": fund_data.get("return_1m"),
+        }
         daily_change = float(
-            raw_data.get("gszzl")
-            or raw_data.get("estimated_change_percent")
-            or raw_data.get("estimated_change")
+            fund_data.get("estimated_change_percent")
+            or fund_data.get("estimated_change")
+            or fund_data.get("gszzl")
             or 0
         )
 
@@ -128,7 +134,7 @@ class ScoreService:
                 fund_type="stock",
                 fund_scale=10.0,
                 daily_change=daily_change,
-                fund_data=raw_data,
+                fund_data=fund_data,
                 fund_code=fund_code,
                 use_cache=use_cache,
             )
