@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 def _get_cache_manager():
     """延迟导入，避免循环依赖"""
     from src.cache.manager import get_cache_manager
+
     return get_cache_manager()
 
 
@@ -29,6 +30,7 @@ class ScoreService:
     def config(self):
         if self._config is None:
             from src.config import get_config
+
             self._config = get_config()
         return self._config
 
@@ -183,6 +185,7 @@ def test_score_service():
     except Exception as e:
         print(f"❌ 评分服务测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

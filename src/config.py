@@ -5,6 +5,7 @@
 
 import os as _os
 
+
 def _get_version() -> str:
     """从 VERSION 文件读取当前版本"""
     try:
@@ -317,6 +318,7 @@ class CorsConfig:
         # CorsConfig.validate() 由 ConfigManager 调用时，ConfigManager 已初始化 app.config
         # 如果需要单独验证，可以传入 env 参数
         return errors
+
 
 class ConfigManager:
     """统一配置管理器"""
