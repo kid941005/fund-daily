@@ -188,6 +188,35 @@ def fetch_fund_detail(fund_code: str) -> Dict:
             if date_match:
                 result["establish_date"] = date_match.group(1)
 
+            # 提取业绩数据（年化收益率，近1月/3月/6月/1年）
+            syl_1n_match = re.search(r'syl_1n\s*=\s*["\']([^"\']+)["\']', content)
+            if syl_1n_match and syl_1n_match.group(1):
+                try:
+                    result["return_1y"] = float(syl_1n_match.group(1))
+                except ValueError:
+                    pass
+
+            syl_6y_match = re.search(r'syl_6y\s*=\s*["\']([^"\']+)["\']', content)
+            if syl_6y_match and syl_6y_match.group(1):
+                try:
+                    result["return_6m"] = float(syl_6y_match.group(1))
+                except ValueError:
+                    pass
+
+            syl_3y_match = re.search(r'syl_3y\s*=\s*["\']([^"\']+)["\']', content)
+            if syl_3y_match and syl_3y_match.group(1):
+                try:
+                    result["return_3m"] = float(syl_3y_match.group(1))
+                except ValueError:
+                    pass
+
+            syl_1z_match = re.search(r'syl_1z\s*=\s*["\']([^"\']+)["\']', content)
+            if syl_1z_match and syl_1z_match.group(1):
+                try:
+                    result["return_1w"] = float(syl_1z_match.group(1))
+                except ValueError:
+                    pass
+
             # 缓存结果
             set_cache(cache_key, result)
             return result

@@ -107,7 +107,12 @@ class ScoreService:
         # 4. 提取评分所需字段
         raw_data = fund_data.get("data", {}) if isinstance(fund_data, dict) else {}
         fund_detail = raw_data.get("detail", {})
-        daily_change = float(raw_data.get("gszzl") or 0)
+        daily_change = float(
+            raw_data.get("gszzl")
+            or raw_data.get("estimated_change_percent")
+            or raw_data.get("estimated_change")
+            or 0
+        )
 
         # 5. 计算评分
         try:
