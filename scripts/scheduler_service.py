@@ -33,11 +33,11 @@ Environment Variables:
     SCHEDULER_INSTANCE_ID           # Override instance ID
 """
 
-import os
-import sys
-import signal
-import logging
 import argparse
+import logging
+import os
+import signal
+import sys
 from datetime import datetime
 
 # Add project root to path
@@ -114,6 +114,7 @@ class SchedulerService:
     def _setup_logging(self):
         """Configure logging from args"""
         import logging
+
         level = getattr(logging, self.args.log_level.upper(), logging.INFO)
         logging.getLogger().setLevel(level)
 
@@ -187,10 +188,7 @@ class SchedulerService:
 
             if self._manager and self._manager.is_running():
                 jobs = self._manager.get_jobs()
-                logger.debug(
-                    f"[{datetime.now().strftime('%H:%M')}] "
-                    f"Scheduler alive, {len(jobs)} jobs registered"
-                )
+                logger.debug(f"[{datetime.now().strftime('%H:%M')}] " f"Scheduler alive, {len(jobs)} jobs registered")
 
     def _handle_signal(self, signum, frame):
         """Handle shutdown signals"""

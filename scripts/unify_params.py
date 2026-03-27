@@ -9,159 +9,164 @@ import re
 from pathlib import Path
 from typing import List, Tuple
 
+
 def find_functions_with_code_param(project_root: str) -> List[Tuple[str, str, int]]:
     """查找使用code参数的函数"""
     project_path = Path(project_root)
     results = []
-    
+
     for py_file in project_path.rglob("*.py"):
         if "node_modules" in str(py_file) or "__pycache__" in str(py_file) or "test" in str(py_file):
             continue
-            
+
         rel_path = py_file.relative_to(project_path)
-        
+
         try:
-            with open(py_file, 'r', encoding='utf-8') as f:
+            with open(py_file, "r", encoding="utf-8") as f:
                 content = f.read()
-                
+
             # 查找函数定义中的code参数
-            func_pattern = r'def\s+(\w+)\s*\((.*?)\)\s*:'
+            func_pattern = r"def\s+(\w+)\s*\((.*?)\)\s*:"
             for match in re.finditer(func_pattern, content, re.DOTALL):
                 func_name = match.group(1)
                 params_str = match.group(2)
-                
+
                 # 检查参数中是否有code
-                if 'code' in params_str and 'fund_code' not in params_str:
+                if "code" in params_str and "fund_code" not in params_str:
                     # 获取函数开始行
-                    lines_before = content[:match.start()].count('\n')
+                    lines_before = content[: match.start()].count("\n")
                     results.append((str(rel_path), func_name, lines_before + 1))
-                    
+
         except Exception as e:
             print(f"检查文件 {py_file} 时出错: {e}")
-            
+
     return results
+
 
 def update_function_params(file_path: str, func_name: str, line_num: int):
     """更新函数参数命名"""
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
-    
+
     # 查找函数定义行
     func_line_idx = line_num - 1
-    
+
     if func_line_idx >= len(lines):
         print(f"错误: 行号 {line_num} 超出文件范围")
         return False
-    
+
     func_line = lines[func_line_idx]
-    
+
     # 使用正则表达式匹配函数定义
-    pattern = r'(def\s+' + re.escape(func_name) + r'\s*\()(.*?)(\)\s*:)'
+    pattern = r"(def\s+" + re.escape(func_name) + r"\s*\()(.*?)(\)\s*:)"
     match = re.search(pattern, func_line)
-    
+
     if not match:
         print(f"未找到函数 {func_name} 的定义")
         return False
-    
+
     # 获取参数部分
     params_str = match.group(2)
-    
+
     # 替换code为fund_code（但避免替换status_code等）
     # 只替换作为独立参数的code
-    new_params = re.sub(r'\bcode\b(?=\s*(?:,|$|:))', 'fund_code', params_str)
-    
+    new_params = re.sub(r"\bcode\b(?=\s*(?:,|$|:))", "fund_code", params_str)
+
     if new_params == params_str:
         print(f"未找到需要替换的code参数: {func_name}")
         return False
-    
+
     # 替换整行
-    new_line = func_line[:match.start(2)] + new_params + func_line[match.end(2):]
+    new_line = func_line[: match.start(2)] + new_params + func_line[match.end(2) :]
     lines[func_line_idx] = new_line
-    
+
     # 写回文件
-    with open(file_path, 'w', encoding='utf-8') as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         f.writelines(lines)
-    
+
     print(f"已更新: {file_path}:{line_num} - {func_name}")
     return True
 
+
 def update_function_calls(file_path: str):
     """更新函数调用中的参数名"""
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
-    
+
     # 查找函数调用中的code参数
     # 模式: 函数名(..., code=值, ...) 或 函数名(..., 值, ...) 但需要更复杂的分析
     # 这里先处理关键字参数的情况
-    
+
     # 替换关键字参数 code= 为 fund_code=
-    new_content = re.sub(r'\bcode\s*=', 'fund_code=', content)
-    
+    new_content = re.sub(r"\bcode\s*=", "fund_code=", content)
+
     if new_content != content:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(new_content)
         print(f"已更新函数调用: {file_path}")
         return True
-    
+
     return False
+
 
 def main():
     project_root = "/home/kid/fund-daily"
-    
+
     print("🔍 查找使用code参数的函数...")
     functions = find_functions_with_code_param(project_root)
-    
+
     print(f"\n📊 找到 {len(functions)} 个使用code参数的函数:")
     for file_path, func_name, line_num in functions[:20]:  # 只显示前20个
         print(f"  {file_path}:{line_num} - {func_name}")
-    
+
     if len(functions) > 20:
         print(f"  等 {len(functions) - 20} 个函数...")
-    
+
     # 询问用户是否继续
     response = input("\n是否继续更新这些函数？(y/n): ")
-    if response.lower() != 'y':
+    if response.lower() != "y":
         print("操作已取消")
         return
-    
+
     print("\n🔄 开始更新函数参数...")
     updated_count = 0
-    
+
     for file_path, func_name, line_num in functions:
         full_path = Path(project_root) / file_path
         if update_function_params(str(full_path), func_name, line_num):
             updated_count += 1
-    
+
     print(f"\n✅ 更新完成！共更新了 {updated_count} 个函数")
-    
+
     # 更新函数调用
     print("\n🔄 更新函数调用中的参数名...")
     call_updated = 0
-    
+
     # 只更新主要的业务文件
     main_dirs = ["src", "web", "db"]
     for main_dir in main_dirs:
         dir_path = Path(project_root) / main_dir
         if not dir_path.exists():
             continue
-            
+
         for py_file in dir_path.rglob("*.py"):
             if "node_modules" in str(py_file) or "__pycache__" in str(py_file):
                 continue
-                
+
             if update_function_calls(str(py_file)):
                 call_updated += 1
-    
+
     print(f"✅ 更新了 {call_updated} 个文件中的函数调用")
-    
+
     print("\n📝 总结:")
     print(f"  1. 更新了 {updated_count} 个函数的参数定义")
     print(f"  2. 更新了 {call_updated} 个文件中的函数调用")
     print(f"  3. 基金代码参数已统一为 fund_code")
-    
+
     # 创建命名规范文档
     print("\n📄 创建命名规范文档...")
     create_naming_standards(project_root)
+
 
 def create_naming_standards(project_root: str):
     """创建命名规范文档"""
@@ -286,11 +291,12 @@ def updateHoldings(uid: int, data: List) -> bool:  # 缩写不一致
 
     standards_file = Path(project_root) / "docs" / "CODING_STANDARDS.md"
     standards_file.parent.mkdir(exist_ok=True)
-    
-    with open(standards_file, 'w', encoding='utf-8') as f:
+
+    with open(standards_file, "w", encoding="utf-8") as f:
         f.write(standards_content)
-    
+
     print(f"✅ 命名规范文档已创建: {standards_file}")
+
 
 if __name__ == "__main__":
     main()

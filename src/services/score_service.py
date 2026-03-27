@@ -37,6 +37,7 @@ class ScoreService:
     @handle_errors(default_return={"total_score": 0.0, "grade": "N/A", "error": True}, log_level="error")
     def calculate_score(self, fund_code: str, use_cache: bool = True) -> Dict[str, Any]:
         """计算基金评分（兼容旧接口）"""
+        from src.analyzer import get_enhanced_market_sentiment
         from src.cache.manager import get_cache_manager
         from src.fetcher import (
             fetch_commodity_prices,
@@ -44,7 +45,6 @@ class ScoreService:
             fetch_hot_sectors,
             fetch_market_news,
         )
-        from src.analyzer import get_enhanced_market_sentiment
         from src.scoring.calculator import calculate_total_score
 
         cache = get_cache_manager()

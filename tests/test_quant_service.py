@@ -1,4 +1,5 @@
 import pytest
+
 from src.services.quant_service import QuantService, QuantServiceError
 
 
@@ -12,10 +13,12 @@ class DummyFundService:
 
 @pytest.fixture
 def fund_service_minimal():
-    return DummyFundService([
-        {"fund_code": "000001", "amount": 100.0, "score_100": {"total_score": 60}, "current_pct": 50},
-        {"fund_code": "000002", "amount": 50.0, "score_100": {"total_score": 40}, "current_pct": 40},
-    ])
+    return DummyFundService(
+        [
+            {"fund_code": "000001", "amount": 100.0, "score_100": {"total_score": 60}, "current_pct": 50},
+            {"fund_code": "000002", "amount": 50.0, "score_100": {"total_score": 40}, "current_pct": 40},
+        ]
+    )
 
 
 @pytest.fixture

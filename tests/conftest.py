@@ -4,11 +4,12 @@ Pytest fixtures and configuration
 
 import os
 import sys
-import pytest
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 
 @pytest.fixture
@@ -23,7 +24,7 @@ def mock_fund_data():
         "estimated_change": -0.69,
         "estimated_change_percent": -0.69,
         "update_time": "2026-03-12 15:00",
-        "source": "eastmoney"
+        "source": "eastmoney",
     }
 
 
@@ -39,7 +40,7 @@ def mock_fund_data_positive():
         "estimated_change": 1.25,
         "estimated_change_percent": 1.25,
         "update_time": "2026-03-12 15:00",
-        "source": "eastmoney"
+        "source": "eastmoney",
     }
 
 
@@ -75,6 +76,7 @@ def mock_news():
 def clear_cache():
     """Clear cache before each test"""
     from src.fetcher import clear_cache
+
     clear_cache()
     yield
     clear_cache()

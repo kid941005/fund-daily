@@ -7,10 +7,11 @@ Tests for APScheduler-based scheduled task management.
 import os
 import sys
 import time
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
 from threading import Thread
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Ensure project root is in path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -87,8 +88,8 @@ class TestJobMetadata:
         """Test that predefined jobs are registered"""
         from src.scheduler.jobs import (
             SCHEDULED_JOBS,
-            list_scheduled_jobs,
             get_scheduled_job,
+            list_scheduled_jobs,
         )
 
         assert len(SCHEDULED_JOBS) > 0, "Expected at least one predefined job"
@@ -176,8 +177,8 @@ class TestSchedulerManagerUnit:
 
     def test_manager_initialization(self):
         """Test manager initializes correctly"""
-        from src.scheduler.manager import SchedulerManager
         from src.scheduler.config import SchedulerConfig
+        from src.scheduler.manager import SchedulerManager
 
         SchedulerManager._instance = None
 
@@ -194,8 +195,8 @@ class TestSchedulerManagerUnit:
 
     def test_is_running_state(self):
         """Test is_running reflects scheduler state"""
-        from src.scheduler.manager import SchedulerManager
         from src.scheduler.config import SchedulerConfig
+        from src.scheduler.manager import SchedulerManager
 
         SchedulerManager._instance = None
 
@@ -283,8 +284,9 @@ class TestSchedulerAPI:
 
     def test_jobs_to_response(self):
         """Test jobs list to response conversion"""
-        from src.scheduler.api import jobs_to_response
         from datetime import datetime, timezone
+
+        from src.scheduler.api import jobs_to_response
 
         mock_job = MagicMock()
         mock_job.id = "test_job"
@@ -340,8 +342,9 @@ class TestSchedulerAPI:
 
     def test_scheduler_status_response(self):
         """Test SchedulerStatusResponse model"""
-        from src.scheduler.api import SchedulerStatusResponse
         from datetime import datetime, timezone
+
+        from src.scheduler.api import SchedulerStatusResponse
 
         now = datetime.now(timezone.utc)
         response = SchedulerStatusResponse(
@@ -393,6 +396,7 @@ class TestScheduledJobFunctions:
     def test_daily_nav_update_returns_dict(self):
         """Test daily_nav_update returns expected dict structure"""
         import asyncio
+
         from src.scheduler.jobs import daily_nav_update
 
         # Mock inside the function where it's imported (BackgroundTaskManager is imported locally)
@@ -410,6 +414,7 @@ class TestScheduledJobFunctions:
     def test_cache_warmup(self):
         """Test cache warmup job"""
         import asyncio
+
         from src.scheduler.jobs import cache_warmup
 
         with patch("src.tasks.background.BackgroundTaskManager") as mock_manager_class:
@@ -425,6 +430,7 @@ class TestScheduledJobFunctions:
     def test_market_open_reminder_not_trading_day(self):
         """Test market open reminder on non-trading day"""
         import asyncio
+
         from src.scheduler.jobs import market_open_reminder
 
         with patch("src.scheduler.jobs._is_trading_day", return_value=False):
@@ -435,6 +441,7 @@ class TestScheduledJobFunctions:
     def test_cleanup_old_data(self):
         """Test cleanup job"""
         import asyncio
+
         from src.scheduler.jobs import cleanup_old_data
 
         with patch("src.cache.manager.CacheManager") as mock_cache_mgr:
@@ -471,6 +478,7 @@ class TestFastAPIRouter:
 
 # ---- Integration Tests (require Redis) ----
 
+
 class TestSchedulerIntegration:
     """Integration tests that require Redis (skip if unavailable)"""
 
@@ -479,6 +487,7 @@ class TestSchedulerIntegration:
         """Check if Redis is available"""
         try:
             import redis
+
             r = redis.Redis(host="localhost", port=6379, db=1, socket_connect_timeout=2)
             r.ping()
             return True
@@ -498,8 +507,8 @@ class TestSchedulerIntegration:
         if not redis_available:
             pytest.skip("Redis not available")
 
-        from src.scheduler.manager import SchedulerManager
         from src.scheduler.config import SchedulerConfig
+        from src.scheduler.manager import SchedulerManager
 
         # Reset singleton
         SchedulerManager._instance = None

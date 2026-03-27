@@ -8,14 +8,15 @@ JWT Token 认证测试
 
 import os
 import sys
+
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 # 设置测试环境变量
-os.environ['FUND_DAILY_DB_HOST'] = 'localhost'
-os.environ['FUND_DAILY_DB_PASSWORD'] = '941005'
-os.environ['FUND_DAILY_JWT_SECRET'] = 'test-jwt-secret-for-testing-only'
+os.environ["FUND_DAILY_DB_HOST"] = "localhost"
+os.environ["FUND_DAILY_DB_PASSWORD"] = "941005"
+os.environ["FUND_DAILY_JWT_SECRET"] = "test-jwt-secret-for-testing-only"
 
 
 class TestJwtAuth:
@@ -73,16 +74,18 @@ class TestJwtAuth:
 
     def test_expired_token(self):
         """测试过期 token"""
+        from datetime import datetime, timedelta, timezone
+
         import jwt
-        from datetime import datetime, timezone, timedelta
-        from src.jwt_auth import verify_access_token
 
         # 临时覆盖 JWT_SECRET 以使用测试密钥
         import src.jwt_auth as jwt_auth_module
+        from src.jwt_auth import verify_access_token
+
         original_secret = jwt_auth_module.JWT_SECRET
 
         try:
-            jwt_auth_module.JWT_SECRET = 'test-jwt-secret-for-testing-only'
+            jwt_auth_module.JWT_SECRET = "test-jwt-secret-for-testing-only"
             # 使用与 jwt_auth 模块相同的密钥创建已过期的 token
             payload = {
                 "sub": "user_expired",
@@ -90,9 +93,9 @@ class TestJwtAuth:
                 "type": "access",
                 "iat": datetime.now(timezone.utc) - timedelta(hours=1),
                 "exp": datetime.now(timezone.utc) - timedelta(minutes=1),  # 已过期
-                "iss": "fund-daily"
+                "iss": "fund-daily",
             }
-            expired_token = jwt.encode(payload, 'test-jwt-secret-for-testing-only', algorithm="HS256")
+            expired_token = jwt.encode(payload, "test-jwt-secret-for-testing-only", algorithm="HS256")
 
             is_valid, _, error = verify_access_token(expired_token)
             assert is_valid is False

@@ -5,12 +5,12 @@ Quant Router
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from src.error import ErrorCode, create_error_response
 from src.jwt_auth import verify_access_token
 from src.services.quant_service import QuantServiceError, get_quant_service
-from src.error import ErrorCode, create_error_response
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +34,7 @@ def _auth_required(request: Request) -> str:
     if not user_id:
         raise HTTPException(
             status_code=401,
-            detail={
-                "success": False,
-                "error": "请先登录",
-                "need_login": True,
-                "error_code": "UNAUTHORIZED"
-            }
+            detail={"success": False, "error": "请先登录", "need_login": True, "error_code": "UNAUTHORIZED"},
         )
     return user_id
 
@@ -51,7 +46,7 @@ quant_service = get_quant_service()
 async def get_timing_signals(request: Request):
     """Get timing signals"""
     user_id = _auth_required(request)
-    
+
     try:
         data = quant_service.timing_signals()
         return {"success": True, "data": data}
@@ -61,13 +56,11 @@ async def get_timing_signals(request: Request):
             error_response, status_code = create_error_response(
                 ErrorCode.INVALID_INPUT if "validation" in str(e).lower() else ErrorCode.INTERNAL_ERROR,
                 message=str(e),
-                http_status=500
+                http_status=500,
             )
         else:
             error_response, status_code = create_error_response(
-                ErrorCode.INTERNAL_ERROR,
-                message="获取择时信号失败",
-                http_status=500
+                ErrorCode.INTERNAL_ERROR, message="获取择时信号失败", http_status=500
             )
         return JSONResponse(status_code=status_code, content=error_response)
 
@@ -76,7 +69,7 @@ async def get_timing_signals(request: Request):
 async def get_portfolio_optimize(request: Request):
     """Get portfolio optimization suggestions"""
     user_id = _auth_required(request)
-    
+
     try:
         data = quant_service.optimize_portfolio(user_id)
         return {"success": True, "data": data}
@@ -86,13 +79,11 @@ async def get_portfolio_optimize(request: Request):
             error_response, status_code = create_error_response(
                 ErrorCode.INVALID_INPUT if "validation" in str(e).lower() else ErrorCode.INTERNAL_ERROR,
                 message=str(e),
-                http_status=500
+                http_status=500,
             )
         else:
             error_response, status_code = create_error_response(
-                ErrorCode.INTERNAL_ERROR,
-                message="组合优化失败",
-                http_status=500
+                ErrorCode.INTERNAL_ERROR, message="组合优化失败", http_status=500
             )
         return JSONResponse(status_code=status_code, content=error_response)
 
@@ -101,7 +92,7 @@ async def get_portfolio_optimize(request: Request):
 async def get_rebalancing(request: Request):
     """Get rebalancing suggestions"""
     user_id = _auth_required(request)
-    
+
     try:
         data = quant_service.rebalancing(user_id)
         return {"success": True, "data": data}
@@ -111,13 +102,11 @@ async def get_rebalancing(request: Request):
             error_response, status_code = create_error_response(
                 ErrorCode.INVALID_INPUT if "validation" in str(e).lower() else ErrorCode.INTERNAL_ERROR,
                 message=str(e),
-                http_status=500
+                http_status=500,
             )
         else:
             error_response, status_code = create_error_response(
-                ErrorCode.INTERNAL_ERROR,
-                message="调仓建议生成失败",
-                http_status=500
+                ErrorCode.INTERNAL_ERROR, message="调仓建议生成失败", http_status=500
             )
         return JSONResponse(status_code=status_code, content=error_response)
 
@@ -126,7 +115,7 @@ async def get_rebalancing(request: Request):
 async def get_dynamic_weights(request: Request):
     """Get dynamic weights"""
     user_id = _auth_required(request)
-    
+
     try:
         data = quant_service.dynamic_weights()
         return {"success": True, "data": data}
@@ -136,12 +125,10 @@ async def get_dynamic_weights(request: Request):
             error_response, status_code = create_error_response(
                 ErrorCode.INVALID_INPUT if "validation" in str(e).lower() else ErrorCode.INTERNAL_ERROR,
                 message=str(e),
-                http_status=500
+                http_status=500,
             )
         else:
             error_response, status_code = create_error_response(
-                ErrorCode.INTERNAL_ERROR,
-                message="动态权重获取失败",
-                http_status=500
+                ErrorCode.INTERNAL_ERROR, message="动态权重获取失败", http_status=500
             )
         return JSONResponse(status_code=status_code, content=error_response)

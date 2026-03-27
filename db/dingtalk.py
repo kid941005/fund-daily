@@ -2,10 +2,11 @@
 钉钉通知模块
 """
 
-import os
 import json
-import requests
+import os
 from datetime import datetime
+
+import requests
 
 
 def send_dingtalk_message(webhook_url: str, message: str, msg_type: str = "text") -> bool:

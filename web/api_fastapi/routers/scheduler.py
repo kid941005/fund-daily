@@ -6,23 +6,23 @@ REST API endpoints for managing scheduled jobs.
 
 import logging
 from datetime import datetime, timezone
-
-from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
 
-from src.scheduler.manager import get_scheduler_manager
+from fastapi import APIRouter, HTTPException, Query
+
 from src.scheduler.api import (
+    JobPauseResponse,
+    JobRescheduleRequest,
+    JobRescheduleResponse,
+    JobResponse,
+    JobResumeResponse,
+    JobRunRequest,
+    JobRunResponse,
     SchedulerJobsListResponse,
     SchedulerStatusResponse,
-    JobResponse,
-    JobRunResponse,
-    JobPauseResponse,
-    JobResumeResponse,
-    JobRescheduleResponse,
-    JobRescheduleRequest,
-    JobRunRequest,
     jobs_to_response,
 )
+from src.scheduler.manager import get_scheduler_manager
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ async def get_scheduler_status():
         current_time=_get_current_time(),
         timezone="Asia/Shanghai",
         instance_id=manager.instance_id,
-        cluster_enabled=manager._config.cluster_enabled if hasattr(manager, '_config') else False,
+        cluster_enabled=manager._config.cluster_enabled if hasattr(manager, "_config") else False,
         pending_jobs=len(manager.get_jobs()),
     )
 
@@ -87,13 +87,9 @@ async def get_job(job_id: str):
     job = manager.get_job(job_id)
 
     if job is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Job not found: {job_id}"
-        )
+        raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
 
-    from src.scheduler.api import _extract_trigger_args
-    from src.scheduler.api import JobState
+    from src.scheduler.api import JobState, _extract_trigger_args
 
     jobs_list = [job]
     response = jobs_to_response(jobs_list, manager.is_running(), _get_current_time())
@@ -116,10 +112,7 @@ async def run_job(job_id: str, request: JobRunRequest = None):
 
     job = manager.get_job(job_id)
     if job is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Job not found: {job_id}"
-        )
+        raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
 
     result = manager.run_job_now(job_id)
 
@@ -137,7 +130,7 @@ async def run_job(job_id: str, request: JobRunRequest = None):
                 "job_id": job_id,
                 "success": False,
                 "message": result.get("message", "Job run failed"),
-            }
+            },
         )
 
 
@@ -154,24 +147,14 @@ async def pause_job(job_id: str):
 
     job = manager.get_job(job_id)
     if job is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Job not found: {job_id}"
-        )
+        raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
 
     success = manager.pause_job(job_id)
 
     if success:
-        return JobPauseResponse(
-            job_id=job_id,
-            success=True,
-            message=f"Job {job_id} paused"
-        )
+        return JobPauseResponse(job_id=job_id, success=True, message=f"Job {job_id} paused")
     else:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to pause job {job_id}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to pause job {job_id}")
 
 
 @router.post("/jobs/{job_id}/resume", response_model=JobResumeResponse)
@@ -185,24 +168,14 @@ async def resume_job(job_id: str):
 
     job = manager.get_job(job_id)
     if job is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Job not found: {job_id}"
-        )
+        raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
 
     success = manager.resume_job(job_id)
 
     if success:
-        return JobResumeResponse(
-            job_id=job_id,
-            success=True,
-            message=f"Job {job_id} resumed"
-        )
+        return JobResumeResponse(job_id=job_id, success=True, message=f"Job {job_id} resumed")
     else:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to resume job {job_id}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to resume job {job_id}")
 
 
 @router.post("/jobs/{job_id}/reschedule", response_model=JobRescheduleResponse)
@@ -218,18 +191,12 @@ async def reschedule_job(job_id: str, request: JobRescheduleRequest):
 
     job = manager.get_job(job_id)
     if job is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Job not found: {job_id}"
-        )
+        raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
 
     # Build trigger args dict
     trigger_args = _build_trigger_args(request)
     if not trigger_args:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid trigger parameters"
-        )
+        raise HTTPException(status_code=400, detail="Invalid trigger parameters")
 
     # Include trigger type
     trigger_type = request.trigger or "cron"
@@ -248,10 +215,7 @@ async def reschedule_job(job_id: str, request: JobRescheduleRequest):
             next_run_time=next_run,
         )
     else:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to reschedule job {job_id}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to reschedule job {job_id}")
 
 
 @router.delete("/jobs/{job_id}")
@@ -268,10 +232,7 @@ async def remove_job(job_id: str):
     if success:
         return {"success": True, "message": f"Job {job_id} removed"}
     else:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Job not found or could not be removed: {job_id}"
-        )
+        raise HTTPException(status_code=404, detail=f"Job not found or could not be removed: {job_id}")
 
 
 @router.get("/jobs/{job_id}/stats")
@@ -285,10 +246,7 @@ async def get_job_stats(job_id: str):
 
     job = manager.get_job(job_id)
     if job is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Job not found: {job_id}"
-        )
+        raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
 
     stats = manager.get_job_stats(job_id)
 
@@ -332,6 +290,7 @@ async def stop_scheduler():
 
 
 # ---- Helper ----
+
 
 def _build_trigger_args(request: JobRescheduleRequest) -> dict:
     """Build trigger args dict from request model"""

@@ -6,101 +6,104 @@
 import re
 from pathlib import Path
 
+
 def update_fetcher_cache_keys():
     """更新 fetcher 模块的缓存键"""
     file_path = Path("/home/kid/fund-daily/src/fetcher/__init__.py")
-    
-    with open(file_path, 'r', encoding='utf-8') as f:
+
+    with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
-    
+
     changes = []
-    
+
     # 替换基金数据缓存键
     pattern1 = r'cache_key = f"fund:{fund_code}"'
     if re.search(pattern1, content):
-        content = re.sub(pattern1, 'cache_key = cache_keys.fund_data(fund_code)', content)
+        content = re.sub(pattern1, "cache_key = cache_keys.fund_data(fund_code)", content)
         changes.append("基金数据缓存键")
-    
+
     # 替换基金详情缓存键
     pattern2 = r'cache_key = f"fund_detail:{fund_code}"'
     if re.search(pattern2, content):
-        content = re.sub(pattern2, 'cache_key = cache_keys.fund_detail(fund_code)', content)
+        content = re.sub(pattern2, "cache_key = cache_keys.fund_detail(fund_code)", content)
         changes.append("基金详情缓存键")
-    
+
     # 替换市场新闻缓存键
     pattern3 = r'cache_key = f"news:{limit}"'
     if re.search(pattern3, content):
-        content = re.sub(pattern3, 'cache_key = cache_keys.market_news(limit)', content)
+        content = re.sub(pattern3, "cache_key = cache_keys.market_news(limit)", content)
         changes.append("市场新闻缓存键")
-    
+
     # 替换热点板块缓存键
     pattern4 = r'cache_key = f"sectors:{limit}"'
     if re.search(pattern4, content):
-        content = re.sub(pattern4, 'cache_key = cache_keys.hot_sectors(limit)', content)
+        content = re.sub(pattern4, "cache_key = cache_keys.hot_sectors(limit)", content)
         changes.append("热点板块缓存键")
-    
+
     # 替换基金经理缓存键
     pattern5 = r'cache_key = f"fund_manager:{fund_code}"'
     if re.search(pattern5, content):
-        content = re.sub(pattern5, 'cache_key = cache_keys.fund_manager(fund_code)', content)
+        content = re.sub(pattern5, "cache_key = cache_keys.fund_manager(fund_code)", content)
         changes.append("基金经理缓存键")
-    
+
     if changes:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
         print(f"✅ 已更新 fetcher 模块: {', '.join(changes)}")
     else:
         print("⚠️  未找到需要更新的缓存键")
 
+
 def update_market_service_cache_keys():
     """更新 market_service 的缓存键"""
     file_path = Path("/home/kid/fund-daily/src/services/market_service.py")
-    
-    with open(file_path, 'r', encoding='utf-8') as f:
+
+    with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
-    
+
     # 添加导入
     if "from src.utils.cache_keys import cache_keys" not in content:
         # 在现有导入后添加
-        import_match = re.search(r'^from src\.services\.metrics_service import', content, re.MULTILINE)
+        import_match = re.search(r"^from src\.services\.metrics_service import", content, re.MULTILINE)
         if import_match:
             insert_pos = import_match.end()
-            content = content[:insert_pos] + '\nfrom src.utils.cache_keys import cache_keys' + content[insert_pos:]
-    
+            content = content[:insert_pos] + "\nfrom src.utils.cache_keys import cache_keys" + content[insert_pos:]
+
     changes = []
-    
+
     # 替换缓存键生成
     patterns = [
-        (r'cache_key = f"{self\.cache_prefix}sentiment"', 'cache_key = cache_keys.market_sentiment()'),
+        (r'cache_key = f"{self\.cache_prefix}sentiment"', "cache_key = cache_keys.market_sentiment()"),
         (r'cache_key = f"{self\.cache_prefix}commodity"', 'cache_key = cache_keys.custom("market", "commodity")'),
-        (r'cache_key = f"{self\.cache_prefix}hot_sectors"', 'cache_key = cache_keys.hot_sectors()'),
-        (r'cache_key = f"{self\.cache_prefix}market_news"', 'cache_key = cache_keys.market_news()'),
+        (r'cache_key = f"{self\.cache_prefix}hot_sectors"', "cache_key = cache_keys.hot_sectors()"),
+        (r'cache_key = f"{self\.cache_prefix}market_news"', "cache_key = cache_keys.market_news()"),
     ]
-    
+
     for pattern, replacement in patterns:
         if re.search(pattern, content):
             content = re.sub(pattern, replacement, content)
-            changes.append(pattern.split('=')[-1].strip().strip('"'))
-    
+            changes.append(pattern.split("=")[-1].strip().strip('"'))
+
     if changes:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
         print(f"✅ 已更新 market_service: {', '.join(changes)}")
     else:
         print("⚠️  未找到需要更新的缓存键")
 
+
 def main():
     print("🔧 开始更新缓存键生成...\n")
-    
+
     print("1. 更新 fetcher 模块...")
     update_fetcher_cache_keys()
-    
+
     print("\n2. 更新 market_service...")
     update_market_service_cache_keys()
-    
+
     print("\n📊 更新完成!")
     print("   缓存键生成已统一到 cache_keys 工具")
-    
+
     # 测试新的缓存键生成器
     print("\n🧪 测试缓存键生成器:")
     test_script = """
@@ -117,19 +120,18 @@ test_keys = [
 for key in test_keys:
     print(f"  {key}")
 """
-    
+
     import subprocess
-    result = subprocess.run(["python3", "-c", test_script], 
-                          cwd="/home/kid/fund-daily", 
-                          capture_output=True, text=True)
-    
+
+    result = subprocess.run(["python3", "-c", test_script], cwd="/home/kid/fund-daily", capture_output=True, text=True)
+
     if result.returncode == 0:
         print("✅ 缓存键生成器测试通过:")
         print(result.stdout)
     else:
         print("❌ 缓存键生成器测试失败:")
         print(result.stderr)
-    
+
     # 创建更新报告
     report = """# 缓存键生成统一优化报告
 
@@ -194,14 +196,15 @@ for key in test_keys:
 2. 添加缓存键验证和文档
 3. 实现缓存键版本管理
 """
-    
+
     report_file = Path("/home/kid/fund-daily/docs/CACHE_KEYS_OPTIMIZATION.md")
     report_file.parent.mkdir(exist_ok=True)
-    
-    with open(report_file, 'w', encoding='utf-8') as f:
+
+    with open(report_file, "w", encoding="utf-8") as f:
         f.write(report)
-    
+
     print(f"\n📄 优化报告已保存: {report_file}")
+
 
 if __name__ == "__main__":
     main()

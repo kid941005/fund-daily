@@ -2,9 +2,10 @@
 Tests for scoring module - 8 dimensions + calculator + weights + config + models
 """
 
-import pytest
-import sys
 import os
+import sys
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -311,7 +312,7 @@ class TestCalculatorGetGrade:
     def test_grade_boundaries(self):
         from src.scoring.utils import get_grade
 
-        # 新的等级标准：A+(95-100), A(90-94), B+(85-89), B(80-84), 
+        # 新的等级标准：A+(95-100), A(90-94), B+(85-89), B(80-84),
         # C+(75-79), C(70-74), D+(65-69), D(60-64), F(0-59)
         assert get_grade(0) == "F"
         assert get_grade(59) == "F"
@@ -338,15 +339,15 @@ class TestCalculatorTotalScore:
 
     def test_calculate_total_score_mocked(self, monkeypatch):
         # Patch dimension functions at their source modules (they're imported inside calculate_total_score)
-        import src.scoring.valuation as valuation_mod
+        import src.scoring.calculator as calc_mod
+        import src.scoring.liquidity as liq_mod
+        import src.scoring.manager as mgr_mod
+        import src.scoring.momentum as mom_mod
         import src.scoring.performance as perf_mod
         import src.scoring.risk_control as rc_mod
-        import src.scoring.momentum as mom_mod
-        import src.scoring.sentiment as sent_mod
         import src.scoring.sector as sector_mod
-        import src.scoring.manager as mgr_mod
-        import src.scoring.liquidity as liq_mod
-        import src.scoring.calculator as calc_mod
+        import src.scoring.sentiment as sent_mod
+        import src.scoring.valuation as valuation_mod
 
         monkeypatch.setattr(valuation_mod, "calculate_valuation_score", lambda *a, **kw: {"score": 20.0})
         monkeypatch.setattr(perf_mod, "calculate_performance_score", lambda *a, **kw: {"score": 15.0})
@@ -478,9 +479,7 @@ class TestApplyRankingBonus:
     def test_apply_ranking_bonus_single(self):
         from src.scoring.calculator import apply_ranking_bonus
 
-        funds = [
-            {"code": "000001", "score_100": {"total_score": 80, "grade": "B"}}
-        ]
+        funds = [{"code": "000001", "score_100": {"total_score": 80, "grade": "B"}}]
         result = apply_ranking_bonus(funds)
         assert result[0]["score_100"]["total_score"] == 80
 
@@ -488,14 +487,10 @@ class TestApplyRankingBonus:
         from src.scoring.calculator import apply_ranking_bonus
 
         funds = [
-            {"code": "000001", "daily_change": 5.0, "return_1m": 10.0,
-             "score_100": {"total_score": 80, "grade": "B"}},
-            {"code": "000002", "daily_change": 3.0, "return_1m": 8.0,
-             "score_100": {"total_score": 75, "grade": "B+"}},
-            {"code": "000003", "daily_change": 1.0, "return_1m": 5.0,
-             "score_100": {"total_score": 70, "grade": "B"}},
-            {"code": "000004", "daily_change": -1.0, "return_1m": 2.0,
-             "score_100": {"total_score": 65, "grade": "B"}},
+            {"code": "000001", "daily_change": 5.0, "return_1m": 10.0, "score_100": {"total_score": 80, "grade": "B"}},
+            {"code": "000002", "daily_change": 3.0, "return_1m": 8.0, "score_100": {"total_score": 75, "grade": "B+"}},
+            {"code": "000003", "daily_change": 1.0, "return_1m": 5.0, "score_100": {"total_score": 70, "grade": "B"}},
+            {"code": "000004", "daily_change": -1.0, "return_1m": 2.0, "score_100": {"total_score": 65, "grade": "B"}},
         ]
         result = apply_ranking_bonus(funds)
         # Top performer should get ranking bonus

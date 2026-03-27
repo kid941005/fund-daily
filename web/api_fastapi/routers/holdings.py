@@ -2,11 +2,11 @@
 Holdings Router
 """
 
-import re
 import logging
-from typing import Optional, List
+import re
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Request, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -37,12 +37,7 @@ def _auth_required(request: Request) -> str:
     if not user_id:
         raise HTTPException(
             status_code=401,
-            detail={
-                "success": False,
-                "error": "请先登录",
-                "need_login": True,
-                "error_code": "UNAUTHORIZED"
-            }
+            detail={"success": False, "error": "请先登录", "need_login": True, "error_code": "UNAUTHORIZED"},
         )
     return user_id
 
@@ -50,7 +45,7 @@ def _auth_required(request: Request) -> str:
 def _validate_fund_code(code: str) -> str:
     """Validate fund code format"""
     code = code.strip()
-    if not re.match(r'^\d{6}[A-Z]*$', code):
+    if not re.match(r"^\d{6}[A-Z]*$", code):
         raise ValueError("基金代码格式错误，应为6位数字加可选字母后缀")
     return code
 
@@ -79,23 +74,23 @@ class SingleHoldingRequest(BaseModel):
 async def get_holdings(
     request: Request,
     page: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(20, ge=1, le=100, description="每页数量")
+    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
 ):
     """Get user holdings with pagination"""
     # Check rate limit
     limit_result = check_rate_limit(request, "holdings")
     if not limit_result["allowed"]:
         raise HTTPException(status_code=429, detail={"success": False, "error": "请求过于频繁"})
-    
+
     user_id = _auth_required(request)
     holdings = db.get_holdings(user_id)
-    
+
     # 分页
     total = len(holdings)
     start = (page - 1) * page_size
     end = start + page_size
     paginated = holdings[start:end]
-    
+
     return {
         "success": True,
         "holdings": paginated,
@@ -103,8 +98,8 @@ async def get_holdings(
             "page": page,
             "page_size": page_size,
             "total": total,
-            "total_pages": (total + page_size - 1) // page_size
-        }
+            "total_pages": (total + page_size - 1) // page_size,
+        },
     }
 
 
@@ -115,11 +110,11 @@ async def manage_holdings(request: Request, data: BatchHoldingsRequest):
     limit_result = check_rate_limit(request, "holdings")
     if not limit_result["allowed"]:
         raise HTTPException(status_code=429, detail={"success": False, "error": "请求过于频繁"})
-    
+
     user_id = _auth_required(request)
-    
+
     action = data.action or "add"
-    
+
     if action == "delete":
         fund_code = data.funds[0].code if data.funds else None
         fund_code = fund_code or data.funds[0].fund_code if data.funds else None
@@ -129,31 +124,29 @@ async def manage_holdings(request: Request, data: BatchHoldingsRequest):
                 db.delete_holding(user_id, fund_code)
             except ValueError as e:
                 error_response, status_code = create_error_response(
-                    ErrorCode.INVALID_INPUT,
-                    f"输入验证失败: {str(e)}",
-                    http_status=400
+                    ErrorCode.INVALID_INPUT, f"输入验证失败: {str(e)}", http_status=400
                 )
                 return JSONResponse(status_code=status_code, content=error_response)
         return {"success": True, "message": "删除成功"}
-    
+
     # Add/update holdings
     for fund in data.funds:
         fund_code = fund.code or fund.fund_code
         amount = fund.amount
-        
+
         if not fund_code:
             continue
-        
+
         try:
             fund_code = _validate_fund_code(fund_code)
         except ValueError:
             continue
-        
+
         if amount <= 0:
             db.delete_holding(user_id, fund_code)
         else:
             db.save_holding(user_id, fund_code, amount)
-    
+
     return {"success": True, "message": "保存成功"}
 
 
@@ -164,28 +157,24 @@ async def delete_holding(request: Request, data: SingleHoldingRequest):
     limit_result = check_rate_limit(request, "holdings")
     if not limit_result["allowed"]:
         raise HTTPException(status_code=429, detail={"success": False, "error": "请求过于频繁"})
-    
+
     user_id = _auth_required(request)
-    
+
     fund_code = data.code or data.fund_code
     if not fund_code:
         error_response, status_code = create_error_response(
-            ErrorCode.INVALID_INPUT,
-            message="缺少基金代码",
-            http_status=400
+            ErrorCode.INVALID_INPUT, message="缺少基金代码", http_status=400
         )
         return JSONResponse(status_code=status_code, content=error_response)
-    
+
     try:
         fund_code = _validate_fund_code(fund_code)
     except ValueError as e:
         error_response, status_code = create_error_response(
-            ErrorCode.INVALID_INPUT,
-            message=f"输入验证失败: {str(e)}",
-            http_status=400
+            ErrorCode.INVALID_INPUT, message=f"输入验证失败: {str(e)}", http_status=400
         )
         return JSONResponse(status_code=status_code, content=error_response)
-    
+
     db.delete_holding(user_id, fund_code)
     return {"success": True, "message": "删除成功"}
 
@@ -197,17 +186,14 @@ async def clear_all_holdings(request: Request):
     limit_result = check_rate_limit(request, "holdings")
     if not limit_result["allowed"]:
         raise HTTPException(status_code=429, detail={"success": False, "error": "请求过于频繁"})
-    
+
     user_id = _auth_required(request)
-    
+
     # Check if user has holdings
     holdings = db.get_holdings(user_id)
     if not holdings:
-        return JSONResponse(
-            status_code=400,
-            content={"success": False, "error": "当前没有持仓可清空"}
-        )
-    
+        return JSONResponse(status_code=400, content={"success": False, "error": "当前没有持仓可清空"})
+
     db.clear_holdings(user_id)
     return {"success": True, "message": "已清空所有持仓"}
 
@@ -215,10 +201,7 @@ async def clear_all_holdings(request: Request):
 @router.post("/import")
 async def import_holdings(request: Request):
     """Import holdings (placeholder)"""
-    return JSONResponse(
-        status_code=400,
-        content={"success": False, "error": "No data provided"}
-    )
+    return JSONResponse(status_code=400, content={"success": False, "error": "No data provided"})
 
 
 @router.post("/import_screenshot")
@@ -226,58 +209,47 @@ async def import_screenshot(request: Request, file: UploadFile = File(...)):
     """OCR import holdings from screenshot"""
     import os
     import tempfile
-    
+
     user_id = _auth_required(request)
-    
+
     if not file.filename:
-        return JSONResponse(
-            status_code=400,
-            content={"success": False, "error": "文件名为空"}
-        )
-    
+        return JSONResponse(status_code=400, content={"success": False, "error": "文件名为空"})
+
     try:
         # Save to temp file
-        suffix = os.path.splitext(file.filename)[1] or '.jpg'
+        suffix = os.path.splitext(file.filename)[1] or ".jpg"
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
             tmp_path = tmp.name
             content = await file.read()
             tmp.write(content)
-        
+
         try:
             # OCR parse
             from src.ocr import parse_image_easyocr
+
             results = parse_image_easyocr(tmp_path)
             parsed = results.get("funds", [])
-            
+
             if not parsed:
-                return {
-                    "success": True,
-                    "parsed": [],
-                    "message": results.get("message", "未识别到基金数据")
-                }
-            
+                return {"success": True, "parsed": [], "message": results.get("message", "未识别到基金数据")}
+
             return {
                 "success": True,
                 "parsed": [
-                    {
-                        "code": r.get("code", ""),
-                        "amount": r.get("amount", 0),
-                        "name": r.get("name", "")
-                    }
-                    for r in parsed
-                ]
+                    {"code": r.get("code", ""), "amount": r.get("amount", 0), "name": r.get("name", "")} for r in parsed
+                ],
             }
         finally:
             # Clean up temp file
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)
-                
+
     except Exception as e:
         logger.error(f"OCR error: {e}")
         error_response, status_code = create_error_response(
             ErrorCode.INVALID_INPUT,
             message=f"OCR处理失败: {str(e)}",
             details={"operation": "ocr_import"},
-            http_status=500
+            http_status=500,
         )
         return JSONResponse(status_code=status_code, content=error_response)

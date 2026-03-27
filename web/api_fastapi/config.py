@@ -13,6 +13,7 @@ from src.config import get_config
 
 _config = None
 
+
 def get_fastapi_config():
     """Get FastAPI configuration from Flask's config manager"""
     global _config

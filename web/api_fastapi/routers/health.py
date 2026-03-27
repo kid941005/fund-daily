@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 
 from fastapi import APIRouter
+
 from db import database_pg as db
 from src.config import get_config
 
@@ -39,11 +40,12 @@ async def basic_health_check():
                 cursor.fetchone()
     except Exception as e:
         pg_status = str(e)
-    
+
     # Check Redis
     redis_status = "ok"
     try:
         from src.cache.redis_cache import get_redis_client
+
         client = get_redis_client()
         if client:
             client.ping()
@@ -51,9 +53,9 @@ async def basic_health_check():
             redis_status = "client not initialized"
     except Exception as e:
         redis_status = str(e)
-    
+
     config = get_config()
-    
+
     return {
         "status": "ok" if pg_status == "ok" and redis_status == "ok" else "degraded",
         "version": VERSION,
@@ -63,7 +65,7 @@ async def basic_health_check():
             "env": config.app.env,
             "database_type": "postgres",
             "cache_enabled": config.cache.duration > 0,
-        }
+        },
     }
 
 
@@ -71,10 +73,10 @@ async def basic_health_check():
 async def detailed_health_check():
     """Detailed health check with component status"""
     health = await basic_health_check()
-    
+
     # Add more detailed checks
     components = {}
-    
+
     # Check database pools
     try:
         pool = db.get_pool()
@@ -85,10 +87,11 @@ async def detailed_health_check():
         }
     except Exception as e:
         components["db_pool"] = {"status": "error", "error": str(e)}
-    
+
     # Check cache
     try:
         from src.cache.redis_cache import get_redis_client
+
         client = get_redis_client()
         if client:
             info = client.info()
@@ -99,8 +102,8 @@ async def detailed_health_check():
             }
     except Exception as e:
         components["redis"] = {"status": "error", "error": str(e)}
-    
+
     health["components"] = components
     health["timestamp"] = datetime.now().isoformat()
-    
+
     return health

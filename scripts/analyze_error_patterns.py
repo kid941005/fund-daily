@@ -4,45 +4,47 @@
 """
 
 import re
+from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Set
-from collections import Counter
+
 
 def analyze_error_patterns(file_path: Path) -> List[Dict]:
     """分析单个文件的错误处理模式"""
     patterns = []
-    
+
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
-        
+
         # 查找异常处理块
         # 模式: except Exception as e: ... return/raise ...
-        except_pattern = r'except\s+(?:Exception|\w+Error)\s+as\s+e:\s*\n(.*?)(?=\n\S|\Z)'
-        
+        except_pattern = r"except\s+(?:Exception|\w+Error)\s+as\s+e:\s*\n(.*?)(?=\n\S|\Z)"
+
         for match in re.finditer(except_pattern, content, re.DOTALL):
             exception_block = match.group(1)
-            lines = [line.strip() for line in exception_block.split('\n') if line.strip()]
-            
+            lines = [line.strip() for line in exception_block.split("\n") if line.strip()]
+
             if lines:
                 pattern = {
                     "file": str(file_path),
-                    "line": content[:match.start()].count('\n') + 1,
-                    "code": '\n'.join(lines[:3]),  # 只取前3行作为模式
-                    "full_block": exception_block[:200]  # 截断长块
+                    "line": content[: match.start()].count("\n") + 1,
+                    "code": "\n".join(lines[:3]),  # 只取前3行作为模式
+                    "full_block": exception_block[:200],  # 截断长块
                 }
                 patterns.append(pattern)
-        
+
         return patterns
-        
+
     except Exception as e:
         print(f"分析文件 {file_path} 时出错: {e}")
         return []
 
+
 def categorize_pattern(pattern_code: str) -> str:
     """对错误处理模式进行分类"""
     pattern_code_lower = pattern_code.lower()
-    
+
     # 分类规则
     if "logger.error" in pattern_code_lower and "jsonify" in pattern_code_lower:
         return "API错误响应"
@@ -59,38 +61,39 @@ def categorize_pattern(pattern_code: str) -> str:
     else:
         return "其他"
 
+
 def main():
     project_root = Path("/home/kid/fund-daily")
-    
+
     # 分析生产代码文件
     python_files = []
     for py_file in project_root.rglob("*.py"):
         if any(exclude in str(py_file) for exclude in ["node_modules", "__pycache__", "test", ".backup", "scripts"]):
             continue
         python_files.append(py_file)
-    
+
     print(f"🔍 分析 {len(python_files)} 个Python文件的错误处理模式...\n")
-    
+
     all_patterns = []
     for file_path in python_files[:50]:  # 限制分析前50个文件
         patterns = analyze_error_patterns(file_path)
         all_patterns.extend(patterns)
-    
+
     # 分类统计
     categories = Counter()
     pattern_counter = Counter()
-    
+
     for pattern in all_patterns:
         category = categorize_pattern(pattern["code"])
         categories[category] += 1
         pattern_counter[pattern["code"][:100]] += 1  # 使用前100字符作为模式标识
-    
+
     print("📊 错误处理模式分类统计:")
     for category, count in categories.most_common():
         print(f"  {category}: {count} 处")
-    
+
     print(f"\n📈 总共发现 {len(all_patterns)} 个异常处理块")
-    
+
     # 找出最常见的重复模式
     print(f"\n🔍 最常见的错误处理模式 (前5):")
     for pattern_text, count in pattern_counter.most_common(5):
@@ -103,37 +106,37 @@ def main():
                 if pattern["code"][:100] == pattern_text[:100]:
                     rel_path = Path(pattern["file"]).relative_to(project_root)
                     files.append(f"{rel_path}:{pattern['line']}")
-            
+
             if files:
                 print(f"  位置: {', '.join(files[:3])}")
                 if len(files) > 3:
                     print(f"    等 {len(files) - 3} 个更多位置")
-    
+
     # 生成优化建议
     print(f"\n💡 优化建议:")
-    
+
     if categories["API错误响应"] > 10:
         print("1. ✅ 已实施: 统一API错误响应 (create_error_response)")
-    
+
     if categories["日志+返回错误"] > 20:
         print("2. 🔄 建议: 创建通用错误处理装饰器")
         print("   例如: @handle_errors(default_return=None)")
-    
+
     if categories["仅记录日志"] > 30:
         print("3. 🔄 建议: 创建日志记录工具函数")
         print("   例如: log_and_continue(operation, exception)")
-    
+
     # 找出具体的重复代码示例
     print(f"\n📝 重复代码示例分析:")
-    
+
     # 查找相似的错误处理块
     similar_patterns = {}
     for pattern in all_patterns:
-        key = pattern["code"].replace('"', "'").replace(' ', '')[:50]
+        key = pattern["code"].replace('"', "'").replace(" ", "")[:50]
         if key not in similar_patterns:
             similar_patterns[key] = []
         similar_patterns[key].append(pattern)
-    
+
     # 显示重复最多的模式
     duplicate_count = 0
     for key, patterns in similar_patterns.items():
@@ -144,12 +147,12 @@ def main():
                 sample = patterns[0]
                 print(f"  示例代码: {sample['code'][:100]}...")
                 print(f"  示例位置: {Path(sample['file']).relative_to(project_root)}:{sample['line']}")
-    
+
     if duplicate_count > 0:
         print(f"\n🎯 发现 {duplicate_count} 个重复的错误处理模式，建议提取为工具函数")
     else:
         print("✅ 未发现明显的重复错误处理模式")
-    
+
     # 生成报告
     report = f"""# 错误处理模式分析报告
 
@@ -215,12 +218,12 @@ except Exception as e:
 **位置示例**: {Path(sample['file']).relative_to(project_root)}:{sample['line']}
 """
             duplicate_examples.append(example)
-    
+
     if duplicate_examples:
-        report += '\n'.join(duplicate_examples[:3])
+        report += "\n".join(duplicate_examples[:3])
     else:
         report += "\n未发现明显的重复模式。"
-    
+
     report += """
 
 ## 优化路线图
@@ -247,14 +250,15 @@ except Exception as e:
 4. **可测试性**: 更容易测试错误处理逻辑
 5. **监控能力**: 更好的错误统计和监控
 """
-    
+
     report_file = project_root / "docs" / "ERROR_PATTERN_ANALYSIS.md"
     report_file.parent.mkdir(exist_ok=True)
-    
-    with open(report_file, 'w', encoding='utf-8') as f:
+
+    with open(report_file, "w", encoding="utf-8") as f:
         f.write(report)
-    
+
     print(f"\n📄 分析报告已保存: {report_file}")
+
 
 if __name__ == "__main__":
     main()

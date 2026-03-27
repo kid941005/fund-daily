@@ -4,12 +4,14 @@ PostgreSQL Database Module for Fund Daily
 直接使用 psycopg2，避免 SQLite 兼容性问题
 """
 
-import os
 import logging
+import os
+from contextlib import contextmanager
+
 import psycopg2
 from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
-from contextlib import contextmanager
+
 from src.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -25,25 +27,21 @@ DB_PASSWORD = config.database.password
 # 连接池
 _connection_pool = None
 
+
 def get_pool():
     """获取连接池"""
     global _connection_pool
     if _connection_pool is None:
         try:
             _connection_pool = pool.ThreadedConnectionPool(
-                minconn=2,
-                maxconn=20,
-                host=DB_HOST,
-                port=DB_PORT,
-                database=DB_NAME,
-                user=DB_USER,
-                password=DB_PASSWORD
+                minconn=2, maxconn=20, host=DB_HOST, port=DB_PORT, database=DB_NAME, user=DB_USER, password=DB_PASSWORD
             )
             logger.info("PostgreSQL connection pool created")
         except Exception as e:
             logger.error(f"Failed to create connection pool: {e}")
             raise
     return _connection_pool
+
 
 @contextmanager
 def get_db():
@@ -54,6 +52,7 @@ def get_db():
     finally:
         get_pool().putconn(conn)
 
+
 @contextmanager
 def get_cursor(conn):
     """获取字典游标"""
@@ -62,6 +61,7 @@ def get_cursor(conn):
         yield cursor
     finally:
         cursor.close()
+
 
 def init_db():
     """初始化数据库表"""
@@ -77,7 +77,7 @@ def init_db():
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
+
             # Holdings 表
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS holdings (
@@ -93,7 +93,7 @@ def init_db():
                     UNIQUE(user_id, code)
                 )
             """)
-            
+
             # 基金基本信息表
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS funds (
@@ -112,7 +112,7 @@ def init_db():
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
+
             # 基金净值表
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS fund_nav (
@@ -131,7 +131,7 @@ def init_db():
                     FOREIGN KEY (fund_code) REFERENCES funds(fund_code) ON DELETE CASCADE
                 )
             """)
-            
+
             # 基金评分表
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS fund_scores (
@@ -150,7 +150,7 @@ def init_db():
                     FOREIGN KEY (fund_code) REFERENCES funds(fund_code) ON DELETE CASCADE
                 )
             """)
-            
+
             # Config 表
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS config (
@@ -159,7 +159,7 @@ def init_db():
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
+
             # History 表
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS history (
@@ -170,7 +170,7 @@ def init_db():
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
+
             # Watchlist 表
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS watchlist (
@@ -181,7 +181,7 @@ def init_db():
                     UNIQUE(user_id, code)
                 )
             """)
-            
+
             # 创建索引
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_holdings_user_id ON holdings(user_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_holdings_code ON holdings(code)")
@@ -220,6 +220,6 @@ def init_db():
                 CREATE INDEX IF NOT EXISTS idx_fund_scores_code_date
                 ON fund_scores(fund_code, score_date DESC)
             """)
-            
+
             conn.commit()
             logger.info("Database tables initialized")

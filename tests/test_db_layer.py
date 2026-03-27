@@ -3,20 +3,21 @@ Tests for db/users.py and db/holdings.py
 Mock database connection using monkeypatch
 """
 
-import pytest
-import sys
 import os
+import sys
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import db.holdings as db_holdings
 import db.pool as db_pool
 import db.users as db_users
-import db.holdings as db_holdings
-
 
 # ---------------------------------------------------------------------------
 # Dummy DB objects
 # ---------------------------------------------------------------------------
+
 
 class DummyCursor:
     def __init__(self, results=None):
@@ -70,6 +71,7 @@ class DummyConn:
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def mock_db(monkeypatch):
     """
@@ -107,6 +109,7 @@ def mock_db(monkeypatch):
 # ---------------------------------------------------------------------------
 # db/users.py tests
 # ---------------------------------------------------------------------------
+
 
 class TestGetUserByUsername:
     def test_returns_user(self, mock_db):
@@ -205,6 +208,7 @@ class TestUpdateUserPassword:
 # ---------------------------------------------------------------------------
 # db/holdings.py tests
 # ---------------------------------------------------------------------------
+
 
 class TestGetHoldings:
     def test_get_holdings_returns_list(self, mock_db):
@@ -341,5 +345,6 @@ class TestConfig:
         assert "INSERT INTO config" in conn._cursor._last_sql
         assert conn._cursor._last_params[0] == "u1"
         import json
+
         assert json.loads(conn._cursor._last_params[1]) == config
         assert conn._committed is True

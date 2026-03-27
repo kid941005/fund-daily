@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 from typing import Dict, List, Set
 
+
 def analyze_file(file_path: Path) -> Dict:
     """分析单个文件的配置使用情况"""
     results = {
@@ -15,59 +16,60 @@ def analyze_file(file_path: Path) -> Dict:
         "os_getenv_calls": [],
         "os_environ_access": [],
         "config_imports": [],
-        "get_config_calls": []
+        "get_config_calls": [],
     }
-    
+
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
-        
+
         # 查找 os.getenv() 调用
-        getenv_pattern = r'os\.getenv\(([^)]+)\)'
+        getenv_pattern = r"os\.getenv\(([^)]+)\)"
         for match in re.finditer(getenv_pattern, content):
             args = match.group(1)
             # 提取参数
-            params = re.split(r',\s*', args)
+            params = re.split(r",\s*", args)
             env_var = params[0].strip("'\"")
             default_value = params[1] if len(params) > 1 else None
-            
-            results["os_getenv_calls"].append({
-                "line": content[:match.start()].count('\n') + 1,
-                "env_var": env_var,
-                "default": default_value,
-                "full_match": match.group(0)
-            })
-        
+
+            results["os_getenv_calls"].append(
+                {
+                    "line": content[: match.start()].count("\n") + 1,
+                    "env_var": env_var,
+                    "default": default_value,
+                    "full_match": match.group(0),
+                }
+            )
+
         # 查找 os.environ 访问
-        environ_pattern = r'os\.environ\[([^\]]+)\]'
+        environ_pattern = r"os\.environ\[([^\]]+)\]"
         for match in re.finditer(environ_pattern, content):
             key = match.group(1).strip("'\"")
-            results["os_environ_access"].append({
-                "line": content[:match.start()].count('\n') + 1,
-                "key": key,
-                "full_match": match.group(0)
-            })
-        
+            results["os_environ_access"].append(
+                {"line": content[: match.start()].count("\n") + 1, "key": key, "full_match": match.group(0)}
+            )
+
         # 查找配置导入
         if "from src.config import" in content or "import src.config" in content:
-            config_import_match = re.search(r'(from src.config import|import src.config)', content)
+            config_import_match = re.search(r"(from src.config import|import src.config)", content)
             if config_import_match:
                 results["config_imports"].append(config_import_match.group(0))
-        
+
         # 查找 get_config() 调用
-        get_config_pattern = r'get_config\(\)'
+        get_config_pattern = r"get_config\(\)"
         get_config_matches = list(re.finditer(get_config_pattern, content))
         results["get_config_calls_count"] = len(get_config_matches)
-        
+
         return results
-        
+
     except Exception as e:
         print(f"分析文件 {file_path} 时出错: {e}")
         return results
 
+
 def main():
     project_root = Path("/home/kid/fund-daily")
-    
+
     # 需要分析的文件
     files_to_analyze = [
         project_root / "src" / "jwt_auth.py",
@@ -76,29 +78,29 @@ def main():
         project_root / "db" / "pool.py",
         project_root / "db" / "dingtalk.py",
     ]
-    
+
     print("🔍 分析配置使用情况...\n")
-    
+
     all_results = []
     total_getenv_calls = 0
     total_environ_access = 0
-    
+
     for file_path in files_to_analyze:
         if file_path.exists():
             results = analyze_file(file_path)
             all_results.append(results)
-            
+
             getenv_count = len(results["os_getenv_calls"])
             environ_count = len(results["os_environ_access"])
             total_getenv_calls += getenv_count
             total_environ_access += environ_count
-            
+
             if getenv_count > 0 or environ_count > 0:
                 print(f"📄 {file_path.relative_to(project_root)}")
                 print(f"   os.getenv() 调用: {getenv_count}")
                 print(f"   os.environ 访问: {environ_count}")
                 print(f"   get_config() 调用: {results.get('get_config_calls_count', 0)}")
-                
+
                 if getenv_count > 0:
                     print("   具体调用:")
                     for call in results["os_getenv_calls"][:3]:  # 只显示前3个
@@ -106,7 +108,7 @@ def main():
                     if getenv_count > 3:
                         print(f"     ... 等 {getenv_count - 3} 个更多调用")
                 print()
-    
+
     # 生成报告
     report = f"""# 配置使用分析报告
 
@@ -229,19 +231,20 @@ def main():
 2. 配置热重载支持
 3. 配置监控集成
 """
-    
+
     report_file = project_root / "docs" / "CONFIG_ANALYSIS_REPORT.md"
     report_file.parent.mkdir(exist_ok=True)
-    
-    with open(report_file, 'w', encoding='utf-8') as f:
+
+    with open(report_file, "w", encoding="utf-8") as f:
         f.write(report)
-    
+
     print(f"\n📊 分析完成!")
     print(f"   发现 {total_getenv_calls} 个 os.getenv() 调用")
     print(f"   发现 {total_environ_access} 个 os.environ 访问")
     print(f"   报告已保存: {report_file}")
-    
+
     return all_results
+
 
 if __name__ == "__main__":
     main()
