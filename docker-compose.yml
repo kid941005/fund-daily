@@ -1,5 +1,5 @@
 # Fund Daily - Docker Compose 配置
-# 版本: 2.7.7
+# 版本: 2.7.10
 # 使用: docker-compose up -d
 
 services:
