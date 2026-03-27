@@ -4,6 +4,57 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.7.17] - 2026-03-27
+
+### Changed
+- 代码质量全面提升：Lint 清理 E402/F401/F541/F821 共 50+ 错误
+- Pydantic 迁移：`class Config` → `ConfigDict(use_enum_values=True)`
+- datetime: `utcnow()` → `timezone.utc` 修复弃用警告
+- 全项目 `isort + black` 格式化
+
+### Fixed
+- advice/generate.py: 提取辅助函数，复杂度 40→15
+- services/fund_service.py: 提取辅助函数，复杂度 27→15
+- tasks/models.py: 新建，分离 TaskType/TaskStatus/TaskInfo/TaskContext
+- scheduler/jobs.py: 顶层导入 TaskType，消除循环依赖
+- Dockerfile: 端口 5000→5007，补充缺失环境变量
+
+## [2.7.16] - 2026-03-27
+
+### Changed
+- 架构清理：删除 6 个死代码文件（-621 行）
+- 删除未使用的异步数据库层、未使用的 Flask 备份文件
+- fetcher 文件重命名消除同名混淆
+
+### Fixed
+- db.init_db() 懒加载（数据库不可用时降级启动）
+- fetch_fund_data 缓存命中后不再发无谓 API 请求
+
+## [2.7.15] - 2026-03-27
+
+### Changed
+- 修复 Release 创建权限
+
+## [2.7.14] - 2026-03-27
+
+### Fixed
+- 修复 dist 路径，Vite 输出到 ./dist
+
+## [2.7.13] - 2026-03-27
+
+### Fixed
+- 修复 .dockerignore 规则
+
+## [2.7.12] - 2026-03-27
+
+### Changed
+- 从 .dockerignore 移除 web/vue3/dist
+
+## [2.7.11] - 2026-03-27
+
+### Changed
+- 简化 Dockerfile，使用预构建前端
+
 ## [2.7.10] - 2026-03-27
 
 ### Fixed

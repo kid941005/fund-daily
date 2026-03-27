@@ -39,6 +39,7 @@ RUN ln -sf /app/dist /app/web/dist
 
 # 环境变量
 ENV PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
     FUND_DAILY_DB_TYPE=postgres \
     FUND_DAILY_DB_HOST=postgres \
     FUND_DAILY_DB_PORT=5432 \
@@ -49,13 +50,14 @@ ENV PYTHONUNBUFFERED=1 \
     FUND_DAILY_REDIS_DB=0 \
     FUND_DAILY_REDIS_TTL=1800 \
     FUND_DAILY_CACHE_DURATION=1800 \
+    FUND_DAILY_SERVER_PORT=5007 \
     FUND_DAILY_CORS_ORIGINS=*
 
-EXPOSE 5000
+EXPOSE 5007
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5000/ || exit 1
+    CMD curl -f http://localhost:5007/health || exit 1
 
 # 启动命令
-CMD ["uvicorn", "web.api_fastapi.main:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["uvicorn", "web.api_fastapi.main:app", "--host", "0.0.0.0", "--port", "5007"]

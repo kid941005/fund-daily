@@ -3,11 +3,11 @@
 > 每日基金分析系统 - 智能持仓管理与量化分析
 
 [![GitHub Stars](https://img.shields.io/github/stars/kid941005/fund-daily?style=flat)](https://github.com/kid941005/fund-daily)
-[![Version](https://img.shields.io/badge/version-2.7.10-blue)](https://github.com/kid941005/fund-daily/releases/tag/v2.7.10)
+[![Version](https://img.shields.io/badge/version-2.7.17-blue)](https://github.com/kid941005/fund-daily/releases/tag/v2.7.17)
 [![Python](https://img.shields.io/badge/python-3.11+-green)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.100+-blue)](https://fastapi.tiangolo.com/)
 [![Vue](https://img.shields.io/badge/vue-3.3-green)](https://vuejs.org/)
-[![Tests](https://img.shields.io/badge/tests-268-green)](https://github.com/kid941005/fund-daily)
+[![Tests](https://img.shields.io/badge/tests-221-green)](https://github.com/kid941005/fund-daily)
 [![Docker](https://img.shields.io/badge/docker-ready-blue)](https://www.docker.com/)
 
 ## ✨ 特性
@@ -21,7 +21,7 @@
 - 🔐 **JWT 认证** - 安全的 API 认证系统
 - 🗄️ **多级缓存** - Redis + 内存缓存，自动失效
 - 🐳 **Docker 支持** - 一键部署
-- ✅ **完整测试** - 289 个单元测试用例
+- ✅ **完整测试** - 268 个单元测试用例
 - 🔄 **CI/CD** - GitHub Actions 自动测试 + Docker 构建
 
 ## 🏗️ 技术架构

@@ -11,8 +11,6 @@ __pycache__
 *.so
 *.egg
 *.egg-info
-# dist/ # 不能忽略！web/vue3/dist/ 需要被 Docker 访问
-# build/
 
 # Virtual environments
 venv/
@@ -47,9 +45,6 @@ Thumbs.db
 # Documentation build
 docs/_build/
 
-# CI/CD workflows (保留 workflow 文件)
-.github/workflows/
-
 # Temporary files
 *.tmp
 *.bak
@@ -59,18 +54,16 @@ docs/_build/
 # Project-specific
 backup/
 node_modules/
-.web/
 .env
 .env.local
-*.log
 
 # Vue.js
 web/vue3/node_modules/
-# web/vue3/dist/  # 需要！由 GitHub Actions 构建
 web/vue3/.vite/
 web/vue3/coverage/
+web/vue3/dist/
 
-# Editor configs (optional to include in image)
+# Editor configs
 .editorconfig
 .eslintrc*
 .prettierrc*
