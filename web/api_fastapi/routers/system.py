@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from db import database_pg as db
+from src.config import get_config
 from src.error import ErrorCode, create_error_response
 from src.fetcher import fetch_hot_sectors, fetch_market_news
 from src.jwt_auth import verify_access_token
@@ -124,7 +125,7 @@ async def health_check():
             "status": "healthy",
             "database": db_status,
             "redis": redis_status,
-            "version": "2.6.0",
+            "version": get_config().app.version,
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
