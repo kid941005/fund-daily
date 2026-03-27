@@ -12,8 +12,9 @@ from ..fetcher import fetch_fund_data, fetch_fund_detail
 logger = logging.getLogger(__name__)
 
 # ============== 配置常量 ==============
-ADVICE_SCORE_THRESHOLDS = {"BUY": 60, "HOLD": 40, "SELL": 20}
-ADVICE_ALLOCATION_RATIOS = {
+# 组合投资建议配置（区别于 scoring 模块的 SCORE_WEIGHTS）
+PORTFOLIO_SCORE_THRESHOLDS = {"BUY": 60, "HOLD": 40, "SELL": 20}
+PORTFOLIO_ALLOCATION_RATIOS = {
     "HIGH": 0.375,
     "MEDIUM_HIGH": 0.275,
     "MEDIUM": 0.225,
@@ -22,7 +23,7 @@ ADVICE_ALLOCATION_RATIOS = {
     "MINIMAL": 0.075,
     "NONE": 0,
 }
-ADVICE_WEIGHT_CONFIG = {
+PORTFOLIO_WEIGHT_CONFIG = {
     "DAILY_CHANGE": 15,
     "M1_CHANGE": 10,
     "M3_CHANGE": 8,
@@ -99,9 +100,9 @@ def _compute_technical_score(up_count: int, down_count: int) -> int:
     """计算技术面得分"""
     score = 0
     if up_count > down_count:
-        score += ADVICE_WEIGHT_CONFIG["MOMENTUM"]
+        score += PORTFOLIO_WEIGHT_CONFIG["MOMENTUM"]
     elif down_count > up_count:
-        score -= ADVICE_WEIGHT_CONFIG["MOMENTUM"]
+        score -= PORTFOLIO_WEIGHT_CONFIG["MOMENTUM"]
     score += (up_count - down_count) * 3
     return max(min(score, 30), -30)
 
@@ -204,18 +205,18 @@ def generate_advice(funds: List[Dict]) -> Dict:
 
     # 热点行业加分
     if hot_sectors:
-        score += ADVICE_WEIGHT_CONFIG["HOT_SECTOR"]
+        score += PORTFOLIO_WEIGHT_CONFIG["HOT_SECTOR"]
 
     # 夏普比率
     if avg_sharpe > 1:
-        score += ADVICE_WEIGHT_CONFIG["SHARPE_HIGH"]
+        score += PORTFOLIO_WEIGHT_CONFIG["SHARPE_HIGH"]
     elif avg_sharpe > 0:
         score += 10
     else:
-        score += ADVICE_WEIGHT_CONFIG["SHARPE_LOW"]
+        score += PORTFOLIO_WEIGHT_CONFIG["SHARPE_LOW"]
 
     # 风险评分
-    score += avg_risk * ADVICE_WEIGHT_CONFIG["DRAWDOWN"] / 2
+    score += avg_risk * PORTFOLIO_WEIGHT_CONFIG["DRAWDOWN"] / 2
 
     # 股票型基金权重
     if fund_types.get("股票", 0) > fund_types.get("债券", 0):
@@ -303,7 +304,7 @@ __all__ = [
     "generate_advice",
     "generate_daily_report",
     "format_report_for_share",
-    "ADVICE_SCORE_THRESHOLDS",
-    "ADVICE_ALLOCATION_RATIOS",
-    "ADVICE_WEIGHT_CONFIG",
+    "PORTFOLIO_SCORE_THRESHOLDS",
+    "PORTFOLIO_ALLOCATION_RATIOS",
+    "PORTFOLIO_WEIGHT_CONFIG",
 ]

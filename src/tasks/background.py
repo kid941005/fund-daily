@@ -1,11 +1,5 @@
 """
 Background Task Core Module
-
-Provides:
-- BackgroundTaskManager: Singleton task manager
-- TaskInfo: Pydantic model for task information
-- TaskStatus: Task status enum
-- TaskType: Task type enum
 """
 
 import json
@@ -13,53 +7,12 @@ import logging
 import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import field
-from datetime import datetime
-from enum import Enum
+from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from .models import TaskContext, TaskInfo, TaskStatus, TaskType
 
 logger = logging.getLogger(__name__)
-
-
-class TaskType(str, Enum):
-    """Task type enumeration"""
-
-    FUND_FETCH = "fund_fetch"  # 基金数据抓取
-    NAV_UPDATE = "nav_update"  # 净值更新
-    SCORE_CALC = "score_calculation"  # 评分计算
-    CACHE_WARM = "cache_warmup"  # 缓存预热
-    BATCH_IMPORT = "batch_import"  # 批量导入
-
-
-class TaskStatus(str, Enum):
-    """Task status enumeration"""
-
-    PENDING = "pending"  # 等待执行
-    RUNNING = "running"  # 执行中
-    COMPLETED = "completed"  # 已完成
-    FAILED = "failed"  # 失败
-    CANCELLED = "cancelled"  # 已取消
-
-
-class TaskInfo(BaseModel):
-    """Task information model"""
-
-    task_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    task_type: TaskType
-    status: TaskStatus = TaskStatus.PENDING
-    progress: float = 0.0  # 0.0 to 1.0
-    message: str = ""
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    result: Optional[Any] = None
-    error: Optional[str] = None
-    params: Dict[str, Any] = field(default_factory=dict)
-
-    class Config:
-        use_enum_values = True
 
 
 class BackgroundTaskManager:
@@ -253,7 +206,7 @@ class BackgroundTaskManager:
         if handler is None:
             task_info.status = TaskStatus.FAILED
             task_info.error = f"Unknown task type: {task_type}"
-            task_info.completed_at = datetime.utcnow()
+            task_info.completed_at = datetime.now(timezone.utc)
             self._save_task(task_info)
             return task_id
 
@@ -277,7 +230,7 @@ class BackgroundTaskManager:
 
         try:
             task_info.status = TaskStatus.RUNNING
-            task_info.started_at = datetime.utcnow()
+            task_info.started_at = datetime.now(timezone.utc)
             self._save_task(task_info)
 
             logger.info(f"🚀 Task started: {task_id}")
@@ -307,12 +260,12 @@ class BackgroundTaskManager:
                 task_info.result = result
                 logger.info(f"✅ Task completed: {task_id}")
 
-            task_info.completed_at = datetime.utcnow()
+            task_info.completed_at = datetime.now(timezone.utc)
 
         except Exception as e:
             task_info.status = TaskStatus.FAILED
             task_info.error = str(e)
-            task_info.completed_at = datetime.utcnow()
+            task_info.completed_at = datetime.now(timezone.utc)
             logger.error(f"❌ Task failed: {task_id} - {e}")
 
         finally:
@@ -388,7 +341,7 @@ class BackgroundTaskManager:
         task_info = self._load_task(task_id)
         if task_info and task_info.status == TaskStatus.PENDING:
             task_info.status = TaskStatus.CANCELLED
-            task_info.completed_at = datetime.utcnow()
+            task_info.completed_at = datetime.now(timezone.utc)
             self._save_task(task_info)
             return True
 
@@ -421,45 +374,6 @@ class BackgroundTaskManager:
         }
 
         return stats
-
-
-class TaskContext:
-    """
-    Task execution context
-
-    Passed to task handlers to provide:
-    - Task ID
-    - Parameters
-    - Cancellation check
-    - Progress updates
-    """
-
-    def __init__(
-        self,
-        task_id: str,
-        params: Dict[str, Any],
-        cancel_event: threading.Event,
-        update_progress_func: Callable[[float, str], None],
-    ):
-        self.task_id = task_id
-        self.params = params
-        self._cancel_event = cancel_event
-        self._update_progress = update_progress_func
-        self._current_progress = 0.0
-
-    def update_progress(self, progress: float, message: str = ""):
-        """Update task progress"""
-        self._current_progress = progress
-        self._update_progress(progress, message)
-
-    def check_cancelled(self) -> bool:
-        """Check if task has been cancelled"""
-        return self._cancel_event.is_set()
-
-    @property
-    def is_cancelled(self) -> bool:
-        """Check if task has been cancelled (alias)"""
-        return self.check_cancelled()
 
 
 def get_task_manager() -> BackgroundTaskManager:

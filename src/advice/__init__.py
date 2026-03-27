@@ -10,9 +10,9 @@ from typing import Dict, List
 from ..analyzer import calculate_risk_metrics, get_commodity_sentiment, get_market_sentiment
 from ..fetcher import fetch_fund_data, fetch_fund_detail, fetch_fund_manager, fetch_fund_scale
 from ..utils.technical import calculate_ma, calculate_macd, calculate_rsi
-from .generate import ADVICE_ALLOCATION_RATIOS as ALLOCATION_RATIOS
-from .generate import ADVICE_SCORE_THRESHOLDS as SCORE_THRESHOLDS
-from .generate import ADVICE_WEIGHT_CONFIG as WEIGHT_CONFIG
+from .generate import PORTFOLIO_ALLOCATION_RATIOS as ALLOCATION_RATIOS
+from .generate import PORTFOLIO_SCORE_THRESHOLDS as SCORE_THRESHOLDS
+from .generate import PORTFOLIO_WEIGHT_CONFIG as WEIGHT_CONFIG
 from .generate import (
     format_report_for_share,
     generate_advice,
