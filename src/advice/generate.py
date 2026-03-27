@@ -22,197 +22,92 @@ ADVICE_ALLOCATION_RATIOS = {
     "MINIMAL": 0.075,
     "NONE": 0,
 }
-# 评分权重配置 - 增加区分度
 ADVICE_WEIGHT_CONFIG = {
-    # 涨跌类 - 扩大差距
     "DAILY_CHANGE": 15,
     "M1_CHANGE": 10,
     "M3_CHANGE": 8,
-    # 动量趋势
     "MOMENTUM": 15,
     "TREND": 12,
-    # 市场情绪
     "MARKET_SENTIMENT": 12,
     "HOT_SECTOR": 15,
-    # 商品和季节性
     "COMMODITY": 10,
     "SEASONAL": 8,
-    # 风险调整收益 - 扩大差距
     "SHARPE_HIGH": 30,
     "SHARPE_LOW": -25,
     "DRAWDOWN": 15,
-    # 规模和流动性
     "SCALE": 8,
     "POSITION": 5,
 }
 
+# ============== 辅助函数 ==============
 
-def generate_advice(funds: List[Dict]) -> Dict:
-    """
-    Generate investment advice based on fund performance and market indicators
+SENTIMENT_MAP = {"乐观": 15, "偏多": 10, "平稳": 0, "偏空": -10, "恐慌": -15}
+COMMODITY_MAP = {"乐观": 15, "偏多": 10, "平稳": 0, "偏空": -10}
 
-    Args:
-        funds: List of analyzed fund data
 
-    Returns:
-        dict: Investment advice
-    """
-    if not funds:
-        return {"advice": "暂无基金数据", "risk_level": "未知", "action": "观望"}
+def _fetch_fund_risks(fund_codes: List[str]) -> Dict[str, Dict]:
+    """并行获取基金风险指标"""
+    result: Dict[str, Dict] = {}
 
-    # 基础统计
-    up_count = sum(1 for f in funds if f.get("trend") == "up")
-    down_count = sum(1 for f in funds if f.get("trend") == "down")
-    total = len(funds)
-
-    avg_change = sum(f.get("daily_change", 0) for f in funds) / total if total > 0 else 0
-
-    # 获取市场情绪
-    market = get_market_sentiment()
-    market_sentiment = market.get("sentiment", "平稳")
-    market_score = market.get("score", 0)
-
-    # 获取大宗商品情绪
-    commodity = get_commodity_sentiment()
-
-    # 计算组合加权指标（并行获取基金详情）
-    total_sharpe = 0
-    total_drawdown = 0
-    total_risk_score = 0
-    funds_with_risk = 0
-
-    # 并行获取所有基金详情
-    fund_codes = [f.get("fund_code") for f in funds if f.get("fund_code")]
-
-    def fetch_risk(code):
+    def fetch_one(code: str) -> tuple:
         try:
-            return fetch_fund_detail(code)
+            detail = fetch_fund_detail(code)
+            return code, detail.get("risk_metrics", {})
         except Exception:
-            return {}
+            return code, {}
 
-    # 使用线程池并行获取，最多5个线程
     with ThreadPoolExecutor(max_workers=5) as executor:
-        futures = {executor.submit(fetch_risk, code): code for code in fund_codes}
+        futures = {executor.submit(fetch_one, code): code for code in fund_codes}
         for future in as_completed(futures):
             try:
-                detail = future.result()
-                risk = detail.get("risk_metrics", {})
-                if risk:
-                    total_sharpe += risk.get("sharpe_ratio", 0)
-                    total_drawdown += risk.get("estimated_max_drawdown", 0)
-                    total_risk_score += risk.get("risk_score", 4)
-                    funds_with_risk += 1
+                code, risk = future.result()
+                result[code] = risk
             except Exception:
                 pass
+    return result
 
-    if funds_with_risk > 0:
-        avg_sharpe = total_sharpe / funds_with_risk
-        avg_drawdown = total_drawdown / funds_with_risk
-        avg_risk = total_risk_score / funds_with_risk
-    else:
-        avg_sharpe = 0
-        avg_drawdown = 0
-        avg_risk = 4
 
-    # 计算技术评分
-    technical_score = 0
-    up_funds = [f for f in funds if f.get("trend") == "up"]
-    down_funds = [f for f in funds if f.get("trend") == "down"]
+def _compute_base_stats(funds: List[Dict]) -> tuple:
+    """计算基础统计数据"""
+    up_count = sum(1 for f in funds if f.get("trend") == "up")
+    down_count = sum(1 for f in funds if f.get("trend") == "down")
+    avg_change = sum(f.get("daily_change", 0) for f in funds) / len(funds) if funds else 0
+    return up_count, down_count, avg_change
 
-    if len(up_funds) > len(down_funds):
-        technical_score += ADVICE_WEIGHT_CONFIG["MOMENTUM"]
-    elif len(down_funds) > len(up_funds):
-        technical_score -= 10
 
-    # 行业轮动分析
-    hot_sectors = []
-    try:
-        from ..fetcher import fetch_hot_sectors
+def _compute_risk_profile(funds: List[Dict]) -> tuple:
+    """计算组合风险指标"""
+    fund_codes = [f.get("fund_code") for f in funds if f.get("fund_code")]
+    risks = _fetch_fund_risks(fund_codes)
 
-        hot_sectors = fetch_hot_sectors(5) or []
-    except Exception:
-        pass
+    total_sharpe = total_drawdown = total_risk = 0
+    for risk in risks.values():
+        total_sharpe += risk.get("sharpe_ratio", 0)
+        total_drawdown += risk.get("estimated_max_drawdown", 0)
+        total_risk += risk.get("risk_score", 4)
 
-    # 大宗商品
-    commodity_sentiment = commodity.get("sentiment", "平稳")
-    commodity_score = commodity.get("score", 0)
+    count = len(risks) or 1
+    return total_sharpe / count, total_drawdown / count, total_risk / count
 
-    # 基金类型分析
-    fund_types = {}
-    for f in funds:
-        name = f.get("fund_name", "")
-        if "混合" in name:
-            fund_types["混合"] = fund_types.get("混合", 0) + 1
-        elif "股票" in name or "指数" in name:
-            fund_types["股票"] = fund_types.get("股票", 0) + 1
-        elif "债券" in name:
-            fund_types["债券"] = fund_types.get("债券", 0) + 1
-        else:
-            fund_types["其他"] = fund_types.get("其他", 0) + 1
 
-    # 核心评分计算
+def _compute_sentiment_score(market_sentiment: str, market_score: float, commodity_sentiment: str) -> int:
+    """计算情绪得分"""
+    return SENTIMENT_MAP.get(market_sentiment, 0) + int(market_score * 0.5) + COMMODITY_MAP.get(commodity_sentiment, 0)
+
+
+def _compute_technical_score(up_count: int, down_count: int) -> int:
+    """计算技术面得分"""
     score = 0
-
-    # 1. 市场情绪
-    sentiment_map = {"乐观": 15, "偏多": 10, "平稳": 0, "偏空": -10, "恐慌": -15}
-    score += sentiment_map.get(market_sentiment, 0)
-    score += market_score * 0.5
-
-    # 2. 大宗商品
-    commodity_map = {"乐观": 15, "偏多": 10, "平稳": 0, "偏空": -10}
-    score += commodity_map.get(commodity_sentiment, 0)
-
-    # 3. 涨跌分布
     if up_count > down_count:
         score += ADVICE_WEIGHT_CONFIG["MOMENTUM"]
     elif down_count > up_count:
         score -= ADVICE_WEIGHT_CONFIG["MOMENTUM"]
+    score += (up_count - down_count) * 3
+    return max(min(score, 30), -30)
 
-    # 4. 行业热点
-    if hot_sectors:
-        score += ADVICE_WEIGHT_CONFIG["HOT_SECTOR"]
 
-    # 5. 仓位
-    position_ratio = 50  # 简化
-
-    # 6. 夏普比率
-    if avg_sharpe > 1:
-        score += ADVICE_WEIGHT_CONFIG["SHARPE_HIGH"]
-    elif avg_sharpe > 0:
-        score += 10
-    else:
-        score += ADVICE_WEIGHT_CONFIG["SHARPE_LOW"]
-
-    # 7. 风险评分
-    score += avg_risk * ADVICE_WEIGHT_CONFIG["DRAWDOWN"] / 2
-
-    # 8. 基金类型权重
-    if fund_types.get("股票", 0) > fund_types.get("债券", 0):
-        score += 5
-
-    # 9. 计算平均收益
-    total_profit = 0
-    count = 0
-    for f in funds:
-        try:
-            profit = float(f.get("return_1y", 0) or 0)
-            total_profit += profit
-            count += 1
-        except Exception:
-            pass
-
-    avg_profit_pct = total_profit / count if count > 0 else 0
-
-    # 10. 技术分析
-    technical_score += (up_count - down_count) * 3
-    if technical_score > 30:
-        score += 10
-    elif technical_score < -30:
-        score -= 10
-    else:
-        score += max(technical_score, -30)
-
-    # 确定操作建议
+def _determine_action(score: int, avg_profit_pct: float, position_ratio: int) -> str:
+    """根据综合评分确定操作建议"""
     if score > 50:
         action = "买入"
     elif score > 30:
@@ -224,10 +119,8 @@ def generate_advice(funds: List[Dict]) -> Dict:
     else:
         action = "卖出"
 
-    # 边界条件判断
-    if position_ratio >= 100 and action == "买入":
-        action = "持有"
-    elif position_ratio >= 80 and action == "买入":
+    # 仓位约束
+    if position_ratio >= 80 and action == "买入":
         action = "持有"
 
     # 止损止盈
@@ -236,22 +129,118 @@ def generate_advice(funds: List[Dict]) -> Dict:
     elif avg_profit_pct > 50:
         action = "部分止盈"
 
-    # 生成建议文本
-    advice = _build_advice_text(action, score, market_sentiment, avg_change, up_count, down_count)
+    return action
 
-    # 风险等级
+
+def _get_risk_level(avg_risk: float) -> str:
+    """根据平均风险评分确定风险等级"""
     if avg_risk >= 7:
-        risk_level = "高风险"
-    elif avg_risk >= 5:
-        risk_level = "中高风险"
-    elif avg_risk >= 3:
-        risk_level = "中等风险"
+        return "高风险"
+    if avg_risk >= 5:
+        return "中高风险"
+    if avg_risk >= 3:
+        return "中等风险"
+    return "中低风险"
+
+
+def _build_advice_text(action: str, sentiment: str) -> str:
+    """构建建议文本"""
+    if action == "买入":
+        return f"市场{sentiment}，建议适当加仓"
+    if action == "持有":
+        return f"市场平稳，建议继续持有"
+    if action == "减仓":
+        return f"市场偏谨慎，建议适当减仓"
+    if action == "卖出":
+        return f"市场情绪较差，建议减仓观望"
+    return f"建议{action}"
+
+
+# ============== 主函数 ==============
+
+
+def generate_advice(funds: List[Dict]) -> Dict:
+    """生成投资建议"""
+    if not funds:
+        return {"advice": "暂无基金数据", "risk_level": "未知", "action": "观望"}
+
+    # 基础统计
+    up_count, down_count, avg_change = _compute_base_stats(funds)
+
+    # 市场情绪
+    market = get_market_sentiment()
+    market_sentiment = market.get("sentiment", "平稳")
+    market_score = market.get("score", 0)
+    commodity = get_commodity_sentiment()
+    commodity_sentiment = commodity.get("sentiment", "平稳")
+    commodity_score = commodity.get("score", 0)
+
+    # 风险指标
+    avg_sharpe, avg_drawdown, avg_risk = _compute_risk_profile(funds)
+
+    # 热点行业
+    try:
+        from ..fetcher import fetch_hot_sectors
+
+        hot_sectors = fetch_hot_sectors(5) or []
+    except Exception:
+        hot_sectors = []
+
+    # 基金类型分布
+    fund_types: Dict[str, int] = {}
+    for f in funds:
+        name = f.get("fund_name", "")
+        if "混合" in name:
+            fund_types["混合"] = fund_types.get("混合", 0) + 1
+        elif "股票" in name or "指数" in name:
+            fund_types["股票"] = fund_types.get("股票", 0) + 1
+        elif "债券" in name:
+            fund_types["债券"] = fund_types.get("债券", 0) + 1
+        else:
+            fund_types["其他"] = fund_types.get("其他", 0) + 1
+
+    # 综合评分
+    score = _compute_sentiment_score(market_sentiment, market_score, commodity_sentiment)
+
+    # 热点行业加分
+    if hot_sectors:
+        score += ADVICE_WEIGHT_CONFIG["HOT_SECTOR"]
+
+    # 夏普比率
+    if avg_sharpe > 1:
+        score += ADVICE_WEIGHT_CONFIG["SHARPE_HIGH"]
+    elif avg_sharpe > 0:
+        score += 10
     else:
-        risk_level = "中低风险"
+        score += ADVICE_WEIGHT_CONFIG["SHARPE_LOW"]
+
+    # 风险评分
+    score += avg_risk * ADVICE_WEIGHT_CONFIG["DRAWDOWN"] / 2
+
+    # 股票型基金权重
+    if fund_types.get("股票", 0) > fund_types.get("债券", 0):
+        score += 5
+
+    # 平均收益率
+    total_profit = sum(float(f.get("return_1y", 0) or 0) for f in funds)
+    avg_profit_pct = total_profit / len(funds) if funds else 0
+
+    # 技术面
+    technical_score = _compute_technical_score(up_count, down_count)
+    if technical_score > 30:
+        score += 10
+    elif technical_score < -30:
+        score -= 10
+    else:
+        score += technical_score
+
+    # 操作建议
+    action = _determine_action(score, avg_profit_pct, position_ratio=50)
+    advice = _build_advice_text(action, market_sentiment)
 
     return {
         "advice": advice,
-        "risk_level": risk_level,
+        "risk_level": _get_risk_level(avg_risk),
         "action": action,
         "up_count": up_count,
         "down_count": down_count,
@@ -264,29 +253,11 @@ def generate_advice(funds: List[Dict]) -> Dict:
         "max_drawdown": round(avg_drawdown, 2),
         "risk_score": round(avg_risk, 1),
         "technical_score": technical_score,
-        "position_ratio": position_ratio,
+        "position_ratio": 50,
         "avg_profit_pct": round(avg_profit_pct, 1),
     }
 
 
-def _build_advice_text(action: str, score: int, sentiment: str, avg_change: float, up: int, down: int) -> str:
-    """构建建议文本"""
-    if action == "买入":
-        return f"市场{sentiment}，建议适当加仓"
-    elif action == "持有":
-        return f"市场平稳，建议继续持有"
-    elif action == "减仓":
-        return f"市场偏谨慎，建议适当减仓"
-    elif action == "卖出":
-        return f"市场情绪较差，建议减仓观望"
-    else:
-        return f"建议{action}"
-
-
-__all__ = ["generate_advice", "ADVICE_SCORE_THRESHOLDS", "ADVICE_ALLOCATION_RATIOS", "ADVICE_WEIGHT_CONFIG"]
-
-
-# ============== 额外函数 ==============
 def generate_daily_report(fund_codes: List[str]) -> Dict:
     """Generate daily report for funds"""
     from . import analyze_fund
@@ -328,24 +299,11 @@ def format_report_for_share(report: Dict) -> str:
     return "\n".join(lines)
 
 
-# 修复循环导入
-def _generate_daily_report_internal(fund_codes: List[str]) -> Dict:
-    """Internal function to generate daily report"""
-    from . import analyze_fund
-
-    funds = []
-    for code in fund_codes:
-        data = fetch_fund_data(code)
-        if data and not data.get("error"):
-            funds.append(analyze_fund(data))
-
-    if not funds:
-        return {"error": "No data"}
-
-    advice = generate_advice(funds)
-
-    return {
-        "date": funds[0].get("date", ""),
-        "funds": funds,
-        "advice": advice,
-    }
+__all__ = [
+    "generate_advice",
+    "generate_daily_report",
+    "format_report_for_share",
+    "ADVICE_SCORE_THRESHOLDS",
+    "ADVICE_ALLOCATION_RATIOS",
+    "ADVICE_WEIGHT_CONFIG",
+]
