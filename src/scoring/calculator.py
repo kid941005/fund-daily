@@ -9,9 +9,9 @@ from typing import Dict, List, Optional
 from src.utils.error_handling import handle_errors
 
 from .config import _get_cached_score, _set_cached_score
-from .weights import SCORE_WEIGHTS
 from .models import ScoreInput
 from .utils import get_grade  # 统一使用 utils.py 的等级函数
+from .weights import SCORE_WEIGHTS
 
 logger = logging.getLogger(__name__)
 
