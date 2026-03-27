@@ -149,11 +149,11 @@ def _build_advice_text(action: str, sentiment: str) -> str:
     if action == "买入":
         return f"市场{sentiment}，建议适当加仓"
     if action == "持有":
-        return f"市场平稳，建议继续持有"
+        return "市场平稳，建议继续持有"
     if action == "减仓":
-        return f"市场偏谨慎，建议适当减仓"
+        return "市场偏谨慎，建议适当减仓"
     if action == "卖出":
-        return f"市场情绪较差，建议减仓观望"
+        return "市场情绪较差，建议减仓观望"
     return f"建议{action}"
 
 

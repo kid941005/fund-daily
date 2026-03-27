@@ -8,7 +8,7 @@ import os
 import sys
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -20,7 +20,7 @@ class TestTaskStatus:
     """Test TaskStatus enum"""
 
     def test_task_status_values(self):
-        from src.tasks.background import TaskStatus
+        from src.tasks.models import TaskStatus
 
         assert TaskStatus.PENDING == "pending"
         assert TaskStatus.RUNNING == "running"
@@ -29,7 +29,7 @@ class TestTaskStatus:
         assert TaskStatus.CANCELLED == "cancelled"
 
     def test_task_status_from_string(self):
-        from src.tasks.background import TaskStatus
+        from src.tasks.models import TaskStatus
 
         assert TaskStatus("pending") == TaskStatus.PENDING
         assert TaskStatus("running") == TaskStatus.RUNNING
@@ -40,7 +40,7 @@ class TestTaskType:
     """Test TaskType enum"""
 
     def test_task_type_values(self):
-        from src.tasks.background import TaskType
+        from src.tasks.models import TaskType
 
         assert TaskType.FUND_FETCH == "fund_fetch"
         assert TaskType.NAV_UPDATE == "nav_update"
@@ -53,7 +53,7 @@ class TestTaskInfo:
     """Test TaskInfo model"""
 
     def test_task_info_creation(self):
-        from src.tasks.background import TaskInfo, TaskStatus, TaskType
+        from src.tasks.models import TaskInfo, TaskStatus, TaskType
 
         task = TaskInfo(task_type=TaskType.FUND_FETCH, params={"codes": ["000001"]})
 
@@ -67,7 +67,7 @@ class TestTaskInfo:
         assert task.completed_at is None
 
     def test_task_info_default_values(self):
-        from src.tasks.background import TaskInfo, TaskType
+        from src.tasks.models import TaskInfo, TaskType
 
         task = TaskInfo(task_type=TaskType.NAV_UPDATE)
 
@@ -168,7 +168,7 @@ class TestTaskRegistry:
             name="dummy",
             description="",
             handler=dummy_handler,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             max_concurrent=1,
             timeout=3600,
         )
@@ -309,7 +309,7 @@ class TestTaskAPI:
 
     def test_task_response_from_task_info(self):
         from src.tasks.api import TaskResponse
-        from src.tasks.background import TaskInfo, TaskType
+        from src.tasks.models import TaskInfo, TaskType
 
         task = TaskInfo(task_type=TaskType.FUND_FETCH, params={"codes": ["000001"]})
 
@@ -331,7 +331,7 @@ class TestTaskAPI:
 
     def test_task_list_response(self):
         from src.tasks.api import tasks_to_list_response
-        from src.tasks.background import TaskInfo, TaskType
+        from src.tasks.models import TaskInfo, TaskType
 
         tasks = [TaskInfo(task_type=TaskType.FUND_FETCH), TaskInfo(task_type=TaskType.NAV_UPDATE)]
 
@@ -358,7 +358,7 @@ class TestTaskHandlers:
     def test_handlers_registered(self):
         # Import handlers to register them
         from src.tasks import handlers  # noqa: F401
-        from src.tasks.background import TaskType
+        from src.tasks.models import TaskType
         from src.tasks.task_registry import TaskRegistry
 
         registry = TaskRegistry()

@@ -13,12 +13,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Dict, List
 
-from src.advice import analyze_fund, generate_advice
+from src.advice import generate_advice
 from src.cache.manager import get_cache_manager
-from src.error import FundServiceError, fund_data_fetch_failed, fund_not_found
-from src.fetcher import fetch_fund_data, fetch_fund_data_enhanced
-from src.services.metrics_service import get_metrics_service, timed_metric
-from src.services.score_service import get_score_service
+from src.fetcher import fetch_fund_data
+from src.services.metrics_service import timed_metric
 from src.utils.error_handling import handle_errors
 
 logger = logging.getLogger(__name__)

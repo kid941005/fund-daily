@@ -8,9 +8,9 @@ import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-from .models import TaskContext, TaskInfo, TaskStatus, TaskType
+from .models import TaskContext, TaskInfo, TaskStatus
 
 logger = logging.getLogger(__name__)
 

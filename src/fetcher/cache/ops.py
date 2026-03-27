@@ -16,8 +16,7 @@ _cache_manager = get_cache_manager()
 
 # Redis支持检查
 try:
-    from src.cache.redis_cache import redis_clear as redis_clear
-    from src.cache.redis_cache import redis_get, redis_set
+    from src.cache import redis_get  # noqa: F401
 
     HAS_REDIS = True
 except ImportError:

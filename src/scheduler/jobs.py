@@ -11,6 +11,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, TypeVar
 
+from src.tasks.models import TaskType
+
 logger = logging.getLogger(__name__)
 
 
@@ -191,7 +193,7 @@ async def daily_nav_update():
     Fetches latest NAV data for all tracked funds.
     Runs 30 minutes after market close to allow data providers to update.
     """
-    from src.tasks.background import BackgroundTaskManager, TaskType
+    from src.tasks.background import BackgroundTaskManager
 
     try:
         # Delegate to background task system
@@ -234,7 +236,7 @@ async def weekly_score_calculation():
     Recalculates comprehensive scores for all funds.
     Runs Monday morning to refresh scores for the new week.
     """
-    from src.tasks.background import BackgroundTaskManager, TaskType
+    from src.tasks.background import BackgroundTaskManager
 
     if not _is_trading_day():
         logger.info("[Scheduler] Skipping weekly score calc (not a trading day)")
@@ -347,7 +349,7 @@ async def cache_warmup():
     Preloads frequently accessed fund data into cache.
     Runs every 30 minutes to ensure cache freshness.
     """
-    from src.tasks.background import BackgroundTaskManager, TaskType
+    from src.tasks.background import BackgroundTaskManager
 
     try:
         manager = BackgroundTaskManager.get_instance()
@@ -453,7 +455,7 @@ async def fund_data_fetch():
 
     Periodically fetches fund basic data to keep information current.
     """
-    from src.tasks.background import BackgroundTaskManager, TaskType
+    from src.tasks.background import BackgroundTaskManager
 
     try:
         manager = BackgroundTaskManager.get_instance()

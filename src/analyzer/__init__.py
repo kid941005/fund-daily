@@ -113,4 +113,6 @@ __all__ = [
     "get_enhanced_market_sentiment",
     "get_commodity_sentiment",
     "calculate_expected_return",
+    "fetch_hot_sectors",
+    "fetch_market_news",
 ]

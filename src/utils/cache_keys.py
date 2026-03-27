@@ -133,4 +133,4 @@ if __name__ == "__main__":
         else:
             print(f"  键: {key}")
 
-    print(f"\n✅ 缓存键生成器测试完成")
+    print("\n✅ 缓存键生成器测试完成")

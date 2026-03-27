@@ -14,9 +14,6 @@ from ..network import _make_request
 logger = logging.getLogger(__name__)
 
 
-import logging
-
-
 def calculate_technical_from_history(closes: List[float]) -> Dict:
     """
     Calculate technical indicators from historical NAV data

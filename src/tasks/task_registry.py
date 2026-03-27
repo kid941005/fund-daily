@@ -8,7 +8,7 @@ Provides:
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -77,7 +77,7 @@ class TaskRegistry:
                 name=name,
                 description=description,
                 handler=handler,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
                 max_concurrent=max_concurrent,
                 timeout=timeout,
             )

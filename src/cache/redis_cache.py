@@ -1,12 +1,12 @@
 # Redis 缓存层
 import json
 import logging
+import warnings
 from typing import Any, Optional
 
-logger = logging.getLogger(__name__)
-
-# 导入配置管理器
 from src.config import get_config
+
+logger = logging.getLogger(__name__)
 
 _redis_client = None
 
@@ -133,7 +133,7 @@ def add_token_to_blacklist(token: str, expires_in: int = None) -> bool:
             # 默认 24 小时
             expires_in = 86400
         client.setex(key, expires_in, "1")
-        logger.info(f"Token 已加入黑名单")
+        logger.info("Token 已加入黑名单")
         return True
     except Exception as e:
         logger.error(f"添加 Token 到黑名单失败: {e}")
@@ -288,9 +288,6 @@ def redis_clear() -> bool:
 
 
 # 注意：以下函数已废弃，请使用 CacheManager
-# 保留这些函数仅用于向后兼容
-
-import warnings
 
 
 def get_cache(key: str) -> Optional[Any]:

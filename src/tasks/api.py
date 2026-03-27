@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from .background import TaskInfo
+from .models import TaskInfo
 
 
 class TaskResponse(BaseModel):

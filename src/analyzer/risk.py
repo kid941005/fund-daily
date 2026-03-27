@@ -8,15 +8,6 @@ from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
-# Try to import numpy for real calculations
-try:
-    import numpy as np
-
-    HAS_NUMPY = True
-except ImportError:
-    HAS_NUMPY = False
-    logger.warning("numpy not installed, using simplified calculations")
-
 
 def calculate_risk_metrics(month_1, month_3, year_1, fund_type: str = "") -> Dict:
     """

@@ -3,6 +3,8 @@ Constants module for Fund Daily
 统一管理项目中的常量定义
 """
 
+import warnings
+
 # 评分阈值
 SCORE_THRESHOLDS = {
     "BUY": 60,
@@ -46,7 +48,6 @@ CACHE_TTL = {
 
 # 别名（保持向后兼容）
 # TODO: v3.0.0 移除此别名
-import warnings
 
 warnings.warn("ST 是 SCORE_THRESHOLDS 的别名，已废弃，将在 v3.0.0 移除", DeprecationWarning, stacklevel=2)
 ST = SCORE_THRESHOLDS

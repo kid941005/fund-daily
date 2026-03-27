@@ -3,13 +3,17 @@
 解决配置分散问题，提供类型安全和验证
 """
 
-import os as _os
+import logging
+import os
+import threading
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
 
 def _get_version() -> str:
     """从 VERSION 文件读取当前版本"""
     try:
-        version_file = _os.path.join(_os.path.dirname(__file__), "..", "VERSION")
+        version_file = os.path.join(os.path.dirname(__file__), "..", "VERSION")
         with open(version_file, "r") as f:
             return f.read().strip()
     except Exception:
@@ -17,12 +21,6 @@ def _get_version() -> str:
 
 
 _CURRENT_VERSION = _get_version()
-
-
-import logging
-import os
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -407,9 +405,6 @@ class ConfigManager:
             },
         }
 
-
-# 全局单例实例（线程安全）
-import threading
 
 _config_instance = None
 _config_lock = threading.Lock()

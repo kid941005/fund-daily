@@ -7,7 +7,7 @@ Handles cache warmup and update tasks.
 import logging
 from typing import Any, Dict
 
-from ..background import TaskContext, TaskType
+from ..models import TaskContext, TaskType
 from ..task_registry import register_task
 
 logger = logging.getLogger(__name__)

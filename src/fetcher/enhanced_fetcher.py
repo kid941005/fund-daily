@@ -7,6 +7,9 @@ import logging
 from datetime import date, datetime
 from typing import Dict, Optional
 
+from .fund_basic.basic import fetch_fund_data as original_fetch_fund_data
+from .fund_basic.basic import fetch_fund_detail as original_fetch_fund_detail
+
 logger = logging.getLogger(__name__)
 
 # 导入数据库函数
@@ -16,20 +19,12 @@ try:
         get_fund_info,
         get_fund_nav,
         get_fund_score,
-        save_fund_data,
-        save_fund_info,
-        save_fund_nav,
-        save_fund_score,
     )
 
     HAS_DB = True
 except ImportError as e:
     logger.warning(f"数据库模块导入失败: {e}")
     HAS_DB = False
-
-# 导入原始fetcher（直接从子模块避免循环导入）
-from .fund_basic.basic import fetch_fund_data as original_fetch_fund_data
-from .fund_basic.basic import fetch_fund_detail as original_fetch_fund_detail
 
 
 class EnhancedFetcher:

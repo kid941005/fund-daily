@@ -8,16 +8,13 @@ Provides async background task processing with:
 - Concurrent task limiting
 """
 
-from .background import (
-    BackgroundTaskManager,
-    TaskInfo,
-    TaskStatus,
-    TaskType,
-)
+from .background import BackgroundTaskManager
+from .models import TaskContext, TaskInfo, TaskStatus, TaskType
 from .task_registry import TaskRegistry, register_task
 
 __all__ = [
     "BackgroundTaskManager",
+    "TaskContext",
     "TaskInfo",
     "TaskStatus",
     "TaskType",

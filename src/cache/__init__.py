@@ -1,4 +1,19 @@
 # Cache module - 统一缓存接口
+
+__all__ = [
+    "CacheManager",
+    "cached",
+    "get_cache_manager",
+    "get_cache",
+    "set_cache",
+    "clear_cache",
+    # 向后兼容的 redis 函数
+    "get_redis_client",
+    "redis_clear",
+    "redis_delete",
+    "redis_get",
+    "redis_set",
+]
 # 注意：旧的 get_cache/set_cache/clear_cache 接口已废弃
 # 请使用 CacheManager 或 cached 装饰器
 

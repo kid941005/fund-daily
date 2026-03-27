@@ -203,18 +203,18 @@ if __name__ == "__main__":
             raise ValueError("测试异常")
         return "成功"
 
-    print(f"1. handle_errors 装饰器测试:")
+    print("1. handle_errors 装饰器测试:")
     print(f"   正常执行: {risky_function(False)}")
     print(f"   异常处理: {risky_function(True)}")
 
     # 测试 log_and_continue 上下文管理器
-    print(f"\n2. log_and_continue 上下文管理器测试:")
+    print("\n2. log_and_continue 上下文管理器测试:")
     with log_and_continue("测试操作", default_value={}):
         raise RuntimeError("测试上下文管理器异常")
     print("   异常被抑制，继续执行")
 
     # 测试 safe_execute 函数
-    print(f"\n3. safe_execute 函数测试:")
+    print("\n3. safe_execute 函数测试:")
 
     def divide(a, b):
         return a / b
@@ -222,6 +222,6 @@ if __name__ == "__main__":
     result = safe_execute(divide, 10, 0, default_return=0, log_message="除法运算失败")
     print(f"   安全除法: 10 / 0 = {result}")
 
-    print(f"\n✅ 错误处理工具测试完成")
+    print("\n✅ 错误处理工具测试完成")
 # Patched: handle_db_errors should only catch DB-related exceptions
 # This is done at the module level by importing and reassigning

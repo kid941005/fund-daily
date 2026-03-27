@@ -14,6 +14,9 @@ __all__ = [
     "calculate_efficient_frontier",
     "calculate_rebalancing",
     "generate_trade_orders",
+    "adjust_score_by_cycle",
+    "detect_market_cycle",
+    "get_dynamic_weights",
 ]
 
 # 动态权重

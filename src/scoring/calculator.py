@@ -157,7 +157,7 @@ def format_score_report(scoring_result: Dict) -> str:
     dimension_scores = sum(detail.get("score", 0) for detail in details.values())
 
     lines = [
-        f"📊 基金综合评分报告",
+        "📊 基金综合评分报告",
         "=" * 40,
         f"总分: {scoring_result['total_score']}/100 ({scoring_result.get('grade', 'N/A')}级)",
     ]

@@ -19,7 +19,8 @@ from .api import (
     task_to_response,
     tasks_to_list_response,
 )
-from .background import BackgroundTaskManager, TaskStatus, TaskType
+from .background import BackgroundTaskManager
+from .models import TaskStatus, TaskType
 
 logger = logging.getLogger(__name__)
 
@@ -165,4 +166,4 @@ async def cancel_task(task_id: str):
 
 
 # Import handlers to register them
-from . import handlers  # noqa: F401
+from . import handlers  # noqa: F401,E402

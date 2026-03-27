@@ -6,16 +6,14 @@
 import logging
 from typing import Dict, Optional, Tuple
 
-logger = logging.getLogger(__name__)
-
-# ============== 评分缓存配置 ==============
 from src.constants import CACHE_PREFIXES, CACHE_TTL
+
+from .weights import validate_weights
+
+logger = logging.getLogger(__name__)
 
 SCORE_CACHE_TTL = CACHE_TTL.get("score_data", 600)
 SCORE_CACHE_PREFIX = CACHE_PREFIXES.get("scoring", "fund_score:v2:")
-
-# ============== 评分权重配置 ==============
-from .weights import validate_weights
 
 
 def validate_weights_compat() -> Tuple[bool, str]:

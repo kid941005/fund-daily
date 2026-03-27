@@ -5,11 +5,10 @@ Advice module - 投资建议模块
 
 import logging
 import re
-from typing import Dict, List
+from typing import Dict
 
 from ..analyzer import calculate_risk_metrics, get_commodity_sentiment, get_market_sentiment
-from ..fetcher import fetch_fund_data, fetch_fund_detail, fetch_fund_manager, fetch_fund_scale
-from ..utils.technical import calculate_ma, calculate_macd, calculate_rsi
+from ..fetcher import fetch_fund_data, fetch_fund_detail
 from .generate import PORTFOLIO_ALLOCATION_RATIOS as ALLOCATION_RATIOS
 from .generate import PORTFOLIO_SCORE_THRESHOLDS as SCORE_THRESHOLDS
 from .generate import PORTFOLIO_WEIGHT_CONFIG as WEIGHT_CONFIG
@@ -29,6 +28,8 @@ __all__ = [
     "get_fund_detail_info",
     "generate_100_score",
     "format_100_score_report",
+    "get_commodity_sentiment",
+    "get_market_sentiment",
     "SCORE_THRESHOLDS",
     "ALLOCATION_RATIOS",
     "WEIGHT_CONFIG",

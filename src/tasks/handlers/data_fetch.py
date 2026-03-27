@@ -7,7 +7,7 @@ Handles fund data fetching tasks in the background.
 import logging
 from typing import Any, Dict
 
-from ..background import TaskContext, TaskType
+from ..models import TaskContext, TaskType
 from ..task_registry import register_task
 
 logger = logging.getLogger(__name__)
@@ -121,7 +121,6 @@ def nav_update_handler(context: TaskContext) -> Dict[str, Any]:
 
     try:
         from src.fetcher.enhanced_fetcher import EnhancedFetcher
-        from src.fetcher.fund_basic.basic import FundBasicFetcher
 
         fetcher = EnhancedFetcher()
     except ImportError as e:
