@@ -69,7 +69,7 @@ class TestCache:
 class TestFetchFundData:
     """Tests for fund data fetching"""
 
-    @patch('src.fetcher.fund_basic.fetcher._make_request')
+    @patch('src.fetcher.fund_basic.basic._make_request')
     def test_fetch_fund_data_success(self, mock_request):
         """Test successful fund data fetch"""
         mock_request.return_value = 'jsonpgz({"fundcode":"000001","name":"测试基金","dwjz":"1.500","gsz":"1.520","gszzl":"1.5","gztime":"2026-03-20 10:00"});'
@@ -80,7 +80,7 @@ class TestFetchFundData:
         assert result["name"] == "测试基金"
         assert result["estimated_change"] == 1.5
 
-    @patch('src.fetcher.fund_basic.fetcher._make_request')
+    @patch('src.fetcher.fund_basic.basic._make_request')
     def test_fetch_fund_data_error(self, mock_request):
         """Test fund data fetch error"""
         mock_request.return_value = None
@@ -89,7 +89,7 @@ class TestFetchFundData:
 
         assert "error" in result
 
-    @patch('src.fetcher.fund_basic.fetcher._make_request')
+    @patch('src.fetcher.fund_basic.basic._make_request')
     def test_fetch_fund_data_invalid_format(self, mock_request):
         """Test invalid response format"""
         mock_request.return_value = "invalid data"
@@ -98,9 +98,9 @@ class TestFetchFundData:
 
         assert "error" in result
 
-    @patch('src.fetcher.fund_basic.fetcher._make_request')
-    @patch('src.fetcher.cache.fetcher.get_cache')
-    @patch('src.fetcher.cache.fetcher.set_cache')
+    @patch('src.fetcher.fund_basic.basic._make_request')
+    @patch('src.fetcher.cache.ops.get_cache')
+    @patch('src.fetcher.cache.ops.set_cache')
     def test_fetch_uses_cache(self, mock_set_cache, mock_get_cache, mock_request):
         """Test that cache is used"""
         mock_request.return_value = 'jsonpgz({"fundcode":"000001","name":"测试","dwjz":"1.000","gsz":"1.010","gszzl":"1.0","gztime":"2026-03-20 10:00"});'
@@ -120,7 +120,7 @@ class TestFetchFundData:
 class TestFetchMarketNews:
     """Tests for market news fetching"""
 
-    @patch('src.fetcher.market_data.fetcher._make_request')
+    @patch('src.fetcher.market_data.market._make_request')
     def test_fetch_market_news_success(self, mock_request):
         """Test successful news fetch"""
         mock_request.return_value = 'var ajaxResult={"LivesList":[{"title":"测试新闻","showtime":"2026-03-12","source":"东方财富","digest":"摘要"}]}'
@@ -134,7 +134,7 @@ class TestFetchMarketNews:
 class TestFetchHotSectors:
     """Tests for sector data fetching"""
 
-    @patch('src.fetcher.market_data.fetcher._make_request')
+    @patch('src.fetcher.market_data.market._make_request')
     def test_fetch_hot_sectors_success(self, mock_request):
         """Test successful sectors fetch"""
         mock_request.return_value = '{"data":{"diff":[{"f14":"新能源","f3":2.5,"f12":"8801"},{"f14":"医药","f3":-1.2,"f12":"8802"}]}}'

@@ -46,9 +46,12 @@ VERSION = get_version()
 # Load config
 config = get_config()
 
-# Initialize database
+# Initialize database（懒加载，失败不阻塞启动）
 from db import database_pg as db
-db.init_db()
+try:
+    db.init_db()
+except Exception as e:
+    logger.warning(f"数据库初始化失败（服务将以降级模式运行）: {e}")
 
 # Create FastAPI app
 app = FastAPI(

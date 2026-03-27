@@ -29,8 +29,8 @@ except ImportError as e:
     HAS_DB = False
 
 # 导入原始fetcher（直接从子模块避免循环导入）
-from .fund_basic.fetcher import fetch_fund_data as original_fetch_fund_data
-from .fund_basic.fetcher import fetch_fund_detail as original_fetch_fund_detail
+from .fund_basic.basic import fetch_fund_data as original_fetch_fund_data
+from .fund_basic.basic import fetch_fund_detail as original_fetch_fund_detail
 
 
 class EnhancedFetcher:

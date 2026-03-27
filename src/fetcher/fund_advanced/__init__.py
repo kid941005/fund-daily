@@ -2,7 +2,7 @@
 Fund Advanced Fetcher Module
 """
 
-from .fetcher import (
+from .advanced import (
     calculate_technical_from_history,
     fetch_fund_manager,
     fetch_fund_scale,

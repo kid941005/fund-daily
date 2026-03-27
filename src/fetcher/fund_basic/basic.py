@@ -45,10 +45,9 @@ def fetch_fund_data(fund_code: str, use_cache: bool = True) -> Dict:
     url = f"https://fundgz.1234567.com.cn/js/{fund_code}.js?rt=1463558676006"
     content = _make_request(url)
 
-    # Also fetch detailed data for returns
-    returns_data = _fetch_fund_returns(fund_code)
-
     if content and content.startswith("jsonpgz("):
+        # Only fetch returns when we have fresh data
+        returns_data = _fetch_fund_returns(fund_code)
         try:
             # 提取JSON部分
             json_str = content[8:-2]  # 移除 "jsonpgz(" 和 ");"

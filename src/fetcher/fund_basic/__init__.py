@@ -2,7 +2,7 @@
 Fund Basic Fetcher Module
 """
 
-from .fetcher import (
+from .basic import (
     fetch_fund_data,
     fetch_fund_detail,
     fetch_fund_nav_history,

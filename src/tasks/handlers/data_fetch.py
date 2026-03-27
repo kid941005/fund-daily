@@ -121,7 +121,7 @@ def nav_update_handler(context: TaskContext) -> Dict[str, Any]:
 
     try:
         from src.fetcher.enhanced_fetcher import EnhancedFetcher
-        from src.fetcher.fund_basic.fetcher import FundBasicFetcher
+        from src.fetcher.fund_basic.basic import FundBasicFetcher
 
         fetcher = EnhancedFetcher()
     except ImportError as e:

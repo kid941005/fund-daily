@@ -2,7 +2,7 @@
 Cache Fetcher Module
 """
 
-from .fetcher import (
+from .ops import (
     clear_cache,
     get_cache,
     get_cache_stats,

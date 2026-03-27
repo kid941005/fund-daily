@@ -2,7 +2,7 @@
 Market Data Fetcher Module
 """
 
-from .fetcher import (
+from .market import (
     fetch_commodity_prices,
     fetch_hot_sectors,
     fetch_market_news,
