@@ -1,12 +1,13 @@
 """
 自动调仓模块
 基于评分和组合优化生成调仓建议
-去弱留强策略：
-  评分 < 30   → 清仓 (0%)
-  评分 30-50 → 降至一半（上限20%）
-  评分 50-60 → 维持当前仓位
+去弱留强策略（激进版）：
+  评分 < 40   → 清仓 (0%)
+  评分 40-50 → 降至一半（上限15%）
+  评分 50-60 → 维持
   评分 60-70 → 增仓至1.5倍
-  评分 >= 70  → 增仓至2倍
+  评分 70-80 → 增仓至2倍
+  评分 >= 80  → 增仓至2.5倍
 """
 
 import logging
@@ -37,15 +38,15 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
         score = item["score"]
         current_pct = item["pct"]
 
-        if score < 30:
+        if score < 40:
             # 清仓
             item["action"] = "卖出"
             item["target_pct"] = 0
         elif score < 50:
-            # 降至一半（上限20%）
+            # 降至一半（上限15%）
             target_pct = current_pct * 0.5
             item["action"] = "卖出" if target_pct < current_pct else "持有"
-            item["target_pct"] = min(target_pct, 20)  # 上限20%
+            item["target_pct"] = min(target_pct, 15)  # 上限15%
         elif score < 60:
             # 维持
             item["action"] = "持有"
@@ -55,9 +56,14 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
             target_pct = current_pct * 1.5
             item["action"] = "买入"
             item["target_pct"] = target_pct
-        else:
+        elif score < 80:
             # 增仓至2倍
             target_pct = current_pct * 2.0
+            item["action"] = "买入"
+            item["target_pct"] = target_pct
+        else:
+            # 增仓至2.5倍
+            target_pct = current_pct * 2.5
             item["action"] = "买入"
             item["target_pct"] = target_pct
 

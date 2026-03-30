@@ -1,5 +1,5 @@
 # Fund Daily Dockerfile - 前后端一体
-# Version: 2.7.10
+# Version: 2.7.17
 
 FROM python:3.11-slim
 
@@ -12,12 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 安装 Python 依赖
+# 安装 Python 依赖（包括 OCR 依赖）
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-# 可选：CPU-only PyTorch
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu || true
 
 # 复制应用代码
 COPY src/ ./src/

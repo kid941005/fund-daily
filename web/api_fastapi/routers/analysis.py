@@ -14,7 +14,7 @@ from src.analyzer import calculate_expected_return
 from src.error import ErrorCode, create_error_response
 from src.fetcher import fetch_fund_data
 from src.jwt_auth import verify_access_token
-from src.services.fund_service import get_fund_service
+from src.services.quant_service import get_quant_service
 
 logger = logging.getLogger(__name__)
 
@@ -48,87 +48,67 @@ async def get_portfolio_analysis(request: Request):
     holdings_dict = {h["code"]: h for h in holdings}
 
     try:
-        # Use FundService to get holdings advice
-        fund_service = get_fund_service(cache_enabled=True)
-        advice_result = fund_service.calculate_holdings_advice(holdings)
-
-        funds = advice_result.get("funds", [])
-        total_amount = advice_result.get("total_amount", 0)
-
-        # Build portfolio analysis
-        if funds and total_amount > 0:
-            risk_scores = []
-            returns_1y = []
-
-            for fund in funds:
-                score_data = fund.get("score_100", {})
-                risk_score = score_data.get("details", {}).get("risk_control", {}).get("score", 4)
-                risk_scores.append(risk_score)
-
-                fund_data = fund.get("fund_data", {})
-                return_1y = float(fund_data.get("return_1y", 0) or 0)
-                returns_1y.append(return_1y)
-
-            weights = [fund.get("current_pct", 0) for fund in funds]
-            if sum(weights) > 0:
-                weighted_risk = sum(r * w for r, w in zip(risk_scores, weights)) / sum(weights)
-                weighted_return = sum(r * w for r, w in zip(returns_1y, weights)) / sum(weights)
-            else:
-                weighted_risk = sum(risk_scores) / len(risk_scores) if risk_scores else 4
-                weighted_return = sum(returns_1y) / len(returns_1y) if returns_1y else 0
-
-            # Determine risk level
-            if weighted_risk > 6:
-                risk_level = "高风险"
-            elif weighted_risk > 4:
-                risk_level = "中高风险"
-            elif weighted_risk > 2:
-                risk_level = "中等风险"
-            else:
-                risk_level = "中低风险"
-
-            # Diversification assessment
-            fund_count = len(funds)
-            if fund_count >= 5:
-                diversification = "良好"
-            elif fund_count >= 3:
-                diversification = "一般"
-            else:
-                diversification = "需分散"
-
-            analysis = {
-                "risk_level": risk_level,
-                "risk_score": round(weighted_risk, 1),
-                "avg_return_1y": round(weighted_return, 2),
-                "fund_count": fund_count,
-                "diversification": diversification,
-                "total_amount": total_amount,
-                "funds": funds,
-                "message": "分析完成",
+        # Use QuantService.optimize_portfolio for consistent scores with quant/portfolio-optimize
+        quant_service = get_quant_service()
+        optimize_result = quant_service.optimize_portfolio(user_id)
+        allocations = optimize_result.get("allocations", [])
+        
+        if not allocations:
+            return {"success": False, "error": "无持仓数据", "analysis": None}
+        
+        # Get holdings advice from cache for 8-dimension details
+        holdings_advice = quant_service._holdings_advice_cache
+        
+        # Build funds with scores from optimize_portfolio (ensures consistency)
+        funds = []
+        holdings_map = {}
+        if holdings_advice:
+            for f in holdings_advice.get("funds", []):
+                holdings_map[f.get("fund_code")] = f
+        
+        for a in allocations:
+            fund_code = a.get("fund_code")
+            holdings_fund = holdings_map.get(fund_code, {})
+            score_100 = holdings_fund.get("score_100", {})
+            
+            fund = {
+                "fund_code": fund_code,
+                "fund_name": a.get("fund_name", holdings_fund.get("fund_name", f"基金{fund_code}")),
+                "amount": holdings_fund.get("amount", 0),
+                "current_pct": a.get("weight", 0),
+                "score_100": {
+                    "total_score": a.get("score", 0),
+                    "base_score": score_100.get("base_score"),
+                    "ranking_bonus": score_100.get("ranking_bonus"),
+                    "details": score_100.get("details"),
+                },
             }
+            funds.append(fund)
+        
+        # Calculate risk metrics
+        if holdings_advice:
+            risk_level = holdings_advice.get("risk_level", "未知")
+            risk_score = holdings_advice.get("risk_score", 0)
+            avg_return_1y = holdings_advice.get("avg_return_1y", 0)
+            diversification = holdings_advice.get("diversification", "一般")
+            total_amount = holdings_advice.get("total_amount", 0)
         else:
-            # No funds data, use basic holding info
-            chart_funds = []
-            for holding in holdings:
-                chart_funds.append(
-                    {
-                        "fund_code": holding.get("code"),
-                        "fund_name": holding.get("name") or f"基金{holding.get('code')}",
-                        "amount": holding.get("amount", 0),
-                        "score_100": {"total_score": 50},
-                    }
-                )
-
-            analysis = {
-                "risk_level": "未知",
-                "risk_score": 0,
-                "avg_return_1y": 0,
-                "fund_count": len(holdings),
-                "diversification": "无详细数据",
-                "total_amount": sum(h.get("amount", 0) for h in holdings),
-                "funds": chart_funds,
-                "message": "使用持仓数据，基金详情待更新",
-            }
+            risk_level = "未知"
+            risk_score = 0
+            avg_return_1y = 0
+            diversification = "一般"
+            total_amount = sum(a.get("weight", 0) for a in allocations)
+        
+        analysis = {
+            "risk_level": risk_level,
+            "risk_score": round(risk_score, 1),
+            "avg_return_1y": round(avg_return_1y, 2),
+            "fund_count": len(funds),
+            "diversification": diversification,
+            "total_amount": total_amount,
+            "funds": funds,
+            "message": "分析完成",
+        }
 
         return {"success": True, "analysis": analysis}
 

@@ -11,6 +11,7 @@ __pycache__
 *.so
 *.egg
 *.egg-info
+*.whl
 
 # Virtual environments
 venv/
@@ -22,6 +23,7 @@ env/
 .idea/
 *.swp
 *.swo
+*.sublime-*
 
 # Testing
 .pytest_cache/
@@ -30,6 +32,7 @@ htmlcov/
 
 # Data
 data/
+data2/
 *.db
 *.sqlite
 *.sqlite3
@@ -51,11 +54,15 @@ docs/_build/
 .cache/
 *.cache
 
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
 # Project-specific
 backup/
 node_modules/
-.env
-.env.local
+scripts/
 
 # Vue.js
 web/vue3/node_modules/
@@ -67,3 +74,12 @@ web/vue3/dist/
 .editorconfig
 .eslintrc*
 .prettierrc*
+
+# CI/CD (build in GitHub Actions)
+.github/
+
+# Documentation (not needed in Docker image)
+README*.md
+CHANGELOG*.md
+*.txt
+docs/

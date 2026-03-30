@@ -211,13 +211,12 @@ class FundService:
         if funds_data and total_amount > 0:
             _compute_target_allocations(funds_data, total_amount)
 
-        # 应用排名加分
-        try:
-            from src.scoring import apply_ranking_bonus
-
-            funds_data = apply_ranking_bonus(funds_data)
-        except Exception as e:
-            logger.warning(f"Failed to apply ranking bonus: {e}")
+        # 评分仅为8维度之和，不使用排名加分
+        # try:
+        #     from src.scoring import apply_ranking_bonus
+        #     funds_data = apply_ranking_bonus(funds_data)
+        # except Exception as e:
+        #     logger.warning(f"Failed to apply ranking bonus: {e}")
 
         # 生成投资建议
         advice = generate_advice(funds_data)

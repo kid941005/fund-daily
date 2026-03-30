@@ -7,14 +7,14 @@
 [![Python](https://img.shields.io/badge/python-3.11+-green)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/fastapi-0.100+-blue)](https://fastapi.tiangolo.com/)
 [![Vue](https://img.shields.io/badge/vue-3.3-green)](https://vuejs.org/)
-[![Tests](https://img.shields.io/badge/tests-221-green)](https://github.com/kid941005/fund-daily)
+[![Tests](https://img.shields.io/badge/tests-268-green)](https://github.com/kid941005/fund-daily)
 [![Docker](https://img.shields.io/badge/docker-ready-blue)](https://www.docker.com/)
 
 ## ✨ 特性
 
 - 📊 **基金数据分析** - 实时获取基金净值、收益率、市场情绪
 - 💼 **持仓管理** - 支持手动添加、OCR 截图导入、一键清仓
-- 🧠 **智能评分系统** - 8维度综合评分（估值、业绩、风险、动量、情绪、板块、经理、流动性）
+- 🧠 **智能评分系统** - 8维度综合评分 + 量化择时信号统一
 - 🔍 **量化分析** - 动量信号、动态权重、投资组合优化
 - 📝 **OCR 识别** - 智能解析基金截图，快速导入持仓
 - 📈 **定时任务** - 自动净值更新、评分计算、缓存预热
@@ -102,7 +102,7 @@ fund-daily/
 │   ├── holdings.py         # 持仓 CRUD
 │   └── fund_ops.py         # 基金数据操作
 │
-├── tests/                    # 单元测试 (221)
+├── tests/                    # 单元测试 (268)
 │
 ├── nginx/                    # Nginx 配置
 │
@@ -278,7 +278,7 @@ pytest tests/test_scoring.py -v
 - **缓存**: Redis + 内存缓存 (LRU)
 - **认证**: JWT (python-jose) + PBKDF2 密码哈希
 - **定时任务**: APScheduler + Redis 分布式锁
-- **测试**: pytest (289 测试用例)
+- **测试**: pytest (268 测试用例)
 - **CI/CD**: GitHub Actions
 - **容器化**: Docker + Docker Compose
 
@@ -324,6 +324,13 @@ pytest tests/test_scoring.py -v
 | `FUND_DAILY_CORS_ORIGINS` | * | CORS 白名单（生产环境应配置） |
 
 ## 📝 更新日志
+
+### v2.7.17 (2026-03-30) - OCR 打包 + 评分系统优化
+- ✅ OCR 依赖完整打包进 Docker 镜像（easyocr、opencv-python-headless、scipy 等）
+- ✅ 评分分布图与量化板块评分系统统一（使用 timing_signals 评分）
+- ✅ Docker 镜像重新构建，包含所有 OCR 依赖
+- ✅ .gitignore 和 .dockerignore 完善
+- ✅ 修复 python-bidi 版本兼容性问题
 
 ### v2.7.10 (2026-03-27) - Docker 配置修复
 - ✅ 补全 .env 缺失变量 (POSTGRES_PASSWORD, REDIS_PASSWORD, REDIS_DB, FUND_DAILY_DB_PASSWORD)
