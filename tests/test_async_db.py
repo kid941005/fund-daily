@@ -74,8 +74,6 @@ async def async_user_db(async_db):
 
 # ==================== AsyncDatabase 测试 ====================
 
-import pytest
-
 # Skip entire module: src.db.async_database was deleted (removed in v2.7.17)
 pytestmark = pytest.mark.skip(reason="src.db.async_database was removed in v2.7.17")
 
