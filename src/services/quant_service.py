@@ -35,18 +35,17 @@ class QuantService:
     def _get_holdings_advice(self, holdings: List[Dict], user_id: Optional[str]) -> Dict:
         """Get cached holdings advice or compute it. Ensures consistent scores within a request."""
         # Check if cached for the same user
-        if (self._holdings_advice_cache is not None and 
-            self._holdings_advice_user_id == user_id):
+        if self._holdings_advice_cache is not None and self._holdings_advice_user_id == user_id:
             logger.debug("Using cached holdings advice")
             return self._holdings_advice_cache
-        
+
         # Compute fresh advice
         advice = self.fund_service.calculate_holdings_advice(holdings)
-        
+
         # Cache it
         self._holdings_advice_cache = advice
         self._holdings_advice_user_id = user_id
-        
+
         return advice
 
     def _fetch_user_holdings(self, user_id: Optional[str]) -> List[Dict]:

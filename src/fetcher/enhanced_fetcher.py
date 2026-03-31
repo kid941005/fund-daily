@@ -5,7 +5,7 @@
 
 import logging
 from datetime import date, datetime
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from .fund_basic.basic import fetch_fund_data as original_fetch_fund_data
 from .fund_basic.basic import fetch_fund_detail as original_fetch_fund_detail
@@ -302,6 +302,21 @@ class EnhancedFetcher:
         except Exception as e:
             logger.error(f"更新基金数据失败: {fund_code}, {e}")
             return False
+
+    def fetch_nav_history(self, fund_code: str, days: int = 30) -> List[Dict]:
+        """
+        获取基金净值历史
+
+        Args:
+            fund_code: 基金代码
+            days: 历史天数
+
+        Returns:
+            净值历史记录列表
+        """
+        from src.fetcher.fund_basic.basic import fetch_fund_nav_history
+
+        return fetch_fund_nav_history(fund_code, days=days)
 
 
 # 全局实例

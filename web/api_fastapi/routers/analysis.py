@@ -52,25 +52,25 @@ async def get_portfolio_analysis(request: Request):
         quant_service = get_quant_service()
         optimize_result = quant_service.optimize_portfolio(user_id)
         allocations = optimize_result.get("allocations", [])
-        
+
         if not allocations:
             return {"success": False, "error": "无持仓数据", "analysis": None}
-        
+
         # Get holdings advice from cache for 8-dimension details
         holdings_advice = quant_service._holdings_advice_cache
-        
+
         # Build funds with scores from optimize_portfolio (ensures consistency)
         funds = []
         holdings_map = {}
         if holdings_advice:
             for f in holdings_advice.get("funds", []):
                 holdings_map[f.get("fund_code")] = f
-        
+
         for a in allocations:
             fund_code = a.get("fund_code")
             holdings_fund = holdings_map.get(fund_code, {})
             score_100 = holdings_fund.get("score_100", {})
-            
+
             fund = {
                 "fund_code": fund_code,
                 "fund_name": a.get("fund_name", holdings_fund.get("fund_name", f"基金{fund_code}")),
@@ -84,7 +84,7 @@ async def get_portfolio_analysis(request: Request):
                 },
             }
             funds.append(fund)
-        
+
         # Calculate risk metrics
         if holdings_advice:
             risk_level = holdings_advice.get("risk_level", "未知")
@@ -98,7 +98,7 @@ async def get_portfolio_analysis(request: Request):
             avg_return_1y = 0
             diversification = "一般"
             total_amount = sum(a.get("weight", 0) for a in allocations)
-        
+
         analysis = {
             "risk_level": risk_level,
             "risk_score": round(risk_score, 1),

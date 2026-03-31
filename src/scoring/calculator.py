@@ -30,7 +30,7 @@ def calculate_total_score(
     daily_change: float,
     fund_data: Dict = None,
     fund_code: str = "",
-    use_cache: bool = True,
+    use_cache: bool = False,
 ) -> Dict:
     """
     计算基金综合评分（100分制）

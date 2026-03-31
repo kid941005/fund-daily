@@ -126,7 +126,7 @@ def get_fund_detail_info(code: str, use_cache: bool = True) -> Dict:
         return {"error": str(e), "fund_code": code}
 
 
-def generate_100_score(fund_code: str, daily_change: float = 0.0, use_cache: bool = True) -> Dict:
+def generate_100_score(fund_code: str, daily_change: float = 0.0, use_cache: bool = False) -> Dict:
     """Generate 100-point score using unified scoring service"""
     try:
         from src.services.score_service import get_score_service

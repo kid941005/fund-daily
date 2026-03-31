@@ -52,9 +52,9 @@ def score_calculation_handler(context: TaskContext) -> Dict[str, Any]:
     results = {"calculated": 0, "errors": [], "scores": {}}
 
     try:
-        from src.scoring.manager import ScoreManager
+        from src.services.score_service import get_score_service
 
-        scorer = ScoreManager.get_instance()
+        service = get_score_service()
     except ImportError as e:
         logger.error(f"Failed to get ScoreManager: {e}")
         return {"error": f"Import error: {e}"}
@@ -68,7 +68,7 @@ def score_calculation_handler(context: TaskContext) -> Dict[str, Any]:
 
         try:
             # Calculate score
-            score_data = scorer.calculate_fund_score(code, use_cache=not force)
+            score_data = service.calculate_score(code, use_cache=not force)
 
             if score_data:
                 results["calculated"] += 1

@@ -3,9 +3,9 @@
 Check all code quality issues - lint, type check, and tests.
 Used in CI/CD pipeline.
 """
+import os
 import subprocess
 import sys
-import os
 
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Move to project root
 

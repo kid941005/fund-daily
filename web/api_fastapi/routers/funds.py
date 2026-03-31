@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from db import database_pg as db
 from src.advice import analyze_fund, generate_100_score, get_fund_detail_info
 from src.error import ErrorCode, create_error_response
-from src.fetcher import fetch_fund_data
+from src.fetcher import fetch_fund_data_enhanced as fetch_fund_data
 from src.jwt_auth import verify_access_token
 from web.api_fastapi.middleware.rate_limiter import check_rate_limit
 

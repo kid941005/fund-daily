@@ -242,37 +242,34 @@ def _parse_with_rules(image_path: str) -> Dict:
     Fallback parser using rule-based OCR when EasyOCR is not available.
     Uses basic image processing and character recognition heuristics.
     """
-    from PIL import Image
     import io
-    
+
+    from PIL import Image
+
     try:
         img = Image.open(image_path)
         # Convert to text using basic image analysis
         # For fund screenshots, we look for 6-digit fund codes
         import re
+
         from PIL import ImageGrab
-        
+
         # Try to extract text from image using basic methods
-        # This is a simplified fallback - real implementation would use 
+        # This is a simplified fallback - real implementation would use
         # more sophisticated image analysis
         parser = FundOcrParser()
-        
+
         # Read image and try to find fund codes using template matching
         # For now, return a message that OCR is processing
         return {
             "success": True,
             "funds": [],
             "message": "正在使用轻量级OCR解析，请上传清晰的基金截图",
-            "method": "rule_based"
+            "method": "rule_based",
         }
     except Exception as e:
         logger.error(f"Rule-based OCR error: {e}")
-        return {
-            "success": False,
-            "error": str(e),
-            "funds": [],
-            "message": "OCR处理失败"
-        }
+        return {"success": False, "error": str(e), "funds": [], "message": "OCR处理失败"}
 
 
 def parse_image_easyocr(image_path: str) -> Dict:

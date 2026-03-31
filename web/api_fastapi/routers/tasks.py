@@ -275,3 +275,7 @@ async def submit_cache_warmup_task(request: CacheWarmupRequest):
     )
 
     return TaskSubmitResponse(task_id=task_id, status="pending", message="Cache warmup task submitted")
+
+
+# Import handlers to register them
+from src.tasks import handlers  # noqa: E402,F401

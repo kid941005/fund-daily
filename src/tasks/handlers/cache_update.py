@@ -152,10 +152,10 @@ def _warmup_analysis_cache(cache_mgr, code: str):
 def _warmup_score_cache(cache_mgr, code: str):
     """Warmup score cache"""
     try:
-        from src.scoring.manager import ScoreManager
+        from src.services.score_service import get_score_service
 
-        scorer = ScoreManager.get_instance()
-        score = scorer.calculate_fund_score(code)
+        service = get_score_service()
+        score = service.calculate_score(code, use_cache=False)
         return score is not None
     except Exception:
         return False
