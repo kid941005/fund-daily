@@ -2,7 +2,7 @@
 import json
 import logging
 import warnings
-from typing import Any, Optional
+from typing import Any
 
 from src.config import get_config
 
@@ -41,7 +41,7 @@ def get_redis_client():
     return _redis_client
 
 
-def redis_get(key: str) -> Optional[Any]:
+def redis_get(key: str) -> Any | None:
     """从 Redis 获取值"""
     client = get_redis_client()
     if client is None:
@@ -290,7 +290,7 @@ def redis_clear() -> bool:
 # 注意：以下函数已废弃，请使用 CacheManager
 
 
-def get_cache(key: str) -> Optional[Any]:
+def get_cache(key: str) -> Any | None:
     """【已废弃】获取缓存（请使用 CacheManager.get()）"""
     warnings.warn("get_cache() is deprecated, use CacheManager.get() instead", DeprecationWarning, stacklevel=2)
     # 优先从 Redis 获取

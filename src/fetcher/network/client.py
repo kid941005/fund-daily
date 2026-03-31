@@ -6,7 +6,6 @@ import logging
 import ssl
 import urllib.error
 import urllib.request
-from typing import Optional
 
 from src.config import get_config
 
@@ -25,7 +24,7 @@ def _get_ssl_context() -> ssl.SSLContext:
     return ctx
 
 
-def _make_request(url: str, timeout: int = 10) -> Optional[str]:
+def _make_request(url: str, timeout: int = 10) -> str | None:
     """Make HTTP request with error handling and rate limiting"""
     # 使用线程安全的速率限制器
     from src.utils.rate_limiter import wait_if_needed

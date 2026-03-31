@@ -4,7 +4,6 @@ Fund Advanced Fetcher Functions
 
 import logging
 import re
-from typing import Dict, List, Optional
 
 from src.utils import cache_keys
 
@@ -14,7 +13,7 @@ from ..network import _make_request
 logger = logging.getLogger(__name__)
 
 
-def calculate_technical_from_history(closes: List[float]) -> Dict:
+def calculate_technical_from_history(closes: list[float]) -> dict:
     """
     Calculate technical indicators from historical NAV data
 
@@ -43,7 +42,7 @@ def calculate_technical_from_history(closes: List[float]) -> Dict:
     return {"ma5": ma5, "ma10": ma10, "ma20": ma20, "macd": macd, "rsi": rsi}
 
 
-def fetch_fund_manager(fund_code: str) -> Optional[Dict]:
+def fetch_fund_manager(fund_code: str) -> dict | None:
     """
     Fetch fund manager information
 

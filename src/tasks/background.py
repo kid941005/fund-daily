@@ -8,7 +8,7 @@ import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from .models import TaskContext, TaskInfo, TaskStatus
 
@@ -51,7 +51,7 @@ class BackgroundTaskManager:
         self._max_concurrent = max_concurrent or self.DEFAULT_MAX_CONCURRENT
         self._task_ttl = self.DEFAULT_TASK_TTL
         self._executor = ThreadPoolExecutor(max_workers=self._max_concurrent)
-        self._running_tasks: Dict[str, threading.Event] = {}
+        self._running_tasks: dict[str, threading.Event] = {}
         self._running_lock = threading.Lock()
 
         # Import registry
@@ -112,7 +112,7 @@ class BackgroundTaskManager:
         if redis is None:
             # Memory fallback - store in instance dict
             if not hasattr(self, "_memory_tasks"):
-                self._memory_tasks: Dict[str, TaskInfo] = {}
+                self._memory_tasks: dict[str, TaskInfo] = {}
             self._memory_tasks[task_info.task_id] = task_info
             return True
 
@@ -137,7 +137,7 @@ class BackgroundTaskManager:
             self._memory_tasks[task_info.task_id] = task_info
             return False
 
-    def _load_task(self, task_id: str) -> Optional[TaskInfo]:
+    def _load_task(self, task_id: str) -> TaskInfo | None:
         """Load task from Redis or memory"""
         redis = self._get_redis()
 
@@ -162,7 +162,7 @@ class BackgroundTaskManager:
 
         return None
 
-    def _get_all_task_ids(self) -> List[str]:
+    def _get_all_task_ids(self) -> list[str]:
         """Get all task IDs"""
         redis = self._get_redis()
 
@@ -177,7 +177,7 @@ class BackgroundTaskManager:
             logger.error(f"❌ Failed to get task list: {e}")
             return []
 
-    def submit(self, task_type: str, params: Dict[str, Any] = None, user_id: str = None) -> str:
+    def submit(self, task_type: str, params: dict[str, Any] = None, user_id: str = None) -> str:
         """
         Submit a new task
 
@@ -291,13 +291,13 @@ class BackgroundTaskManager:
                 task_info.message = message
             self._save_task(task_info)
 
-    def get_task(self, task_id: str) -> Optional[TaskInfo]:
+    def get_task(self, task_id: str) -> TaskInfo | None:
         """Get task information"""
         return self._load_task(task_id)
 
     def list_tasks(
         self, status: TaskStatus = None, task_type: str = None, limit: int = 100, offset: int = 0
-    ) -> List[TaskInfo]:
+    ) -> list[TaskInfo]:
         """List tasks with optional filters"""
         task_ids = self._get_all_task_ids()
         tasks = []
@@ -358,7 +358,7 @@ class BackgroundTaskManager:
         """Get number of currently running tasks"""
         return len(self._running_tasks)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get task manager statistics"""
         all_tasks = self.list_tasks(limit=10000)
 

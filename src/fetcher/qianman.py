@@ -4,7 +4,6 @@
 """
 
 import logging
-from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +11,7 @@ logger = logging.getLogger(__name__)
 QIANMAN_BASE = "https://qieman.com"
 
 
-def fetch_portfolio_list() -> List[Dict]:
+def fetch_portfolio_list() -> list[dict]:
     """
     获取且慢上的基金组合列表
 
@@ -49,7 +48,7 @@ def fetch_portfolio_list() -> List[Dict]:
     return []
 
 
-def fetch_portfolio_detail(portfolio_id: str) -> Dict:
+def fetch_portfolio_detail(portfolio_id: str) -> dict:
     """
     获取组合详情
 
@@ -85,7 +84,7 @@ def fetch_portfolio_detail(portfolio_id: str) -> Dict:
     return {"success": False}
 
 
-def fetch_fund_advisor() -> List[Dict]:
+def fetch_fund_advisor() -> list[dict]:
     """
     获取基金投顾策略
 

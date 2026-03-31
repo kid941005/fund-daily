@@ -4,7 +4,6 @@ Fund Basic Fetcher Functions
 
 import json
 import logging
-from typing import Dict, List
 
 from src.utils import cache_keys
 from src.utils.error_handling import handle_network_errors
@@ -15,7 +14,7 @@ from ..network import _make_request
 logger = logging.getLogger(__name__)
 
 
-def fetch_fund_data(fund_code: str, use_cache: bool = True) -> Dict:
+def fetch_fund_data(fund_code: str, use_cache: bool = True) -> dict:
     """
     Fetch fund data from East Money
 
@@ -80,7 +79,7 @@ def fetch_fund_data(fund_code: str, use_cache: bool = True) -> Dict:
         return {"error": "获取数据失败"}
 
 
-def _fetch_fund_returns(fund_code: str) -> Dict:
+def _fetch_fund_returns(fund_code: str) -> dict:
     """
     Fetch fund return data (syl_1n, syl_3y, etc.) from pingzhongdata API
 
@@ -130,7 +129,7 @@ def _fetch_fund_returns(fund_code: str) -> Dict:
         return {}
 
 
-def fetch_fund_detail(fund_code: str) -> Dict:
+def fetch_fund_detail(fund_code: str) -> dict:
     """
     Fetch detailed fund information
 
@@ -231,7 +230,7 @@ def fetch_fund_detail(fund_code: str) -> Dict:
 
 @handle_network_errors
 @handle_network_errors
-def fetch_fund_nav_history(fund_code: str, days: int = 30) -> List[Dict]:
+def fetch_fund_nav_history(fund_code: str, days: int = 30) -> list[dict]:
     """
     Fetch fund NAV history from East Money API
 
@@ -302,7 +301,7 @@ def fetch_fund_nav_history(fund_code: str, days: int = 30) -> List[Dict]:
                                         "change_percent": change_percent,
                                     }
                                 )
-                            except (ValueError, IndexError) as e:
+                            except (ValueError, IndexError):
                                 logger.warning(f"Failed to parse row: {self.current_row}")
                         self.current_row = []
                         self.td_count = 0

@@ -6,8 +6,9 @@
 """
 
 import logging
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ def handle_errors(
     default_return: Any = None,
     log_level: str = "error",
     raise_exception: bool = False,
-    exception_types: Optional[tuple] = None,
+    exception_types: tuple | None = None,
 ):
     """
     错误处理装饰器
@@ -144,7 +145,7 @@ def retry_on_failure(
     return decorator
 
 
-def safe_execute(func: Callable, *args, default_return: Any = None, log_message: Optional[str] = None, **kwargs) -> Any:
+def safe_execute(func: Callable, *args, default_return: Any = None, log_message: str | None = None, **kwargs) -> Any:
     """
     安全执行函数，捕获异常并返回默认值
 

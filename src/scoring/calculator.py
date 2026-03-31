@@ -4,7 +4,6 @@
 """
 
 import logging
-from typing import Dict, List, Optional
 
 from src.utils.error_handling import handle_errors
 
@@ -17,21 +16,21 @@ logger = logging.getLogger(__name__)
 
 
 def calculate_total_score(
-    fund_detail: Dict,
-    risk_metrics: Dict,
+    fund_detail: dict,
+    risk_metrics: dict,
     market_sentiment: str,
     market_score: int,
-    news: List[Dict],
-    hot_sectors: List[Dict],
+    news: list[dict],
+    hot_sectors: list[dict],
     commodity_sentiment: str,
-    fund_manager: Optional[Dict],
+    fund_manager: dict | None,
     fund_type: str,
     fund_scale: float,
     daily_change: float,
-    fund_data: Dict = None,
+    fund_data: dict = None,
     fund_code: str = "",
     use_cache: bool = False,
-) -> Dict:
+) -> dict:
     """
     计算基金综合评分（100分制）
     """
@@ -151,7 +150,7 @@ def calculate_total_score(
 
 
 @handle_errors(default_return="[评分报告生成失败]", log_level="warning")
-def format_score_report(scoring_result: Dict) -> str:
+def format_score_report(scoring_result: dict) -> str:
     """格式化评分报告"""
     details = scoring_result["details"]
     dimension_scores = sum(detail.get("score", 0) for detail in details.values())
@@ -189,7 +188,7 @@ def format_score_report(scoring_result: Dict) -> str:
 
 
 @handle_errors(default_return=None, log_level="warning")
-def apply_ranking_bonus(funds: List[Dict]) -> List[Dict]:
+def apply_ranking_bonus(funds: list[dict]) -> list[dict]:
     """
     根据持仓内排名加分，拉开分数差距
     """
@@ -233,7 +232,7 @@ def apply_ranking_bonus(funds: List[Dict]) -> List[Dict]:
     return funds
 
 
-def calculate_score_v2(input_data: ScoreInput) -> Dict:
+def calculate_score_v2(input_data: ScoreInput) -> dict:
     """
     新版评分函数，使用ScoreInput数据类封装参数
     """

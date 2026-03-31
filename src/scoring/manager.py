@@ -3,10 +3,9 @@
 """
 
 import re
-from typing import Dict, Optional
 
 
-def calculate_manager_score(fund_manager: Optional[Dict]) -> Dict:
+def calculate_manager_score(fund_manager: dict | None) -> dict:
     """
     基金经理评分 (满分4分)
     """

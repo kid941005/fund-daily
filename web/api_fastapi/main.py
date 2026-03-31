@@ -26,9 +26,9 @@ logger = logging.getLogger(__name__)
 
 def get_version():
     """Read version from VERSION file"""
-    VERSION_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "VERSION")
-    if os.path.exists(VERSION_FILE):
-        with open(VERSION_FILE, "r") as f:
+    version_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "VERSION")
+    if os.path.exists(version_file):
+        with open(version_file) as f:
             return f.read().strip() or "2.6.0"
     return "2.6.0"
 
@@ -39,7 +39,7 @@ VERSION = get_version()
 config = get_config()
 
 # Initialize database（懒加载，失败不阻塞启动）
-from db import database_pg as db
+from db import database_pg as db  # noqa: E402
 
 try:
     db.init_db()
@@ -102,7 +102,7 @@ async def log_requests(request: Request, call_next):
 
 
 # Error handlers
-from web.api_fastapi.middleware.error_handler import (
+from web.api_fastapi.middleware.error_handler import (  # noqa: E402
     APIException,
     generic_exception_handler,
     http_exception_handler,
@@ -147,7 +147,18 @@ async def shutdown_event():
 
 
 # Include routers
-from web.api_fastapi.routers import analysis, auth, external, funds, health, holdings, quant, scheduler, system, tasks
+from web.api_fastapi.routers import (  # noqa: E402
+    analysis,
+    auth,
+    external,
+    funds,
+    health,
+    holdings,
+    quant,
+    scheduler,
+    system,
+    tasks,
+)
 
 app.include_router(auth.router)
 app.include_router(funds.router)
@@ -182,7 +193,7 @@ async def export_holdings(request: Request):
         code = h.get("code")
         from src.fetcher import fetch_fund_data
 
-        fund_data = fetch_fund_data(code)
+        fetch_fund_data(code)
         from src.advice import get_fund_detail_info
 
         detail = get_fund_detail_info(code) if code else {}

@@ -4,7 +4,6 @@ Handles authentication (Session + JWT)
 """
 
 import logging
-from typing import Optional, Tuple
 
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -27,7 +26,7 @@ class AuthenticatedUser:
         self.auth_method = auth_method
 
 
-def _get_token_from_request(request: Request) -> Optional[str]:
+def _get_token_from_request(request: Request) -> str | None:
     """Extract token from request (header or cookie)"""
     # Try Authorization header first
     auth_header = request.headers.get("Authorization", "")
@@ -38,7 +37,7 @@ def _get_token_from_request(request: Request) -> Optional[str]:
     return request.cookies.get("access_token")
 
 
-def _get_user_from_jwt(request: Request) -> Tuple[bool, Optional[dict], Optional[str]]:
+def _get_user_from_jwt(request: Request) -> tuple[bool, dict | None, str | None]:
     """Verify JWT token and return payload"""
     token = _get_token_from_request(request)
     if not token:
@@ -47,7 +46,7 @@ def _get_user_from_jwt(request: Request) -> Tuple[bool, Optional[dict], Optional
     return verify_access_token(token)
 
 
-def _get_user_from_session(request: Request) -> Tuple[bool, Optional[str], Optional[str]]:
+def _get_user_from_session(request: Request) -> tuple[bool, str | None, str | None]:
     """Get user from session cookie"""
     user_id = request.cookies.get("session")
     if not user_id:
@@ -83,7 +82,7 @@ async def get_current_user(request: Request) -> AuthenticatedUser:
     )
 
 
-async def get_current_user_optional(request: Request) -> Optional[AuthenticatedUser]:
+async def get_current_user_optional(request: Request) -> AuthenticatedUser | None:
     """
     Get current user if authenticated, otherwise return None.
     Does not raise exception for unauthenticated requests.

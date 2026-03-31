@@ -3,13 +3,12 @@
 """
 
 import concurrent.futures
-import json
 import os
 import random
 import sys
 import threading
 import time
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -169,7 +168,6 @@ class TestConcurrentAccess:
 
     def test_concurrent_reads(self):
         """测试并发读取"""
-        import threading
 
         from db import get_fund_info, save_fund_info
 

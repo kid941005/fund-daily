@@ -3,8 +3,8 @@ Prometheus Metrics Collectors
 """
 
 import time
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable
 
 # Lazy import to avoid hard dependency
 _metrics = None

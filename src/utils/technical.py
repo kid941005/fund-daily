@@ -3,22 +3,21 @@
 提供 MA、MACD、RSI 等技术分析工具
 """
 
-from typing import Dict, List, Optional
 
 
-def calculate_ma(closes: List[float], period: int) -> Optional[float]:
+def calculate_ma(closes: list[float], period: int) -> float | None:
     """计算移动平均线"""
     if len(closes) < period:
         return None
     return sum(closes[-period:]) / period
 
 
-def calculate_macd(closes: List[float]) -> Dict:
+def calculate_macd(closes: list[float]) -> dict:
     """计算 MACD 指标"""
     if len(closes) < 26:
         return {"macd": 0, "signal": 0, "histogram": 0, "trend": "unknown"}
 
-    def ema(data: List[float], period: int) -> List[float]:
+    def ema(data: list[float], period: int) -> list[float]:
         ema_values = []
         multiplier = 2 / (period + 1)
         for i, price in enumerate(data):
@@ -49,7 +48,7 @@ def calculate_macd(closes: List[float]) -> Dict:
     }
 
 
-def calculate_rsi(closes: List[float], period: int = 14) -> Optional[float]:
+def calculate_rsi(closes: list[float], period: int = 14) -> float | None:
     """计算 RSI 指标"""
     if len(closes) < period + 1:
         return None

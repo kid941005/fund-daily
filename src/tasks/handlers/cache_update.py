@@ -5,7 +5,7 @@ Handles cache warmup and update tasks.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from ..models import TaskContext, TaskType
 from ..task_registry import register_task
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 @register_task(
     task_type=TaskType.CACHE_WARM, name="缓存预热", description="预热常用数据的缓存", max_concurrent=1, timeout=600
 )
-def cache_warmup_handler(context: TaskContext) -> Dict[str, Any]:
+def cache_warmup_handler(context: TaskContext) -> dict[str, Any]:
     """
     Handle cache warmup tasks
 
@@ -50,7 +50,7 @@ def cache_warmup_handler(context: TaskContext) -> Dict[str, Any]:
         else:
             holdings = db.get_all_holdings()
 
-        codes = list(set([h.get("code") for h in holdings if h.get("code")]))
+        codes = list({h.get("code") for h in holdings if h.get("code")})
 
     except Exception as e:
         logger.error(f"Failed to get holdings: {e}")

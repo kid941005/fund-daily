@@ -4,14 +4,13 @@
 """
 
 import logging
-from typing import Dict, List, Tuple
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
 
-def calculate_returns_volatility(funds: List[Dict]) -> Tuple[np.ndarray, np.ndarray]:
+def calculate_returns_volatility(funds: list[dict]) -> tuple[np.ndarray, np.ndarray]:
     """
     计算基金收益率和波动率
 
@@ -49,7 +48,7 @@ def calculate_returns_volatility(funds: List[Dict]) -> Tuple[np.ndarray, np.ndar
     return np.array(returns), np.array(volatilities)
 
 
-def optimize_portfolio(funds: List[Dict], target_return: float = None) -> Dict:
+def optimize_portfolio(funds: list[dict], target_return: float = None) -> dict:
     """
     组合优化 - 最大化夏普比率
 
@@ -104,7 +103,7 @@ def optimize_portfolio(funds: List[Dict], target_return: float = None) -> Dict:
     }
 
 
-def calculate_efficient_frontier(funds: List[Dict], num_points: int = 10) -> List[Dict]:
+def calculate_efficient_frontier(funds: list[dict], num_points: int = 10) -> list[dict]:
     """
     计算有效前沿曲线上的点
 

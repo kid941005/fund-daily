@@ -5,7 +5,7 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 from src.utils.error_handling import handle_errors
 
@@ -35,7 +35,7 @@ class ScoreService:
         return self._config
 
     @handle_errors(default_return={"total_score": 0.0, "grade": "N/A", "error": True}, log_level="error")
-    def calculate_score(self, fund_code: str, use_cache: bool = False) -> Dict[str, Any]:
+    def calculate_score(self, fund_code: str, use_cache: bool = False) -> dict[str, Any]:
         """计算基金评分（兼容旧接口）"""
         from src.analyzer import get_enhanced_market_sentiment
         from src.cache.manager import get_cache_manager
@@ -161,7 +161,7 @@ class ScoreService:
 
         return formatted
 
-    def batch_calculate_scores(self, fund_codes: List[str]) -> Dict[str, Dict[str, Any]]:
+    def batch_calculate_scores(self, fund_codes: list[str]) -> dict[str, dict[str, Any]]:
         """批量计算评分（兼容旧接口）"""
         results = {}
         for code in fund_codes:

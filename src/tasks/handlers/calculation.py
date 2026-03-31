@@ -5,7 +5,7 @@ Handles batch calculation tasks like score calculation.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from ..models import TaskContext, TaskType
 from ..task_registry import register_task
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 @register_task(
     task_type=TaskType.SCORE_CALC, name="评分计算", description="批量计算基金评分", max_concurrent=2, timeout=3600
 )
-def score_calculation_handler(context: TaskContext) -> Dict[str, Any]:
+def score_calculation_handler(context: TaskContext) -> dict[str, Any]:
     """
     Handle score calculation tasks
 
@@ -40,7 +40,7 @@ def score_calculation_handler(context: TaskContext) -> Dict[str, Any]:
                 holdings = db.get_holdings(user_id)
             else:
                 holdings = db.get_all_holdings()
-            codes = list(set([h.get("code") for h in holdings if h.get("code")]))
+            codes = list({h.get("code") for h in holdings if h.get("code")})
         except Exception as e:
             logger.error(f"Failed to get fund codes: {e}")
             codes = []
@@ -92,7 +92,7 @@ def score_calculation_handler(context: TaskContext) -> Dict[str, Any]:
 @register_task(
     task_type=TaskType.BATCH_IMPORT, name="批量导入", description="批量导入基金数据", max_concurrent=1, timeout=1800
 )
-def batch_import_handler(context: TaskContext) -> Dict[str, Any]:
+def batch_import_handler(context: TaskContext) -> dict[str, Any]:
     """
     Handle batch import tasks
 
@@ -105,7 +105,7 @@ def batch_import_handler(context: TaskContext) -> Dict[str, Any]:
         Result dictionary with import results
     """
     source = context.params.get("source", "xueqiu")  # xueqiu, alipay, csv
-    user_id = context.params.get("user_id")
+    context.params.get("user_id")
     file_path = context.params.get("file_path")
 
     results = {"imported": 0, "skipped": 0, "errors": []}
@@ -124,7 +124,7 @@ def batch_import_handler(context: TaskContext) -> Dict[str, Any]:
     return results
 
 
-def _import_from_xueqiu(context: TaskContext) -> Dict[str, Any]:
+def _import_from_xueqiu(context: TaskContext) -> dict[str, Any]:
     """Import data from Xueqiu"""
     results = {"imported": 0, "skipped": 0, "errors": []}
 
@@ -173,7 +173,7 @@ def _import_from_xueqiu(context: TaskContext) -> Dict[str, Any]:
     return results
 
 
-def _import_from_alipay(context: TaskContext) -> Dict[str, Any]:
+def _import_from_alipay(context: TaskContext) -> dict[str, Any]:
     """Import data from Alipay"""
     results = {"imported": 0, "skipped": 0, "errors": []}
 
@@ -220,7 +220,7 @@ def _import_from_alipay(context: TaskContext) -> Dict[str, Any]:
     return results
 
 
-def _import_from_csv(context: TaskContext, file_path: str) -> Dict[str, Any]:
+def _import_from_csv(context: TaskContext, file_path: str) -> dict[str, Any]:
     """Import data from CSV file"""
     results = {"imported": 0, "skipped": 0, "errors": []}
 
@@ -231,7 +231,7 @@ def _import_from_csv(context: TaskContext, file_path: str) -> Dict[str, Any]:
     import csv
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             rows = list(reader)
 

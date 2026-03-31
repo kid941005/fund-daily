@@ -6,7 +6,7 @@ LRU缓存实现
 import logging
 import time
 from collections import OrderedDict
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class LRUCache:
             default_ttl: 默认过期时间（秒）
         """
         self._cache: OrderedDict = OrderedDict()
-        self._timestamps: Dict[str, float] = {}
+        self._timestamps: dict[str, float] = {}
         self.max_size = max_size
         self.default_ttl = default_ttl
 
@@ -40,7 +40,7 @@ class LRUCache:
         self._misses = 0
         self._evictions = 0
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """
         获取缓存值
 
@@ -68,7 +68,7 @@ class LRUCache:
         self._hits += 1
         return self._cache[key]
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> None:
         """
         设置缓存值
 
@@ -157,7 +157,7 @@ class LRUCache:
         """获取当前缓存大小"""
         return len(self._cache)
 
-    def stats(self) -> Dict[str, Any]:
+    def stats(self) -> dict[str, Any]:
         """
         获取缓存统计信息
 
@@ -177,7 +177,7 @@ class LRUCache:
             "total_requests": total,
         }
 
-    def get_stats(self) -> Dict[str, int]:
+    def get_stats(self) -> dict[str, int]:
         """获取统计信息"""
         return {
             "hits": self._hits,
@@ -206,7 +206,7 @@ class LRUCache:
 
 
 # 全局LRU缓存实例
-_lru_cache: Optional[LRUCache] = None
+_lru_cache: LRUCache | None = None
 
 
 def get_lru_cache(max_size: int = 1000, default_ttl: int = 600) -> LRUCache:
@@ -242,12 +242,12 @@ def create_lru_cache(max_size: int = 1000, default_ttl: int = 600) -> LRUCache:
 
 
 # 便捷函数
-def lru_get(key: str) -> Optional[Any]:
+def lru_get(key: str) -> Any | None:
     """从全局LRU缓存获取值"""
     return get_lru_cache().get(key)
 
 
-def lru_set(key: str, value: Any, ttl: Optional[int] = None) -> None:
+def lru_set(key: str, value: Any, ttl: int | None = None) -> None:
     """设置全局LRU缓存值"""
     get_lru_cache().set(key, value, ttl)
 
@@ -262,6 +262,6 @@ def lru_clear() -> None:
     get_lru_cache().clear()
 
 
-def lru_stats() -> Dict[str, Any]:
+def lru_stats() -> dict[str, Any]:
     """获取全局LRU缓存统计"""
     return get_lru_cache().stats()

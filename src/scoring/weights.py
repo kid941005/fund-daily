@@ -2,7 +2,6 @@
 评分权重管理模块
 """
 
-from typing import Dict, Tuple
 
 # 评分权重配置 - 100分制
 SCORE_WEIGHTS = {
@@ -18,7 +17,7 @@ SCORE_WEIGHTS = {
 # 总计: 25+20+15+15+10+8+4+3 = 100分
 
 
-def validate_weights() -> Tuple[bool, str]:
+def validate_weights() -> tuple[bool, str]:
     """
     校验权重配置是否合法
 
@@ -94,7 +93,7 @@ def get_weight(dim: str) -> float:
     return SCORE_WEIGHTS.get(dim, 0)
 
 
-def get_all_weights() -> Dict[str, float]:
+def get_all_weights() -> dict[str, float]:
     """获取所有权重配置"""
     return SCORE_WEIGHTS.copy()
 

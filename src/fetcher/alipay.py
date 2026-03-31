@@ -4,7 +4,6 @@
 """
 
 import logging
-from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +11,7 @@ logger = logging.getLogger(__name__)
 ALIPAY_BASE = "https://fund.alipay.com"
 
 
-def fetch_fund_detail_alipay(fund_code: str) -> Dict:
+def fetch_fund_detail_alipay(fund_code: str) -> dict:
     """
     从支付宝获取基金详细信息
 
@@ -67,7 +66,7 @@ def fetch_fund_detail_alipay(fund_code: str) -> Dict:
     return {"success": False, "fund_code": fund_code}
 
 
-def fetch_fund_ranking(fund_code: str, period: str = "1y") -> Dict:
+def fetch_fund_ranking(fund_code: str, period: str = "1y") -> dict:
     """
     获取基金业绩排名
 
@@ -104,7 +103,7 @@ def fetch_fund_ranking(fund_code: str, period: str = "1y") -> Dict:
     return {"success": False, "ranking": "暂无"}
 
 
-def get_fund_compare(fund_codes: list) -> List[Dict]:
+def get_fund_compare(fund_codes: list) -> list[dict]:
     """
     获取多只基金对比数据
 

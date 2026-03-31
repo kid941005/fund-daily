@@ -5,7 +5,6 @@
 
 import logging
 from datetime import date, datetime
-from typing import Dict, List, Optional
 
 from .fund_basic.basic import fetch_fund_data as original_fetch_fund_data
 from .fund_basic.basic import fetch_fund_detail as original_fetch_fund_detail
@@ -41,7 +40,7 @@ class EnhancedFetcher:
         self.db_fallback_hours = db_fallback_hours
         self.has_db = HAS_DB
 
-    def fetch_fund_data(self, fund_code: str, use_cache: bool = True, force_refresh: bool = False) -> Dict:
+    def fetch_fund_data(self, fund_code: str, use_cache: bool = True, force_refresh: bool = False) -> dict:
         """
         获取基金数据，优先从数据库
 
@@ -96,7 +95,7 @@ class EnhancedFetcher:
 
         return api_data
 
-    def fetch_fund_detail(self, fund_code: str, force_refresh: bool = False) -> Dict:
+    def fetch_fund_detail(self, fund_code: str, force_refresh: bool = False) -> dict:
         """
         获取基金详情，优先从数据库
 
@@ -181,7 +180,7 @@ class EnhancedFetcher:
 
         return api_data
 
-    def _get_fund_data_from_db(self, fund_code: str) -> Optional[Dict]:
+    def _get_fund_data_from_db(self, fund_code: str) -> dict | None:
         """从数据库获取基金数据"""
         if not self.has_db:
             return None
@@ -244,7 +243,7 @@ class EnhancedFetcher:
             logger.error(f"从数据库获取基金数据异常: {fund_code}, {e}")
             return None
 
-    def _save_fund_data_to_db(self, fund_code: str, api_data: Dict):
+    def _save_fund_data_to_db(self, fund_code: str, api_data: dict):
         """保存API数据到数据库"""
         if not self.has_db or not api_data or "error" in api_data:
             return
@@ -270,7 +269,7 @@ class EnhancedFetcher:
         except Exception as e:
             logger.error(f"保存基金数据到数据库失败: {fund_code}, {e}")
 
-    def _fetch_from_api_and_save(self, fund_code: str) -> Dict:
+    def _fetch_from_api_and_save(self, fund_code: str) -> dict:
         """从API获取数据并保存到数据库"""
         api_data = original_fetch_fund_data(fund_code, use_cache=False)
 
@@ -279,7 +278,7 @@ class EnhancedFetcher:
 
         return api_data
 
-    def get_fund_history(self, fund_code: str, days: int = 30) -> Dict:
+    def get_fund_history(self, fund_code: str, days: int = 30) -> dict:
         """获取基金历史数据"""
         if self.has_db:
             try:
@@ -303,7 +302,7 @@ class EnhancedFetcher:
             logger.error(f"更新基金数据失败: {fund_code}, {e}")
             return False
 
-    def fetch_nav_history(self, fund_code: str, days: int = 30) -> List[Dict]:
+    def fetch_nav_history(self, fund_code: str, days: int = 30) -> list[dict]:
         """
         获取基金净值历史
 
@@ -332,19 +331,19 @@ def get_enhanced_fetcher() -> EnhancedFetcher:
 
 
 # 兼容性函数
-def fetch_fund_data_enhanced(fund_code: str, use_cache: bool = True, force_refresh: bool = False) -> Dict:
+def fetch_fund_data_enhanced(fund_code: str, use_cache: bool = True, force_refresh: bool = False) -> dict:
     """增强版fetch_fund_data函数"""
     fetcher = get_enhanced_fetcher()
     return fetcher.fetch_fund_data(fund_code, use_cache, force_refresh)
 
 
-def fetch_fund_detail_enhanced(fund_code: str, force_refresh: bool = False) -> Dict:
+def fetch_fund_detail_enhanced(fund_code: str, force_refresh: bool = False) -> dict:
     """增强版fetch_fund_detail函数"""
     fetcher = get_enhanced_fetcher()
     return fetcher.fetch_fund_detail(fund_code, force_refresh)
 
 
-def get_fund_history_enhanced(fund_code: str, days: int = 30) -> Dict:
+def get_fund_history_enhanced(fund_code: str, days: int = 30) -> dict:
     """获取基金历史数据"""
     fetcher = get_enhanced_fetcher()
     return fetcher.get_fund_history(fund_code, days)

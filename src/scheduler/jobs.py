@@ -6,10 +6,11 @@ Each job class wraps a task handler with scheduling metadata.
 """
 
 import logging
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, TypeVar
+from typing import Any, TypeVar
 
 from src.tasks.models import TaskType
 
@@ -20,12 +21,12 @@ T = TypeVar("T")
 
 
 def batch_process(
-    items: List[T],
+    items: list[T],
     processor: Callable[[T], Any],
     batch_size: int = 10,
     max_workers: int = 5,
     progress_callback: Callable[[int, int], None] = None,
-) -> Dict[str, List[Any]]:
+) -> dict[str, list[Any]]:
     """
     分批处理任务
 
@@ -89,7 +90,7 @@ class JobMetadata:
         name: str,
         description: str,
         trigger_type: str,
-        trigger_args: Dict[str, Any],
+        trigger_args: dict[str, Any],
         func_ref: str,
         enabled: bool = True,
         misfire_grace_time: int = 60,
@@ -109,7 +110,7 @@ class JobMetadata:
 
 
 # Predefined job registry
-SCHEDULED_JOBS: Dict[str, JobMetadata] = {}
+SCHEDULED_JOBS: dict[str, JobMetadata] = {}
 
 
 def _register_job(meta: JobMetadata):
@@ -121,7 +122,7 @@ def _register_job(meta: JobMetadata):
 # ---- Job Definitions ----
 
 
-def _get_fund_codes(user_id: Optional[str] = None) -> List[str]:
+def _get_fund_codes(user_id: str | None = None) -> list[str]:
     """Get list of fund codes to process"""
     try:
         from db import database_pg as db
@@ -130,7 +131,7 @@ def _get_fund_codes(user_id: Optional[str] = None) -> List[str]:
             holdings = db.get_holdings(user_id)
         else:
             holdings = db.get_all_holdings()
-        codes = list(set([h.get("code") for h in holdings if h.get("code")]))
+        codes = list({h.get("code") for h in holdings if h.get("code")})
         return codes
     except Exception as e:
         logger.warning(f"Failed to get fund codes: {e}")
@@ -409,7 +410,7 @@ async def cleanup_old_data():
     try:
         from src.tasks.background import BackgroundTaskManager
 
-        task_mgr = BackgroundTaskManager.get_instance()
+        BackgroundTaskManager.get_instance()
         # This would need a cleanup method in the task manager
         # For now, just log
         logger.info("[Scheduler] Task cleanup skipped (not implemented)")
@@ -485,17 +486,17 @@ _register_job(
 )
 
 
-def get_scheduled_job(job_id: str) -> Optional[JobMetadata]:
+def get_scheduled_job(job_id: str) -> JobMetadata | None:
     """Get job metadata by ID"""
     return SCHEDULED_JOBS.get(job_id)
 
 
-def list_scheduled_jobs() -> Dict[str, JobMetadata]:
+def list_scheduled_jobs() -> dict[str, JobMetadata]:
     """List all registered scheduled jobs"""
     return dict(SCHEDULED_JOBS)
 
 
-def get_job_trigger_args(job_id: str) -> Dict[str, Any]:
+def get_job_trigger_args(job_id: str) -> dict[str, Any]:
     """Get trigger arguments for a job"""
     meta = SCHEDULED_JOBS.get(job_id)
     if meta:

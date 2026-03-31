@@ -4,7 +4,6 @@ External Data Router
 
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from typing import List
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
@@ -16,7 +15,7 @@ router = APIRouter(prefix="/api/external", tags=["外部数据"])
 
 
 class FundCompareRequest(BaseModel):
-    codes: List[str]
+    codes: list[str]
 
 
 @router.get("/hot-rank")

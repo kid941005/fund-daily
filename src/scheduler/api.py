@@ -6,7 +6,7 @@ Pydantic models for scheduler API requests and responses.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -34,26 +34,26 @@ class JobState(str, Enum):
 class JobRescheduleRequest(BaseModel):
     """Request to reschedule a job"""
 
-    trigger: Optional[str] = Field(None, description="Trigger type: date, interval, cron")
+    trigger: str | None = Field(None, description="Trigger type: date, interval, cron")
     # Cron fields
-    year: Optional[str] = Field(None, description="Year (4-digit)")
-    month: Optional[str] = Field(None, description="Month (1-12)")
-    day: Optional[str] = Field(None, description="Day of month (1-31)")
-    week: Optional[str] = Field(None, description="Week of year (1-53)")
-    day_of_week: Optional[str] = Field(None, description="Day of week (0-6 or mon-fri)")
-    hour: Optional[str] = Field(None, description="Hour (0-23)")
-    minute: Optional[str] = Field(None, description="Minute (0-59)")
-    second: Optional[str] = Field(None, description="Second (0-59)")
+    year: str | None = Field(None, description="Year (4-digit)")
+    month: str | None = Field(None, description="Month (1-12)")
+    day: str | None = Field(None, description="Day of month (1-31)")
+    week: str | None = Field(None, description="Week of year (1-53)")
+    day_of_week: str | None = Field(None, description="Day of week (0-6 or mon-fri)")
+    hour: str | None = Field(None, description="Hour (0-23)")
+    minute: str | None = Field(None, description="Minute (0-59)")
+    second: str | None = Field(None, description="Second (0-59)")
     # Date trigger
-    run_date: Optional[datetime] = Field(None, description="Run date for date trigger")
+    run_date: datetime | None = Field(None, description="Run date for date trigger")
     # Interval trigger
-    weeks: Optional[int] = Field(None, description="Weeks interval")
-    days: Optional[int] = Field(None, description="Days interval")
-    hours: Optional[int] = Field(None, description="Hours interval")
-    minutes: Optional[int] = Field(None, description="Minutes interval")
-    seconds: Optional[int] = Field(None, description="Seconds interval")
-    start_date: Optional[datetime] = Field(None, description="Start date for interval")
-    end_date: Optional[datetime] = Field(None, description="End date for interval")
+    weeks: int | None = Field(None, description="Weeks interval")
+    days: int | None = Field(None, description="Days interval")
+    hours: int | None = Field(None, description="Hours interval")
+    minutes: int | None = Field(None, description="Minutes interval")
+    seconds: int | None = Field(None, description="Seconds interval")
+    start_date: datetime | None = Field(None, description="Start date for interval")
+    end_date: datetime | None = Field(None, description="End date for interval")
 
 
 class JobRunRequest(BaseModel):
@@ -71,21 +71,21 @@ class JobResponse(BaseModel):
     id: str = Field(..., description="Job ID")
     name: str = Field(..., description="Job name/description")
     trigger: str = Field(..., description="Trigger type")
-    trigger_args: Dict[str, Any] = Field(default_factory=dict, description="Trigger arguments")
-    next_run_time: Optional[datetime] = Field(None, description="Next scheduled run time")
-    last_run_time: Optional[datetime] = Field(None, description="Last run time")
-    last_result: Optional[Any] = Field(None, description="Last execution result")
-    last_error: Optional[str] = Field(None, description="Last execution error")
+    trigger_args: dict[str, Any] = Field(default_factory=dict, description="Trigger arguments")
+    next_run_time: datetime | None = Field(None, description="Next scheduled run time")
+    last_run_time: datetime | None = Field(None, description="Last run time")
+    last_result: Any | None = Field(None, description="Last execution result")
+    last_error: str | None = Field(None, description="Last execution error")
     misfire_grace_time: int = Field(60, description="Misfire grace time in seconds")
     max_instances: int = Field(1, description="Max concurrent instances")
     coalesce: bool = Field(True, description="Coalesce missed runs")
     state: JobState = Field(JobState.PENDING, description="Job state")
-    func_ref: Optional[str] = Field(None, description="Function reference")
-    kwargs: Dict[str, Any] = Field(default_factory=dict, description="Job keyword arguments")
+    func_ref: str | None = Field(None, description="Function reference")
+    kwargs: dict[str, Any] = Field(default_factory=dict, description="Job keyword arguments")
     runs: int = Field(0, description="Total number of executions")
     successes: int = Field(0, description="Number of successful executions")
     errors: int = Field(0, description="Number of failed executions")
-    avg_duration_ms: Optional[float] = Field(None, description="Average execution duration in ms")
+    avg_duration_ms: float | None = Field(None, description="Average execution duration in ms")
 
     model_config = {"use_enum_values": True}
 
@@ -104,7 +104,7 @@ class SchedulerStatusResponse(BaseModel):
 class SchedulerJobsListResponse(BaseModel):
     """Response containing list of jobs"""
 
-    jobs: List[JobResponse] = Field(default_factory=list)
+    jobs: list[JobResponse] = Field(default_factory=list)
     running: bool = Field(..., description="Whether scheduler is running")
     current_time: datetime = Field(..., description="Current server time")
     total: int = Field(0, description="Total number of jobs")
@@ -142,13 +142,13 @@ class JobRescheduleResponse(BaseModel):
     job_id: str
     success: bool
     message: str
-    next_run_time: Optional[datetime] = None
+    next_run_time: datetime | None = None
 
 
 # ---- Helper Functions ----
 
 
-def jobs_to_response(jobs: List[Any], running: bool, current_time: datetime) -> SchedulerJobsListResponse:
+def jobs_to_response(jobs: list[Any], running: bool, current_time: datetime) -> SchedulerJobsListResponse:
     """Convert APScheduler job list to API response"""
     job_responses = []
     pending = 0
@@ -206,7 +206,7 @@ def jobs_to_response(jobs: List[Any], running: bool, current_time: datetime) -> 
     )
 
 
-def _extract_trigger_args(trigger) -> Dict[str, Any]:
+def _extract_trigger_args(trigger) -> dict[str, Any]:
     """Extract arguments from a trigger object"""
     if trigger is None:
         return {}

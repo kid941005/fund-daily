@@ -5,7 +5,6 @@ Market Data Fetcher Functions
 import json
 import logging
 import urllib.parse
-from typing import Dict, List
 
 from src.utils import cache_keys
 
@@ -15,7 +14,7 @@ from ..network import _make_request
 logger = logging.getLogger(__name__)
 
 
-def fetch_market_news(limit: int = 8) -> List[Dict]:
+def fetch_market_news(limit: int = 8) -> list[dict]:
     """
     Fetch market hot news
 
@@ -68,7 +67,7 @@ def fetch_market_news(limit: int = 8) -> List[Dict]:
         return []
 
 
-def fetch_hot_sectors(limit: int = 10) -> List[Dict]:
+def fetch_hot_sectors(limit: int = 10) -> list[dict]:
     """
     Fetch hot sectors (行业板块)
 
@@ -133,7 +132,7 @@ def fetch_hot_sectors(limit: int = 10) -> List[Dict]:
         return []
 
 
-def fetch_commodity_prices() -> Dict[str, float]:
+def fetch_commodity_prices() -> dict[str, float]:
     """
     Fetch commodity prices (gold, oil, etc.)
 

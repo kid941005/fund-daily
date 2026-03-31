@@ -11,7 +11,6 @@
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from typing import Dict, List
 
 from src.advice import generate_advice
 from src.cache.manager import get_cache_manager
@@ -24,7 +23,7 @@ logger = logging.getLogger(__name__)
 # ============== 辅助函数 ==============
 
 
-def _fetch_holding_fund(code: str, holding: Dict, get_fund_data_fn) -> Dict:
+def _fetch_holding_fund(code: str, holding: dict, get_fund_data_fn) -> dict:
     """获取单个持仓基金的数据（用于并行批量获取）"""
     try:
         fund_data = get_fund_data_fn(code, use_cache=True)
@@ -51,12 +50,12 @@ def _fetch_holding_fund(code: str, holding: Dict, get_fund_data_fn) -> Dict:
         }
 
 
-def _batch_fetch_holdings(fund_codes: List[str], holdings: List[Dict], get_fund_data_fn) -> List[Dict]:
+def _batch_fetch_holdings(fund_codes: list[str], holdings: list[dict], get_fund_data_fn) -> list[dict]:
     """并行批量获取持仓基金数据"""
     holding_map = {h["code"]: h for h in holdings}
     results = []
 
-    def fetch_one(code: str) -> Dict:
+    def fetch_one(code: str) -> dict:
         return _fetch_holding_fund(code, holding_map.get(code, {}), get_fund_data_fn)
 
     with ThreadPoolExecutor(max_workers=min(len(fund_codes), 4)) as executor:
@@ -68,7 +67,7 @@ def _batch_fetch_holdings(fund_codes: List[str], holdings: List[Dict], get_fund_
     return results
 
 
-def _compute_target_allocations(funds_data: List[Dict], total_amount: float) -> None:
+def _compute_target_allocations(funds_data: list[dict], total_amount: float) -> None:
     """计算目标持仓比例（去弱留强策略，修改原列表）"""
     scored_funds = []
     for fund in funds_data:
@@ -115,7 +114,7 @@ class FundService:
     def _fund_cache_key(self, fund_code: str) -> str:
         return f"fund:data:v2:{fund_code}"
 
-    def get_fund_data(self, fund_code: str, use_cache: bool = True) -> Dict:
+    def get_fund_data(self, fund_code: str, use_cache: bool = True) -> dict:
         """获取基金数据"""
         if use_cache:
             cached = self.cache_manager.get(self._fund_cache_key(fund_code))
@@ -127,7 +126,7 @@ class FundService:
             self.cache_manager.set(self._fund_cache_key(fund_code), data, ttl=600)
         return data
 
-    def get_fund_score(self, fund_code: str, use_cache: bool = True) -> Dict:
+    def get_fund_score(self, fund_code: str, use_cache: bool = True) -> dict:
         """获取基金评分"""
         try:
             from src.services.score_service import get_score_service
@@ -138,7 +137,7 @@ class FundService:
             logger.error(f"Failed to get fund score: {e}")
             return {"error": str(e)}
 
-    def get_multiple_fund_scores(self, fund_codes: List[str], use_cache: bool = True) -> Dict[str, Dict]:
+    def get_multiple_fund_scores(self, fund_codes: list[str], use_cache: bool = True) -> dict[str, dict]:
         """批量获取基金评分"""
         results = {}
         for code in fund_codes:
@@ -148,7 +147,7 @@ class FundService:
                 results[code] = {"error": "获取评分失败"}
         return results
 
-    def get_market_data(self, use_cache: bool = True) -> Dict:
+    def get_market_data(self, use_cache: bool = True) -> dict:
         """获取市场数据"""
         try:
             from src.services.market_service import get_market_service
@@ -177,7 +176,7 @@ class FundService:
         },
         log_level="error",
     )
-    def calculate_holdings_advice(self, holdings: List[Dict]) -> Dict:
+    def calculate_holdings_advice(self, holdings: list[dict]) -> dict:
         """计算持仓投资建议"""
         if not holdings:
             return {"funds": [], "advice": generate_advice([]), "message": "暂无持仓"}

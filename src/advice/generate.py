@@ -4,7 +4,6 @@
 
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict, List
 
 from ..analyzer import get_commodity_sentiment, get_market_sentiment
 from ..fetcher import fetch_fund_data, fetch_fund_detail
@@ -46,9 +45,9 @@ SENTIMENT_MAP = {"乐观": 15, "偏多": 10, "平稳": 0, "偏空": -10, "恐慌
 COMMODITY_MAP = {"乐观": 15, "偏多": 10, "平稳": 0, "偏空": -10}
 
 
-def _fetch_fund_risks(fund_codes: List[str]) -> Dict[str, Dict]:
+def _fetch_fund_risks(fund_codes: list[str]) -> dict[str, dict]:
     """并行获取基金风险指标"""
-    result: Dict[str, Dict] = {}
+    result: dict[str, dict] = {}
 
     def fetch_one(code: str) -> tuple:
         try:
@@ -68,7 +67,7 @@ def _fetch_fund_risks(fund_codes: List[str]) -> Dict[str, Dict]:
     return result
 
 
-def _compute_base_stats(funds: List[Dict]) -> tuple:
+def _compute_base_stats(funds: list[dict]) -> tuple:
     """计算基础统计数据"""
     up_count = sum(1 for f in funds if f.get("trend") == "up")
     down_count = sum(1 for f in funds if f.get("trend") == "down")
@@ -76,7 +75,7 @@ def _compute_base_stats(funds: List[Dict]) -> tuple:
     return up_count, down_count, avg_change
 
 
-def _compute_risk_profile(funds: List[Dict]) -> tuple:
+def _compute_risk_profile(funds: list[dict]) -> tuple:
     """计算组合风险指标"""
     fund_codes = [f.get("fund_code") for f in funds if f.get("fund_code")]
     risks = _fetch_fund_risks(fund_codes)
@@ -160,7 +159,7 @@ def _build_advice_text(action: str, sentiment: str) -> str:
 # ============== 主函数 ==============
 
 
-def generate_advice(funds: List[Dict]) -> Dict:
+def generate_advice(funds: list[dict]) -> dict:
     """生成投资建议"""
     if not funds:
         return {"advice": "暂无基金数据", "risk_level": "未知", "action": "观望"}
@@ -188,7 +187,7 @@ def generate_advice(funds: List[Dict]) -> Dict:
         hot_sectors = []
 
     # 基金类型分布
-    fund_types: Dict[str, int] = {}
+    fund_types: dict[str, int] = {}
     for f in funds:
         name = f.get("fund_name", "")
         if "混合" in name:
@@ -259,7 +258,7 @@ def generate_advice(funds: List[Dict]) -> Dict:
     }
 
 
-def generate_daily_report(fund_codes: List[str]) -> Dict:
+def generate_daily_report(fund_codes: list[str]) -> dict:
     """Generate daily report for funds"""
     from . import analyze_fund
 
@@ -281,7 +280,7 @@ def generate_daily_report(fund_codes: List[str]) -> Dict:
     }
 
 
-def format_report_for_share(report: Dict) -> str:
+def format_report_for_share(report: dict) -> str:
     """Format report for sharing"""
     lines = ["📊 基金日报", ""]
 

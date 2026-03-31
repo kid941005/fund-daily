@@ -7,7 +7,6 @@ import os
 # Add project root to path
 import sys
 import threading
-import time
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
@@ -97,8 +96,8 @@ class TestTaskContext:
 
         assert context.task_id == "test-123"
         assert context.params == {"codes": ["000001"]}
-        assert context.check_cancelled() == False
-        assert context.is_cancelled == False
+        assert not context.check_cancelled()
+        assert not context.is_cancelled
 
     def test_task_context_cancelled(self):
         from src.tasks.background import TaskContext
@@ -110,8 +109,8 @@ class TestTaskContext:
             task_id="test-123", params={}, cancel_event=cancel_event, update_progress_func=MagicMock()
         )
 
-        assert context.check_cancelled() == True
-        assert context.is_cancelled == True
+        assert context.check_cancelled()
+        assert context.is_cancelled
 
     def test_task_context_update_progress(self):
         from src.tasks.background import TaskContext
@@ -139,7 +138,7 @@ class TestTaskRegistry:
         assert reg1 is reg2
 
     def test_register_task_decorator(self):
-        from src.tasks.task_registry import TaskRegistry, register_task
+        from src.tasks.task_registry import TaskRegistry
 
         # Create a new registry for testing
         registry = TaskRegistry()
@@ -272,7 +271,7 @@ class TestBackgroundTaskManager:
             # Cancel should work for pending task
             result = mgr.cancel_task(task.task_id)
 
-            assert result == True
+            assert result
 
             cancelled = mgr.get_task(task.task_id)
             assert cancelled.status == TaskStatus.CANCELLED

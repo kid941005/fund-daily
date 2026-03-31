@@ -4,7 +4,6 @@
 """
 
 import logging
-from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +11,7 @@ logger = logging.getLogger(__name__)
 XUEQIU_BASE = "https://stock.xueqiu.com"
 
 
-def get_fund_hot_rank(limit: int = 20) -> List[Dict]:
+def get_fund_hot_rank(limit: int = 20) -> list[dict]:
     """
     获取雪球基金热度排行榜
 
@@ -61,7 +60,7 @@ def get_fund_hot_rank(limit: int = 20) -> List[Dict]:
     return _get_fallback_hot()
 
 
-def _get_fallback_hot() -> List[Dict]:
+def _get_fallback_hot() -> list[dict]:
     """
     获取备用热度数据（从东方财富）
     """
@@ -105,13 +104,13 @@ def _get_fallback_hot() -> List[Dict]:
     return []
 
 
-def fetch_fund_hot(fund_code: str) -> Dict:
+def fetch_fund_hot(fund_code: str) -> dict:
     """获取单只基金热度"""
     # 简化实现
     return {"hot": 0, "discussion_count": 0}
 
 
-def fetch_fund_discussion(fund_code: str, limit: int = 5) -> List[Dict]:
+def fetch_fund_discussion(fund_code: str, limit: int = 5) -> list[dict]:
     """获取基金讨论"""
     # 需要登录 token，暂不实现
     return []

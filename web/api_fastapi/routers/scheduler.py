@@ -6,7 +6,6 @@ REST API endpoints for managing scheduled jobs.
 
 import logging
 from datetime import datetime, timezone
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -60,7 +59,7 @@ async def get_scheduler_status():
 
 @router.get("/jobs", response_model=SchedulerJobsListResponse)
 async def list_jobs(
-    job_id: Optional[str] = Query(None, description="Filter by job ID"),
+    job_id: str | None = Query(None, description="Filter by job ID"),
 ):
     """
     List all scheduled jobs

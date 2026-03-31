@@ -2,10 +2,9 @@
 估值评分模块
 """
 
-from typing import Dict
 
 
-def calculate_valuation_score(fund_detail: Dict, fund_data: Dict = None) -> Dict:
+def calculate_valuation_score(fund_detail: dict, fund_data: dict = None) -> dict:
     """
     估值面评分 (满分25分)
     基于基金收益率、规模调整

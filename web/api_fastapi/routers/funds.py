@@ -5,7 +5,6 @@ Funds Router
 import logging
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
@@ -22,7 +21,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["基金"])
 
 
-def _get_user_id(request: Request) -> Optional[str]:
+def _get_user_id(request: Request) -> str | None:
     """Get user_id from JWT token or session"""
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):

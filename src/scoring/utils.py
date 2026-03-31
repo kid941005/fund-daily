@@ -3,12 +3,12 @@
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-def normalize_returns(fund_data: Dict[str, Any]) -> Dict[str, Any]:
+def normalize_returns(fund_data: dict[str, Any]) -> dict[str, Any]:
     """
     标准化收益率字段
 
@@ -51,7 +51,7 @@ def get_cache_key(fund_code: str, cache_prefix: str) -> str:
     return f"{cache_prefix}{fund_code}"
 
 
-def get_cached_score(fund_code: str, cache_prefix: str) -> Optional[Dict]:
+def get_cached_score(fund_code: str, cache_prefix: str) -> dict | None:
     """获取缓存的评分"""
     if not HAS_CACHE:
         return None
@@ -62,7 +62,7 @@ def get_cached_score(fund_code: str, cache_prefix: str) -> Optional[Dict]:
         return None
 
 
-def set_cached_score(fund_code: str, score: Dict, cache_prefix: str, ttl: int) -> None:
+def set_cached_score(fund_code: str, score: dict, cache_prefix: str, ttl: int) -> None:
     """设置评分缓存"""
     if not HAS_CACHE:
         return

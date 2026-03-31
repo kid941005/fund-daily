@@ -7,7 +7,6 @@ Supports both EasyOCR and rule-based parsing
 import logging
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +37,9 @@ class FundOcrParser:
     CODE_PATTERN = re.compile(r"\b([012356]\d{5})\b")
 
     def __init__(self):
-        self.results: List[OcrResult] = []
+        self.results: list[OcrResult] = []
 
-    def _extract_amount(self, text: str) -> Optional[float]:
+    def _extract_amount(self, text: str) -> float | None:
         """Extract amount from text - prioritize numbers WITH decimal points"""
         fund_codes_in_text = set(self.CODE_PATTERN.findall(text))
 
@@ -82,7 +81,7 @@ class FundOcrParser:
 
         return None
 
-    def _extract_all_amounts(self, text: str) -> List[float]:
+    def _extract_all_amounts(self, text: str) -> list[float]:
         """Extract all potential amounts from text"""
         amounts = []
         # Match numbers with comma: 1,234.56 or 1,234
@@ -103,7 +102,7 @@ class FundOcrParser:
                     continue
         return amounts
 
-    def parse(self, ocr_text: str) -> List[OcrResult]:
+    def parse(self, ocr_text: str) -> list[OcrResult]:
         """Parse OCR text and extract fund data"""
         self.results = []
 
@@ -201,7 +200,7 @@ class FundOcrParser:
 
         return self._deduplicate()
 
-    def _deduplicate(self) -> List[OcrResult]:
+    def _deduplicate(self) -> list[OcrResult]:
         """Remove duplicates"""
         seen = {}
         for r in self.results:
@@ -237,27 +236,24 @@ def _get_easyocr_reader():
     return _easyocr_reader
 
 
-def _parse_with_rules(image_path: str) -> Dict:
+def _parse_with_rules(image_path: str) -> dict:
     """
     Fallback parser using rule-based OCR when EasyOCR is not available.
     Uses basic image processing and character recognition heuristics.
     """
-    import io
 
     from PIL import Image
 
     try:
-        img = Image.open(image_path)
+        Image.open(image_path)
         # Convert to text using basic image analysis
         # For fund screenshots, we look for 6-digit fund codes
-        import re
 
-        from PIL import ImageGrab
 
         # Try to extract text from image using basic methods
         # This is a simplified fallback - real implementation would use
         # more sophisticated image analysis
-        parser = FundOcrParser()
+        FundOcrParser()
 
         # Read image and try to find fund codes using template matching
         # For now, return a message that OCR is processing
@@ -272,7 +268,7 @@ def _parse_with_rules(image_path: str) -> Dict:
         return {"success": False, "error": str(e), "funds": [], "message": "OCR处理失败"}
 
 
-def parse_image_easyocr(image_path: str) -> Dict:
+def parse_image_easyocr(image_path: str) -> dict:
     """
     Parse fund screenshot using EasyOCR
     Supports two formats:
@@ -336,7 +332,7 @@ def parse_image_easyocr(image_path: str) -> Dict:
             return {"success": False, "error": "No text detected", "funds": []}
 
         # Determine number of columns based on x positions
-        x_positions = sorted(set(int(item["x"] / 50) * 50 for item in items))
+        x_positions = sorted({int(item["x"] / 50) * 50 for item in items})
         num_cols = len([x for x in x_positions if any(abs(item["x"] - x) < 40 for item in items)])
 
         # Group items by row (y position)
@@ -417,7 +413,7 @@ def parse_image_easyocr(image_path: str) -> Dict:
         return {"success": False, "error": str(e), "funds": [], "message": f"OCR 处理失败: {str(e)}"}
 
 
-def parse_ocr_result(ocr_text: str) -> Dict:
+def parse_ocr_result(ocr_text: str) -> dict:
     """Main entry point"""
     parser = FundOcrParser()
     results = parser.parse(ocr_text)

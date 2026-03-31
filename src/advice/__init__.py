@@ -5,7 +5,6 @@ Advice module - 投资建议模块
 
 import logging
 import re
-from typing import Dict
 
 from ..analyzer import calculate_risk_metrics, get_commodity_sentiment, get_market_sentiment
 from ..fetcher import fetch_fund_data, fetch_fund_detail
@@ -36,7 +35,7 @@ __all__ = [
 ]
 
 
-def analyze_fund(fund_data: Dict, use_cache: bool = True) -> Dict:
+def analyze_fund(fund_data: dict, use_cache: bool = True) -> dict:
     """Analyze fund data"""
     if "error" in fund_data:
         return {"error": fund_data["error"]}
@@ -85,7 +84,7 @@ def analyze_fund(fund_data: Dict, use_cache: bool = True) -> Dict:
     }
 
 
-def get_fund_detail_info(code: str, use_cache: bool = True) -> Dict:
+def get_fund_detail_info(code: str, use_cache: bool = True) -> dict:
     """Get detailed fund information"""
     try:
         fund_data = fetch_fund_data(code, use_cache=use_cache)
@@ -126,7 +125,7 @@ def get_fund_detail_info(code: str, use_cache: bool = True) -> Dict:
         return {"error": str(e), "fund_code": code}
 
 
-def generate_100_score(fund_code: str, daily_change: float = 0.0, use_cache: bool = False) -> Dict:
+def generate_100_score(fund_code: str, daily_change: float = 0.0, use_cache: bool = False) -> dict:
     """Generate 100-point score using unified scoring service"""
     try:
         from src.services.score_service import get_score_service

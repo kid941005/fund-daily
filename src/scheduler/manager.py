@@ -7,8 +7,9 @@ cluster deployments, and integration with the background task system.
 
 import logging
 import threading
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Optional
 
 from apscheduler.events import (
     EVENT_JOB_ERROR,
@@ -40,7 +41,7 @@ class DistributedLock:
         redis_host: str,
         redis_port: int,
         redis_db: int,
-        redis_password: Optional[str] = None,
+        redis_password: str | None = None,
         lock_ttl: int = 300,
     ):
         self._redis_host = redis_host
@@ -137,23 +138,23 @@ class SchedulerManager:
                     cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self, config: Optional[SchedulerConfig] = None):
+    def __init__(self, config: SchedulerConfig | None = None):
         """Initialize scheduler manager"""
         if hasattr(self, "_initialized") and self._initialized:
             return
 
         self._initialized = True
         self._config = config or get_scheduler_config()
-        self._scheduler: Optional[BackgroundScheduler] = None
-        self._distributed_lock: Optional[DistributedLock] = None
+        self._scheduler: BackgroundScheduler | None = None
+        self._distributed_lock: DistributedLock | None = None
         self._instance_id = self._config.get_instance_id()
 
         # Job execution tracking
-        self._job_stats: Dict[str, Dict[str, Any]] = {}
+        self._job_stats: dict[str, dict[str, Any]] = {}
         self._stats_lock = threading.Lock()
 
         # Listener references (prevent GC)
-        self._listener_refs: List[Any] = []
+        self._listener_refs: list[Any] = []
 
         # Initialize distributed lock if cluster mode
         if self._config.cluster_enabled:
@@ -222,9 +223,8 @@ class SchedulerManager:
         # Job executed successfully
         def on_job_executed(event):
             job_id = event.job_id
-            duration_ms = (event.scheduled_run_time and event.retval) and 0 or 0
             if event.retval is not None and hasattr(event.retval, "total_seconds"):
-                duration_ms = event.retval.total_seconds() * 1000
+                event.retval.total_seconds() * 1000
 
             with self._stats_lock:
                 stats = self._job_stats.get(job_id, {"runs": 0, "successes": 0, "errors": 0, "durations": []})
@@ -416,13 +416,13 @@ class SchedulerManager:
             logger.warning(f"[Scheduler] Failed to remove job {job_id}: {e}")
             return False
 
-    def get_jobs(self) -> List[Any]:
+    def get_jobs(self) -> list[Any]:
         """Get list of all scheduled jobs"""
         if self._scheduler is None:
             return []
         return self._scheduler.get_jobs()
 
-    def get_job(self, job_id: str) -> Optional[Any]:
+    def get_job(self, job_id: str) -> Any | None:
         """Get a specific job by ID"""
         if self._scheduler is None:
             return None
@@ -431,7 +431,7 @@ class SchedulerManager:
         except Exception:
             return None
 
-    def run_job_now(self, job_id: str) -> Dict[str, Any]:
+    def run_job_now(self, job_id: str) -> dict[str, Any]:
         """
         Trigger a job to run immediately.
 
@@ -628,12 +628,12 @@ class SchedulerManager:
 
     # ---- Stats ----
 
-    def get_job_stats(self, job_id: str) -> Dict[str, Any]:
+    def get_job_stats(self, job_id: str) -> dict[str, Any]:
         """Get execution stats for a job"""
         with self._stats_lock:
             return dict(self._job_stats.get(job_id, {}))
 
-    def get_all_stats(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_stats(self) -> dict[str, dict[str, Any]]:
         """Get stats for all jobs"""
         with self._stats_lock:
             return {k: dict(v) for k, v in self._job_stats.items()}
@@ -641,7 +641,7 @@ class SchedulerManager:
 
 # ---- Singleton Accessor ----
 
-_scheduler_manager: Optional[SchedulerManager] = None
+_scheduler_manager: SchedulerManager | None = None
 
 
 def get_scheduler_manager() -> SchedulerManager:

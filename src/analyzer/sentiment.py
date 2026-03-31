@@ -4,7 +4,6 @@ Enhanced market sentiment analysis
 
 import logging
 from datetime import datetime
-from typing import Dict, List
 
 from ..fetcher import fetch_hot_sectors, fetch_market_news
 
@@ -125,7 +124,7 @@ def calculate_sentiment_score(text: str) -> float:
     return score, matched_words
 
 
-def analyze_news_sentiment(news: List[Dict]) -> Dict:
+def analyze_news_sentiment(news: list[dict]) -> dict:
     """
     Analyze sentiment from news headlines
 
@@ -183,7 +182,7 @@ def analyze_news_sentiment(news: List[Dict]) -> Dict:
     }
 
 
-def analyze_sector_sentiment(sectors: List[Dict]) -> Dict:
+def analyze_sector_sentiment(sectors: list[dict]) -> dict:
     """
     Analyze sentiment from sector performance
 
@@ -255,7 +254,7 @@ def analyze_sector_sentiment(sectors: List[Dict]) -> Dict:
     }
 
 
-def get_enhanced_market_sentiment() -> Dict:
+def get_enhanced_market_sentiment() -> dict:
     """
     Get enhanced market sentiment with improved algorithm
 

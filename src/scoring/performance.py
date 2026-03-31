@@ -2,10 +2,9 @@
 业绩表现评分模块
 """
 
-from typing import Dict
 
 
-def calculate_performance_score(fund_data: Dict = None) -> Dict:
+def calculate_performance_score(fund_data: dict = None) -> dict:
     """
     业绩表现评分 (满分20分)
     基于各时间段收益表现
@@ -31,19 +30,14 @@ def calculate_performance_score(fund_data: Dict = None) -> Dict:
     return_3m = float(fund_data.get("return_3m", 0) or 0)
     if return_3m > 30:
         s = 8
-        r = f"近3月{return_3m:.1f}%"
     elif return_3m > 15:
         s = 6
-        r = f"近3月{return_3m:.1f}%"
     elif return_3m > 5:
         s = 4
-        r = f"近3月{return_3m:.1f}%"
     elif return_3m > 0:
         s = 2
-        r = f"近3月{return_3m:.1f}%"
     else:
         s = 0
-        r = f"近3月{return_3m:.1f}%"
     scores.append(s)
     details["return_3m"] = s
 
@@ -66,19 +60,14 @@ def calculate_performance_score(fund_data: Dict = None) -> Dict:
     # 比较近1月和近3月趋势
     if return_1m > 0 and return_3m > 0:
         s = 6  # 趋势一致向上
-        r = "收益稳定上升"
     elif return_1m > 0 and return_3m < 0:
         s = 4  # 短期反弹
-        r = "短期反弹"
     elif return_1m < 0 and return_3m > 0:
         s = 3  # 短期回调
-        r = "短期回调"
     elif return_1m < 0 and return_3m < 0:
         s = 0  # 持续下跌
-        r = "持续下跌"
     else:
         s = 2
-        r = "震荡"
     scores.append(s)
     details["stability"] = s
 

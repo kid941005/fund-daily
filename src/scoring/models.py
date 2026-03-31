@@ -4,29 +4,28 @@
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
 
 
 @dataclass
 class ScoreInput:
     """评分输入参数封装"""
 
-    fund_detail: Dict
-    risk_metrics: Dict
+    fund_detail: dict
+    risk_metrics: dict
     market_sentiment: str
     market_score: int
-    news: List[Dict]
-    hot_sectors: List[Dict]
+    news: list[dict]
+    hot_sectors: list[dict]
     commodity_sentiment: str
-    fund_manager: Optional[Dict]
+    fund_manager: dict | None
     fund_type: str
     fund_scale: float
     daily_change: float
-    fund_data: Optional[Dict] = None
+    fund_data: dict | None = None
     fund_code: str = ""
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "ScoreInput":
+    def from_dict(cls, data: dict) -> "ScoreInput":
         """从字典创建ScoreInput"""
         return cls(
             fund_detail=data.get("fund_detail", {}),
@@ -51,9 +50,9 @@ class ScoreResult:
 
     total_score: int
     grade: str
-    details: Dict
+    details: dict
     from_cache: bool = False
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """转换为字典格式"""
         return {"score": self.total_score, "grade": self.grade, "details": self.details, "from_cache": self.from_cache}

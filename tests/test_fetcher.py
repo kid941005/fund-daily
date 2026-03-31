@@ -4,17 +4,13 @@ Tests for fetcher module
 
 import os
 import sys
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.fetcher import (
     clear_cache,
-    fetch_commodity_prices,
     fetch_fund_data,
-    fetch_fund_detail,
     fetch_hot_sectors,
     fetch_market_news,
     get_cache,

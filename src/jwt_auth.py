@@ -6,7 +6,7 @@ JWT Token 认证模块
 import logging
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import jwt
 
@@ -105,7 +105,7 @@ def create_refresh_token(user_id: str, username: str) -> str:
     return token
 
 
-def create_token_pair(user_id: str, username: str) -> Dict[str, Any]:
+def create_token_pair(user_id: str, username: str) -> dict[str, Any]:
     """
     创建令牌对 (access + refresh)
 
@@ -122,7 +122,7 @@ def create_token_pair(user_id: str, username: str) -> Dict[str, Any]:
 
 def verify_token(
     token: str, expected_type: str = TokenType.ACCESS
-) -> Tuple[bool, Optional[Dict[str, Any]], Optional[str]]:
+) -> tuple[bool, dict[str, Any] | None, str | None]:
     """
     验证 JWT token
 
@@ -160,17 +160,17 @@ def verify_token(
         return False, None, f"Invalid token: {str(e)}"
 
 
-def verify_access_token(token: str) -> Tuple[bool, Optional[Dict[str, Any]], Optional[str]]:
+def verify_access_token(token: str) -> tuple[bool, dict[str, Any] | None, str | None]:
     """验证 access token"""
     return verify_token(token, TokenType.ACCESS)
 
 
-def verify_refresh_token(token: str) -> Tuple[bool, Optional[Dict[str, Any]], Optional[str]]:
+def verify_refresh_token(token: str) -> tuple[bool, dict[str, Any] | None, str | None]:
     """验证 refresh token"""
     return verify_token(token, TokenType.REFRESH)
 
 
-def decode_token_unsafe(token: str) -> Optional[Dict[str, Any]]:
+def decode_token_unsafe(token: str) -> dict[str, Any] | None:
     """
     不验证签名，仅解析 payload（用于日志/调试）
 
@@ -184,7 +184,7 @@ def decode_token_unsafe(token: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def get_user_from_token(token: str) -> Tuple[bool, Optional[str], Optional[str]]:
+def get_user_from_token(token: str) -> tuple[bool, str | None, str | None]:
     """
     从 token 中提取用户信息
 

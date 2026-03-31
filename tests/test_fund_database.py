@@ -2,10 +2,9 @@
 Tests for fund database storage functionality
 """
 
-import json
 import os
 import sys
-from datetime import date, datetime
+from datetime import date
 
 import pytest
 
@@ -38,8 +37,8 @@ class TestFundDatabaseTables:
             with conn.cursor() as cursor:
                 cursor.execute("""
                     SELECT EXISTS (
-                        SELECT FROM information_schema.tables 
-                        WHERE table_schema = 'public' 
+                        SELECT FROM information_schema.tables
+                        WHERE table_schema = 'public'
                         AND table_name = 'funds'
                     )
                 """)
@@ -54,8 +53,8 @@ class TestFundDatabaseTables:
             with conn.cursor() as cursor:
                 cursor.execute("""
                     SELECT EXISTS (
-                        SELECT FROM information_schema.tables 
-                        WHERE table_schema = 'public' 
+                        SELECT FROM information_schema.tables
+                        WHERE table_schema = 'public'
                         AND table_name = 'fund_nav'
                     )
                 """)
@@ -70,8 +69,8 @@ class TestFundDatabaseTables:
             with conn.cursor() as cursor:
                 cursor.execute("""
                     SELECT EXISTS (
-                        SELECT FROM information_schema.tables 
-                        WHERE table_schema = 'public' 
+                        SELECT FROM information_schema.tables
+                        WHERE table_schema = 'public'
                         AND table_name = 'fund_scores'
                     )
                 """)

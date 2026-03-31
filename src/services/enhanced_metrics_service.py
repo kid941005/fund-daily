@@ -6,7 +6,7 @@ P2优化：性能监控增强
 import logging
 import time
 from collections import deque
-from typing import Any, Dict, Tuple
+from typing import Any
 
 from .metrics_service import MetricsService
 
@@ -144,7 +144,7 @@ class EnhancedMetricsService(MetricsService):
         with self._lock:
             self._history["database"].append(db_data)
 
-    def record_error(self, error_type: str, message: str, context: Dict[str, Any] = None):
+    def record_error(self, error_type: str, message: str, context: dict[str, Any] = None):
         """记录错误（新增）"""
         timestamp = time.time()
         error_data = {"timestamp": timestamp, "error_type": error_type, "message": message, "context": context or {}}
@@ -157,12 +157,6 @@ class EnhancedMetricsService(MetricsService):
     def record_resource_usage(self, memory_mb: float, cpu_percent: float, active_threads: int):
         """记录资源使用情况（新增）"""
         timestamp = time.time()
-        resource_data = {
-            "timestamp": timestamp,
-            "memory_mb": memory_mb,
-            "cpu_percent": cpu_percent,
-            "active_threads": active_threads,
-        }
 
         with self._lock:
             self._resource_metrics["memory_usage"].append((timestamp, memory_mb))
@@ -196,7 +190,7 @@ class EnhancedMetricsService(MetricsService):
                 alert_config["last_triggered"] = current_time
                 self._trigger_alert(alert_name, message)
 
-    def _check_error_rate_alert(self, alert_config: Dict[str, Any]) -> Tuple[bool, str]:
+    def _check_error_rate_alert(self, alert_config: dict[str, Any]) -> tuple[bool, str]:
         """检查错误率告警"""
         window_seconds = alert_config["window_minutes"] * 60
         threshold = alert_config["threshold"]
@@ -219,7 +213,7 @@ class EnhancedMetricsService(MetricsService):
 
         return False, ""
 
-    def _check_slow_response_alert(self, alert_config: Dict[str, Any]) -> Tuple[bool, str]:
+    def _check_slow_response_alert(self, alert_config: dict[str, Any]) -> tuple[bool, str]:
         """检查慢响应告警"""
         window_seconds = alert_config["window_minutes"] * 60
         threshold = alert_config["threshold"]
@@ -241,7 +235,7 @@ class EnhancedMetricsService(MetricsService):
 
         return False, ""
 
-    def _check_cache_miss_alert(self, alert_config: Dict[str, Any]) -> Tuple[bool, str]:
+    def _check_cache_miss_alert(self, alert_config: dict[str, Any]) -> tuple[bool, str]:
         """检查缓存未命中告警"""
         window_seconds = alert_config["window_minutes"] * 60
         threshold = alert_config["threshold"]
@@ -279,7 +273,7 @@ class EnhancedMetricsService(MetricsService):
 
         # 这里可以添加告警通知逻辑（邮件、Slack、Webhook等）
 
-    def get_enhanced_metrics(self) -> Dict[str, Any]:
+    def get_enhanced_metrics(self) -> dict[str, Any]:
         """获取增强版性能指标"""
         base_metrics = super().get_metrics_summary()
 
@@ -302,8 +296,8 @@ class EnhancedMetricsService(MetricsService):
             resource_stats = {}
             for resource_name, data in self._resource_metrics.items():
                 if data:
-                    timestamps, values = zip(*data)
-                    recent_data = [v for t, v in zip(timestamps, values) if current_time - t <= recent_window]
+                    timestamps, values = zip(*data, strict=False)
+                    recent_data = [v for t, v in zip(timestamps, values, strict=False) if current_time - t <= recent_window]
                     if recent_data:
                         resource_stats[resource_name] = {
                             "current": values[-1] if values else 0,

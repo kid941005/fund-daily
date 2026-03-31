@@ -12,14 +12,11 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.config import (
-    AppConfig,
-    CacheConfig,
     ConfigManager,
     DatabaseConfig,
     JwtConfig,
     RedisConfig,
     SecurityConfig,
-    ServerConfig,
     get_config,
 )
 

@@ -5,8 +5,6 @@ Tests for scoring module - 8 dimensions + calculator + weights + config + models
 import os
 import sys
 
-import pytest
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 
@@ -413,6 +411,7 @@ class TestCalculatorTotalScore:
             daily_change=0,
             fund_data={},
             fund_code="000001",
+            use_cache=True,
         )
 
         assert result["total_score"] == 85.0

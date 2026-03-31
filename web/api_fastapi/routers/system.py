@@ -6,7 +6,6 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Optional
 
 import psutil
 from fastapi import APIRouter, Request
@@ -31,7 +30,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
 
 
-def _get_user_id(request: Request) -> Optional[str]:
+def _get_user_id(request: Request) -> str | None:
     """Get user_id from JWT token or session"""
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
@@ -46,7 +45,7 @@ def load_config() -> dict:
     """Load config from file"""
     try:
         if os.path.exists(CONFIG_FILE):
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            with open(CONFIG_FILE, encoding="utf-8") as f:
                 return json.load(f)
     except Exception as e:
         logger.error(f"Failed to load config: {e}")
@@ -63,8 +62,8 @@ def save_config(config: dict):
 
 
 class ConfigUpdateRequest(BaseModel):
-    default_funds: Optional[list] = None
-    dingtalk: Optional[dict] = None
+    default_funds: list | None = None
+    dingtalk: dict | None = None
 
 
 @router.get("/config")
@@ -248,7 +247,7 @@ async def get_advice_endpoint(request: Request):
 
 
 # Helper function to get user from Authorization header only (for /metrics endpoint)
-def _get_user_id_from_headers(request: Request = None) -> Optional[str]:
+def _get_user_id_from_headers(request: Request = None) -> str | None:
     """Get user_id from Authorization header only"""
     if request is None:
         return None

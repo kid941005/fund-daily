@@ -2,10 +2,9 @@
 动量趋势评分模块
 """
 
-from typing import Dict
 
 
-def calculate_momentum_score(fund_data: Dict = None) -> Dict:
+def calculate_momentum_score(fund_data: dict = None) -> dict:
     """
     动量趋势评分 (满分15分)
     基于短期动量和趋势强度

@@ -9,9 +9,6 @@ from .database_pg import (
     create_user,
     delete_holding,
     get_all_holdings,
-)
-from .database_pg import get_config as get_user_config  # 基金数据函数
-from .database_pg import (
     get_db,
     get_fund_history,
     get_fund_info,
@@ -24,9 +21,6 @@ from .database_pg import (
     get_watchlist,
     init_db,
     remove_from_watchlist,
-)
-from .database_pg import save_config as save_user_config
-from .database_pg import (
     save_fund_data,
     save_fund_info,
     save_fund_nav,
@@ -37,6 +31,8 @@ from .database_pg import (
     update_user_password,
     verify_user,
 )
+from .database_pg import get_config as get_user_config  # 基金数据函数
+from .database_pg import save_config as save_user_config
 
 __all__ = [
     "get_db",

@@ -5,13 +5,12 @@
 
 import hashlib
 import secrets
-from typing import Optional
 
 # PBKDF2 迭代次数 (NIST SP 800-132 建议至少 310,000)
 PBKDF2_ITERATIONS = 310000
 
 
-def hash_password(password: str, salt: Optional[str] = None) -> str:
+def hash_password(password: str, salt: str | None = None) -> str:
     """
     哈希密码
 

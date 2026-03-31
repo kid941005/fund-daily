@@ -5,7 +5,6 @@
 提供统一的缓存键生成函数，避免重复的缓存键生成逻辑。
 """
 
-from typing import Optional, Union
 
 from src.constants import CACHE_PREFIXES
 
@@ -32,7 +31,7 @@ class CacheKeyGenerator:
         return f"{prefix}{fund_code}"
 
     @staticmethod
-    def market_sentiment(category: Optional[str] = None) -> str:
+    def market_sentiment(category: str | None = None) -> str:
         """生成市场情绪缓存键
 
         Args:
@@ -44,7 +43,7 @@ class CacheKeyGenerator:
         return f"{prefix}sentiment"
 
     @staticmethod
-    def market_news(limit: Optional[int] = None) -> str:
+    def market_news(limit: int | None = None) -> str:
         """生成市场新闻缓存键"""
         prefix = CACHE_PREFIXES.get("market", "market:v2:")
         if limit:
@@ -52,7 +51,7 @@ class CacheKeyGenerator:
         return f"{prefix}news"
 
     @staticmethod
-    def hot_sectors(limit: Optional[int] = None) -> str:
+    def hot_sectors(limit: int | None = None) -> str:
         """生成热点板块缓存键"""
         prefix = CACHE_PREFIXES.get("market", "market:v2:")
         if limit:
@@ -76,7 +75,7 @@ class CacheKeyGenerator:
         return f"user:watchlist:{user_id}"
 
     @staticmethod
-    def custom(prefix_key: str, *parts: Union[str, int]) -> str:
+    def custom(prefix_key: str, *parts: str | int) -> str:
         """
         生成自定义缓存键
 
@@ -107,7 +106,7 @@ def get_fund_score_key(fund_code: str) -> str:
     return cache_keys.fund_score(fund_code)
 
 
-def get_market_news_key(limit: Optional[int] = None) -> str:
+def get_market_news_key(limit: int | None = None) -> str:
     """获取市场新闻缓存键（向后兼容）"""
     return cache_keys.market_news(limit)
 

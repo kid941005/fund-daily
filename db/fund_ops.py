@@ -2,7 +2,8 @@
 
 import logging
 
-from .pool import get_cursor, get_db
+from .holdings import save_holding
+from .pool import get_cursor, get_db, init_db
 
 logger = logging.getLogger(__name__)
 
@@ -224,7 +225,7 @@ def search_funds(query):
         with get_cursor(conn) as cursor:
             cursor.execute(
                 """
-                SELECT * FROM funds 
+                SELECT * FROM funds
                 WHERE fund_code LIKE %s OR fund_name LIKE %s
                 ORDER BY fund_code
                 LIMIT 20

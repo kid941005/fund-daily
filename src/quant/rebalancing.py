@@ -12,12 +12,11 @@
 
 import logging
 from datetime import datetime
-from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
 
-def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
+def calculate_rebalancing(funds: list[dict], total_amount: float) -> dict:
     """计算调仓建议 - 去弱留强，总金额不变"""
     if not funds or total_amount <= 0:
         return {"error": "无持仓数据"}
@@ -157,7 +156,7 @@ def calculate_rebalancing(funds: List[Dict], total_amount: float) -> Dict:
     }
 
 
-def generate_trade_orders(rebalancing: Dict) -> List[Dict]:
+def generate_trade_orders(rebalancing: dict) -> list[dict]:
     """生成具体的交易订单"""
     trades = rebalancing.get("trades", [])
     orders = []

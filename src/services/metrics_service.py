@@ -8,7 +8,7 @@ import threading
 import time
 from collections import defaultdict
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +112,7 @@ class MetricsService:
             metric["queries"] += 1
             metric["total_time"] += duration
 
-    def get_metrics_summary(self, reset: bool = False) -> Dict[str, Any]:
+    def get_metrics_summary(self, reset: bool = False) -> dict[str, Any]:
         """
         获取性能指标摘要
 
@@ -247,7 +247,7 @@ class MetricsService:
                 "database": defaultdict(lambda: {"queries": 0, "total_time": 0.0}),
             }
 
-    def get_current_metrics(self) -> Dict[str, Any]:
+    def get_current_metrics(self) -> dict[str, Any]:
         """获取当前指标（不清零）"""
         return self.get_metrics_summary(reset=False)
 
@@ -299,7 +299,7 @@ def timed_metric(metric_type: str = "external_api", name: str = None):
                 result = func(*args, **kwargs)
                 success = True
                 return result
-            except Exception as e:
+            except Exception:
                 success = False
                 raise
             finally:

@@ -4,7 +4,6 @@ Holdings Router
 
 import logging
 import re
-from typing import List, Optional
 
 from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import JSONResponse
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["持仓"])
 
 
-def _get_user_id(request: Request) -> Optional[str]:
+def _get_user_id(request: Request) -> str | None:
     """Get user_id from JWT token or session"""
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
@@ -52,21 +51,21 @@ def _validate_fund_code(code: str) -> str:
 
 # Request Models
 class HoldingItem(BaseModel):
-    code: Optional[str] = Field(default=None, max_length=20)
-    fund_code: Optional[str] = Field(default=None, max_length=20)
+    code: str | None = Field(default=None, max_length=20)
+    fund_code: str | None = Field(default=None, max_length=20)
     amount: float = Field(default=0, ge=0, le=1000000000)  # 最大10亿
-    cost_basis: Optional[float] = Field(default=None, ge=0)
-    purchase_date: Optional[str] = Field(default=None, max_length=20)
+    cost_basis: float | None = Field(default=None, ge=0)
+    purchase_date: str | None = Field(default=None, max_length=20)
 
 
 class BatchHoldingsRequest(BaseModel):
-    funds: List[HoldingItem] = Field(..., min_length=1, max_length=100)
-    action: Optional[str] = Field(default="add", max_length=20)
+    funds: list[HoldingItem] = Field(..., min_length=1, max_length=100)
+    action: str | None = Field(default="add", max_length=20)
 
 
 class SingleHoldingRequest(BaseModel):
-    code: Optional[str] = None
-    fund_code: Optional[str] = None
+    code: str | None = None
+    fund_code: str | None = None
     amount: float = 0
 
 
@@ -205,12 +204,12 @@ async def import_holdings(request: Request):
 
 
 @router.post("/import_screenshot")
-async def import_screenshot(request: Request, file: UploadFile = File(...)):
+async def import_screenshot(request: Request, file: UploadFile = File(...)):  # noqa: B008
     """OCR import holdings from screenshot"""
     import os
     import tempfile
 
-    user_id = _auth_required(request)
+    _auth_required(request)
 
     if not file.filename:
         return JSONResponse(status_code=400, content={"success": False, "error": "文件名为空"})

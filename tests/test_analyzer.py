@@ -4,16 +4,13 @@ Tests for analyzer module
 
 import os
 import sys
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.analyzer import (
     calculate_expected_return,
     calculate_risk_metrics,
-    get_commodity_sentiment,
     get_market_sentiment,
 )
 

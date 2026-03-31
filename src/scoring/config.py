@@ -4,7 +4,6 @@
 """
 
 import logging
-from typing import Dict, Optional, Tuple
 
 from src.constants import CACHE_PREFIXES, CACHE_TTL
 
@@ -16,7 +15,7 @@ SCORE_CACHE_TTL = CACHE_TTL.get("score_data", 600)
 SCORE_CACHE_PREFIX = CACHE_PREFIXES.get("scoring", "fund_score:v2:")
 
 
-def validate_weights_compat() -> Tuple[bool, str]:
+def validate_weights_compat() -> tuple[bool, str]:
     """校验权重配置是否合法（向后兼容别名，直接调用 validate_weights）"""
     return validate_weights()
 
@@ -37,7 +36,7 @@ def _get_cache_key(fund_code: str) -> str:
     return f"{SCORE_CACHE_PREFIX}{fund_code}"
 
 
-def _get_cached_score(fund_code: str) -> Optional[Dict]:
+def _get_cached_score(fund_code: str) -> dict | None:
     """获取缓存的评分"""
     try:
         from ..fetcher import get_cache
@@ -47,7 +46,7 @@ def _get_cached_score(fund_code: str) -> Optional[Dict]:
         return None
 
 
-def _set_cached_score(fund_code: str, score: Dict) -> None:
+def _set_cached_score(fund_code: str, score: dict) -> None:
     """设置评分缓存"""
     try:
         from ..fetcher import set_cache

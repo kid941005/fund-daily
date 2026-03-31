@@ -4,12 +4,11 @@ Risk calculation module
 """
 
 import logging
-from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
 
-def calculate_risk_metrics(month_1, month_3, year_1, fund_type: str = "") -> Dict:
+def calculate_risk_metrics(month_1, month_3, year_1, fund_type: str = "") -> dict:
     """
     Calculate risk metrics based on returns and fund type
 
@@ -108,7 +107,7 @@ def calculate_risk_metrics(month_1, month_3, year_1, fund_type: str = "") -> Dic
     }
 
 
-def fetch_historical_nav(fund_code: str, days: int = 365) -> List[Dict]:
+def fetch_historical_nav(fund_code: str, days: int = 365) -> list[dict]:
     """Fetch historical NAV data"""
     # 简化实现
     return []

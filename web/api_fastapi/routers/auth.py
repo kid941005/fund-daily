@@ -4,7 +4,6 @@ Authentication Router
 
 import hashlib
 import logging
-from typing import Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
@@ -35,7 +34,7 @@ class LoginRequest(BaseModel):
 class RegisterRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=8, max_length=128)
-    email: Optional[str] = Field(default=None, max_length=100)
+    email: str | None = Field(default=None, max_length=100)
 
 
 class ChangePasswordRequest(BaseModel):
@@ -44,10 +43,10 @@ class ChangePasswordRequest(BaseModel):
 
 
 class RefreshTokenRequest(BaseModel):
-    refresh_token: Optional[str] = Field(default=None, max_length=500)
+    refresh_token: str | None = Field(default=None, max_length=500)
 
 
-def validate_password_strength(password: str) -> Tuple[bool, str]:
+def validate_password_strength(password: str) -> tuple[bool, str]:
     """
     验证密码强度
 
@@ -372,7 +371,7 @@ async def refresh_token(request: Request, data: RefreshTokenRequest):
 async def change_password(
     request: Request,
     data: ChangePasswordRequest,
-    current_user: dict = Depends(lambda request: _get_user_from_request(request)),
+    current_user: dict = Depends(lambda request: _get_user_from_request(request)),  # noqa: B008
 ):
     """Change user password"""
     old_password = data.old_password
@@ -411,7 +410,7 @@ async def change_password(
         return JSONResponse(status_code=500, content={"success": False, "error": f"修改密码失败: {str(e)}"})
 
 
-def _get_user_from_request(request: Request) -> Optional[str]:
+def _get_user_from_request(request: Request) -> str | None:
     """Extract user_id from request (JWT or session)"""
     # Try JWT first
     auth_header = request.headers.get("Authorization", "")

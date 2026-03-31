@@ -1,7 +1,6 @@
 """Quant-related business logic encapsulation and guarantees."""
 
 import logging
-from typing import Dict, List, Optional
 
 from db import database_pg as db
 from src.quant import (
@@ -26,13 +25,13 @@ class QuantServiceError(Exception):
 class QuantService:
     """Encapsulates quant-related domain logic and keeps controllers thin."""
 
-    def __init__(self, fund_service: Optional[FundService] = None):
+    def __init__(self, fund_service: FundService | None = None):
         self.fund_service = fund_service or get_fund_service(cache_enabled=True)
         # Request-level cache for holdings advice to ensure consistent scores
-        self._holdings_advice_cache: Optional[Dict] = None
-        self._holdings_advice_user_id: Optional[str] = None
+        self._holdings_advice_cache: dict | None = None
+        self._holdings_advice_user_id: str | None = None
 
-    def _get_holdings_advice(self, holdings: List[Dict], user_id: Optional[str]) -> Dict:
+    def _get_holdings_advice(self, holdings: list[dict], user_id: str | None) -> dict:
         """Get cached holdings advice or compute it. Ensures consistent scores within a request."""
         # Check if cached for the same user
         if self._holdings_advice_cache is not None and self._holdings_advice_user_id == user_id:
@@ -48,7 +47,7 @@ class QuantService:
 
         return advice
 
-    def _fetch_user_holdings(self, user_id: Optional[str]) -> List[Dict]:
+    def _fetch_user_holdings(self, user_id: str | None) -> list[dict]:
         if not user_id:
             return []
         holdings = db.get_holdings(user_id)
@@ -56,8 +55,8 @@ class QuantService:
         logger.debug("Fetched %d holdings for user %s", len(filtered), user_id)
         return filtered
 
-    def _fetch_all_holdings(self) -> List[Dict]:
-        holdings: List[Dict] = []
+    def _fetch_all_holdings(self) -> list[dict]:
+        holdings: list[dict] = []
         try:
             with db.get_db() as conn:
                 with db.get_cursor(conn) as cursor:
@@ -85,15 +84,15 @@ class QuantService:
         logger.debug("Fetched %d global holdings", len(holdings))
         return holdings
 
-    def _require_holdings(self, holdings: List[Dict]) -> None:
+    def _require_holdings(self, holdings: list[dict]) -> None:
         if not holdings:
             raise QuantServiceError("暂无持仓数据，无法继续操作", http_status=400)
 
-    def timing_signals(self, fund_codes: Optional[List[str]] = None) -> Dict:
+    def timing_signals(self, fund_codes: list[str] | None = None) -> dict:
         logger.debug("Generating timing signals for %s", fund_codes)
         return get_timing_signals(fund_codes or [])
 
-    def optimize_portfolio(self, user_id: Optional[str]) -> Dict:
+    def optimize_portfolio(self, user_id: str | None) -> dict:
         holdings = self._fetch_user_holdings(user_id)
         self._require_holdings(holdings)
 
@@ -105,7 +104,7 @@ class QuantService:
         logger.debug("Optimizing portfolio for user %s with %d funds", user_id, len(funds))
         return optimize_portfolio(funds)
 
-    def rebalancing(self, user_id: Optional[str]) -> Dict:
+    def rebalancing(self, user_id: str | None) -> dict:
         holdings = self._fetch_user_holdings(user_id)
         if not holdings and not user_id:
             holdings = self._fetch_all_holdings()
@@ -131,11 +130,11 @@ class QuantService:
         logger.debug("Generating rebalancing for user %s with total %.2f", user_id, total_amount)
         return calculate_rebalancing(funds, total_amount)
 
-    def dynamic_weights(self) -> Dict:
+    def dynamic_weights(self) -> dict:
         logger.debug("Calculating dynamic weights")
         return get_dynamic_weights()
 
-    def portfolio_analysis(self, user_id: Optional[str]) -> Dict:
+    def portfolio_analysis(self, user_id: str | None) -> dict:
         holdings = self._fetch_user_holdings(user_id)
         if not holdings and not user_id:
             holdings = self._fetch_all_holdings()
@@ -158,12 +157,12 @@ class QuantService:
             weights.append(fund.get("current_pct", 0))
 
         weighted_risk = (
-            sum(r * w for r, w in zip(risk_scores, weights)) / sum(weights)
+            sum(r * w for r, w in zip(risk_scores, weights, strict=False)) / sum(weights)
             if sum(weights) > 0
             else (sum(risk_scores) / len(risk_scores) if risk_scores else 4)
         )
         weighted_return = (
-            sum(r * w for r, w in zip(returns_1y, weights)) / sum(weights)
+            sum(r * w for r, w in zip(returns_1y, weights, strict=False)) / sum(weights)
             if sum(weights) > 0
             else (sum(returns_1y) / len(returns_1y) if returns_1y else 0)
         )
@@ -200,7 +199,7 @@ class QuantService:
         return analysis
 
 
-_quant_service_instance: Optional[QuantService] = None
+_quant_service_instance: QuantService | None = None
 
 
 def get_quant_service() -> QuantService:

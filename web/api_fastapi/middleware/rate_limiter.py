@@ -6,7 +6,6 @@ Reuses logic from Flask's rate_limiter.py
 import logging
 import threading
 import time
-from typing import Dict, List, Tuple
 
 from fastapi import Request
 
@@ -62,7 +61,7 @@ class RateLimiter:
             ip = ip[7:]
         return ip
 
-    def parse_limit_string(self, limit_str: str) -> Tuple[int, int]:
+    def parse_limit_string(self, limit_str: str) -> tuple[int, int]:
         """Parse limit string like '100 per minute' -> (100, 60)"""
         try:
             parts = limit_str.lower().split()
@@ -106,7 +105,7 @@ class RateLimiter:
 
         return f"rate_limit:{limit_name}:{user_id}:{endpoint}:{client_ip}"
 
-    def check_rate_limit(self, request: Request, limit_name: str = "default") -> Dict:
+    def check_rate_limit(self, request: Request, limit_name: str = "default") -> dict:
         """Check rate limit for request"""
         try:
             limit_str = self.default_limits.get(limit_name, self.default_limits["default"])
@@ -177,7 +176,7 @@ class RateLimiter:
                 "error": str(e),
             }
 
-    def get_rate_limit_info(self, limit_name: str = "default") -> Dict:
+    def get_rate_limit_info(self, limit_name: str = "default") -> dict:
         """Get rate limit info for a limit type"""
         limit_str = self.default_limits.get(limit_name, self.default_limits["default"])
         max_requests, window_seconds = self.parse_limit_string(limit_str)
@@ -212,12 +211,12 @@ def get_rate_limiter() -> RateLimiter:
     return _rate_limiter
 
 
-def check_rate_limit(request: Request, limit_name: str = "default") -> Dict:
+def check_rate_limit(request: Request, limit_name: str = "default") -> dict:
     """Check rate limit for a request"""
     return get_rate_limiter().check_rate_limit(request, limit_name)
 
 
-def get_all_limits() -> List[Dict]:
+def get_all_limits() -> list[dict]:
     """Get all rate limit configurations"""
     limiter = get_rate_limiter()
     return [limiter.get_rate_limit_info(name) for name in limiter.default_limits.keys()]

@@ -4,7 +4,6 @@ Tests for cache manager
 
 import os
 import sys
-import time
 from unittest.mock import Mock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -131,7 +130,7 @@ class TestCacheManager:
 
         try:
             manager.get_with_penetration_protection("error_key", loader, ttl=300, empty_ttl=60)
-            assert False, "Should have raised exception"
+            raise AssertionError("Should have raised exception")
         except ValueError:
             pass  # Expected
 
@@ -260,11 +259,10 @@ class TestCachedDecorator:
 
 def test_get_cache_manager_singleton():
     """Test that get_cache_manager returns singleton"""
-    from src.cache.manager import _cache_manager, get_cache_manager
-
-    # Reset singleton
-    global _cache_manager
-    _cache_manager = None
+    # Reset singleton via get_cache_manager internal reset
+    from src.cache import manager as cache_manager_module
+    from src.cache.manager import get_cache_manager
+    cache_manager_module._cache_manager = None
 
     # First call should create instance
     manager1 = get_cache_manager()

@@ -7,7 +7,7 @@
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class ServiceError(Exception):
     """服务层异常基类"""
 
     def __init__(
-        self, code: ErrorCode, message: str, details: Optional[Dict[str, Any]] = None, cause: Optional[Exception] = None
+        self, code: ErrorCode, message: str, details: dict[str, Any] | None = None, cause: Exception | None = None
     ):
         self.code = code
         self.message = message
@@ -74,7 +74,7 @@ class ServiceError(Exception):
 
         super().__init__(full_message)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典，用于API响应"""
         return {
             "error_code": self.code.value,
@@ -108,7 +108,7 @@ class CacheServiceError(ServiceError):
     pass
 
 
-def handle_service_error(error: ServiceError, logger: logging.Logger = None) -> Dict[str, Any]:
+def handle_service_error(error: ServiceError, logger: logging.Logger = None) -> dict[str, Any]:
     """
     统一处理服务异常
 
@@ -130,7 +130,7 @@ def handle_service_error(error: ServiceError, logger: logging.Logger = None) -> 
 
 
 def create_error_response(
-    code: ErrorCode, message: str, details: Optional[Dict[str, Any]] = None, http_status: int = 500
+    code: ErrorCode, message: str, details: dict[str, Any] | None = None, http_status: int = 500
 ) -> tuple:
     """
     创建标准错误响应（用于API层）

@@ -5,7 +5,6 @@ Integrates the background task system with the FastAPI application.
 """
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -35,8 +34,8 @@ def get_task_manager() -> BackgroundTaskManager:
 
 @router.get("", response_model=TaskListResponse)
 async def list_tasks(
-    status: Optional[str] = Query(None, description="Filter by status"),
-    task_type: Optional[str] = Query(None, description="Filter by task type"),
+    status: str | None = Query(None, description="Filter by status"),
+    task_type: str | None = Query(None, description="Filter by task type"),
     limit: int = Query(100, ge=1, le=1000, description="Max results"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
 ):
@@ -58,7 +57,7 @@ async def list_tasks(
         except ValueError:
             raise HTTPException(
                 status_code=400, detail=f"Invalid status: {status}. Valid values: {[s.value for s in TaskStatus]}"
-            )
+            ) from None
 
     # Get tasks
     tasks = manager.list_tasks(status=status_filter, task_type=task_type, limit=limit, offset=offset)
@@ -175,7 +174,7 @@ class FundFetchRequest(BaseModel):
 
     codes: list[str] = Field(default_factory=list, description="Fund codes to fetch")
     force: bool = Field(False, description="Force refresh, ignore cache")
-    user_id: Optional[str] = Field(None, description="User ID")
+    user_id: str | None = Field(None, description="User ID")
 
 
 class ScoreCalculationRequest(BaseModel):
@@ -183,14 +182,14 @@ class ScoreCalculationRequest(BaseModel):
 
     codes: list[str] = Field(default_factory=list, description="Fund codes")
     force: bool = Field(False, description="Force recalculation")
-    user_id: Optional[str] = Field(None, description="User ID")
+    user_id: str | None = Field(None, description="User ID")
 
 
 class CacheWarmupRequest(BaseModel):
     """Cache warmup request model"""
 
     warmup_type: str = Field("all", description="Type: all, funds, analysis, scores")
-    user_id: Optional[str] = Field(None, description="User ID")
+    user_id: str | None = Field(None, description="User ID")
 
 
 @fund_router.post("/fetch", response_model=TaskSubmitResponse)

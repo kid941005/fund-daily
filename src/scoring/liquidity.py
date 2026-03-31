@@ -2,10 +2,9 @@
 流动性评分模块
 """
 
-from typing import Dict
 
 
-def calculate_liquidity_score(daily_change: float, fund_scale: float) -> Dict:
+def calculate_liquidity_score(daily_change: float, fund_scale: float) -> dict:
     """
     流动性评分 (满分3分)
     """

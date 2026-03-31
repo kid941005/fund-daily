@@ -3,7 +3,6 @@ Quant Router
 """
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/quant", tags=["量化"])
 
 
-def _get_user_id(request: Request) -> Optional[str]:
+def _get_user_id(request: Request) -> str | None:
     """Get user_id from JWT token or session"""
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
@@ -45,7 +44,7 @@ quant_service = get_quant_service()
 @router.get("/timing-signals")
 async def get_timing_signals(request: Request):
     """Get timing signals"""
-    user_id = _auth_required(request)
+    _auth_required(request)
 
     try:
         data = quant_service.timing_signals()
@@ -114,7 +113,7 @@ async def get_rebalancing(request: Request):
 @router.get("/dynamic-weights")
 async def get_dynamic_weights(request: Request):
     """Get dynamic weights"""
-    user_id = _auth_required(request)
+    _auth_required(request)
 
     try:
         data = quant_service.dynamic_weights()

@@ -2,12 +2,11 @@
 板块景气评分模块
 """
 
-from typing import Dict, List
 
 
 def calculate_sector_score(
-    fund_type: str, hot_sectors: List[Dict], commodity_sentiment: str, fund_data: Dict = None
-) -> Dict:
+    fund_type: str, hot_sectors: list[dict], commodity_sentiment: str, fund_data: dict = None
+) -> dict:
     """
     板块景气评分 (满分8分)
     """

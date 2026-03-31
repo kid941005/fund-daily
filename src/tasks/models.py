@@ -4,9 +4,10 @@ Task models - 任务相关的数据模型
 
 import threading
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -40,11 +41,11 @@ class TaskInfo(BaseModel):
     progress: float = 0.0
     message: str = ""
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    result: Optional[Any] = None
-    error: Optional[str] = None
-    params: Dict[str, Any] = Field(default_factory=dict)
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    result: Any | None = None
+    error: str | None = None
+    params: dict[str, Any] = Field(default_factory=dict)
 
     model_config = ConfigDict(use_enum_values=True)
 
@@ -55,7 +56,7 @@ class TaskContext:
     def __init__(
         self,
         task_id: str,
-        params: Dict[str, Any],
+        params: dict[str, Any],
         cancel_event: threading.Event,
         update_progress_func: Callable[[float, str], None],
     ):

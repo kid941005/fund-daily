@@ -6,7 +6,6 @@ import logging
 import threading
 import time
 from collections import defaultdict, deque
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +36,7 @@ class RateLimiter:
         self._requests = defaultdict(deque)
         self._lock = threading.RLock()
 
-    def is_allowed(self, key: str, limit: Optional[int] = None, window: Optional[int] = None) -> bool:
+    def is_allowed(self, key: str, limit: int | None = None, window: int | None = None) -> bool:
         """
         检查是否允许请求
 
@@ -74,7 +73,7 @@ class RateLimiter:
             # 保持列表有序（已经是，因为时间递增）
             return True
 
-    def get_remaining(self, key: str, limit: Optional[int] = None, window: Optional[int] = None) -> int:
+    def get_remaining(self, key: str, limit: int | None = None, window: int | None = None) -> int:
         """
         获取剩余请求次数
 
@@ -101,7 +100,7 @@ class RateLimiter:
 
             return max(0, limit - len(timestamps))
 
-    def get_reset_time(self, key: str, window: Optional[int] = None) -> float:
+    def get_reset_time(self, key: str, window: int | None = None) -> float:
         """
         获取限制重置时间
 
@@ -124,7 +123,7 @@ class RateLimiter:
             oldest = timestamps[0]
             return oldest + window
 
-    def clear(self, key: Optional[str] = None):
+    def clear(self, key: str | None = None):
         """
         清除限制记录
 

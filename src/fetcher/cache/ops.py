@@ -3,7 +3,7 @@ Cache Fetcher Functions
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from src.cache.manager import get_cache_manager
 from src.config import get_config
@@ -25,7 +25,7 @@ except ImportError:
 logger.info(f"✅ 使用缓存管理器: {_cache_manager.__class__.__name__}")
 
 
-def get_cache(key: str) -> Optional[Any]:
+def get_cache(key: str) -> Any | None:
     """Get value from cache (使用缓存管理器)"""
     value = _cache_manager.get(key)
 
@@ -45,7 +45,7 @@ def get_cache(key: str) -> Optional[Any]:
     return None
 
 
-def set_cache(key: str, value: Any, ttl: Optional[int] = None) -> None:
+def set_cache(key: str, value: Any, ttl: int | None = None) -> None:
     """Set value in cache (使用缓存管理器)"""
     if ttl is None:
         config = get_config()

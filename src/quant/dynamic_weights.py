@@ -3,7 +3,6 @@
 根据市场周期自动调整评分权重
 """
 
-from typing import Dict
 
 from src.analyzer import get_market_sentiment
 
@@ -76,7 +75,7 @@ def detect_market_cycle() -> str:
         return "震荡"  # 默认震荡市
 
 
-def get_dynamic_weights() -> Dict[str, int]:
+def get_dynamic_weights() -> dict[str, int]:
     """获取动态权重"""
     cycle = detect_market_cycle()
     weights = MARKET_CYCLES.get(cycle, MARKET_CYCLES["震荡"]).copy()
@@ -84,7 +83,7 @@ def get_dynamic_weights() -> Dict[str, int]:
     return weights
 
 
-def adjust_score_by_cycle(score: Dict, cycle: str = None) -> Dict:
+def adjust_score_by_cycle(score: dict, cycle: str = None) -> dict:
     """根据市场周期调整评分"""
     if cycle is None:
         cycle = detect_market_cycle()

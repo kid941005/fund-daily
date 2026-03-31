@@ -5,11 +5,9 @@ Tests for OCR module
 import os
 import sys
 
-import pytest
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.ocr import FundOcrParser, OcrResult, parse_ocr_result, validate_fund_code
+from src.ocr import FundOcrParser, parse_ocr_result, validate_fund_code
 
 
 class TestValidateFundCode:
@@ -17,24 +15,24 @@ class TestValidateFundCode:
 
     def test_valid_codes(self):
         """Test valid fund codes"""
-        assert validate_fund_code("000001") == True
-        assert validate_fund_code("110022") == True
-        assert validate_fund_code("161725") == True
-        assert validate_fund_code("250001") == True
-        assert validate_fund_code("510500") == True
+        assert validate_fund_code("000001")
+        assert validate_fund_code("110022")
+        assert validate_fund_code("161725")
+        assert validate_fund_code("250001")
+        assert validate_fund_code("510500")
 
     def test_invalid_codes(self):
         """Test invalid fund codes"""
-        assert validate_fund_code("12345") == False  # Too short
-        assert validate_fund_code("1234567") == False  # Too long
-        assert validate_fund_code("abcdef") == False  # Not digits
-        assert validate_fund_code("900001") == False  # Invalid first digit
-        assert validate_fund_code("000000") == False  # Invalid first digit
+        assert not validate_fund_code("12345")  # Too short
+        assert not validate_fund_code("1234567")  # Too long
+        assert not validate_fund_code("abcdef")  # Not digits
+        assert not validate_fund_code("900001")  # Invalid first digit
+        assert not validate_fund_code("000000")  # Invalid first digit
 
     def test_edge_cases(self):
         """Test edge cases"""
-        assert validate_fund_code("") == False
-        assert validate_fund_code("12345a") == False
+        assert not validate_fund_code("")
+        assert not validate_fund_code("12345a")
 
 
 class TestFundOcrParser:
@@ -79,7 +77,7 @@ class TestFundOcrParser:
         text = """
         000001
         10,000
-        
+
         110022
         20,000
         """
@@ -144,7 +142,7 @@ class TestParseOcrResult:
 
         result = parse_ocr_result(text)
 
-        assert result["success"] == True
+        assert result["success"]
         assert result["count"] >= 3
 
         # Check all codes are valid

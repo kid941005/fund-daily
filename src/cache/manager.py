@@ -6,8 +6,9 @@
 import hashlib
 import logging
 import random
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +87,7 @@ class CacheManager:
         logger.debug(f"缓存未命中: {key}")
         return default
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         """
         设置缓存值（多级缓存）
 
@@ -223,7 +224,7 @@ class CacheManager:
             logger.debug(f"缓存有效值: {key} (TTL={ttl}s)")
             return value
 
-    def get_stats(self) -> Dict[str, int]:
+    def get_stats(self) -> dict[str, int]:
         """获取缓存统计"""
         stats = dict(self._stats)
 
@@ -249,7 +250,7 @@ class CacheManager:
         """重置统计"""
         self._stats = {"hits": 0, "misses": 0, "penetration_protected": 0, "avalanche_protected": 0, "errors": 0}
 
-    def warm_up(self, keys_and_loaders: Dict[str, Callable[[], Any]], ttl: int = 600):
+    def warm_up(self, keys_and_loaders: dict[str, Callable[[], Any]], ttl: int = 600):
         """
         缓存预热
 

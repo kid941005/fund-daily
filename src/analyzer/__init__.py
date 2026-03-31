@@ -4,7 +4,6 @@ Analysis module for Fund Daily
 """
 
 import logging
-from typing import Dict, List
 
 from src.utils.error_handling import handle_errors
 
@@ -25,12 +24,12 @@ logger = logging.getLogger(__name__)
 
 
 @handle_errors(default_return={"sentiment": "平稳", "score": 3, "error": True}, log_level="warning")
-def get_market_sentiment() -> Dict:
+def get_market_sentiment() -> dict:
     """Get market sentiment (兼容旧接口，内部调用enhanced版本)"""
     return get_enhanced_market_sentiment()
 
 
-def get_commodity_sentiment() -> Dict:
+def get_commodity_sentiment() -> dict:
     """
     Get commodity sentiment analysis
 
@@ -69,7 +68,7 @@ def get_commodity_sentiment() -> Dict:
 
 
 @handle_errors(default_return={"expected_return": 0, "error": True}, log_level="warning")
-def calculate_expected_return(holdings: List[Dict], funds_data: List[Dict]) -> Dict:
+def calculate_expected_return(holdings: list[dict], funds_data: list[dict]) -> dict:
     """
     Calculate expected return for holdings
 

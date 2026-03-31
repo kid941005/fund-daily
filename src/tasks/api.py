@@ -5,7 +5,7 @@ Provides API models and response helpers for task endpoints.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -21,10 +21,10 @@ class TaskResponse(BaseModel):
     progress: float = 0.0
     message: str = ""
     created_at: datetime
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    result: Optional[Any] = None
-    error: Optional[str] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    result: Any | None = None
+    error: str | None = None
 
     @classmethod
     def from_task_info(cls, task_info: TaskInfo) -> "TaskResponse":
@@ -46,17 +46,17 @@ class TaskResponse(BaseModel):
 class TaskListResponse(BaseModel):
     """Task list response model"""
 
-    tasks: List[TaskResponse]
+    tasks: list[TaskResponse]
     total: int
-    stats: Dict[str, Any]
+    stats: dict[str, Any]
 
 
 class TaskSubmitRequest(BaseModel):
     """Task submission request model"""
 
     task_type: str = Field(..., description="Task type (e.g., 'fund_fetch', 'nav_update')")
-    params: Dict[str, Any] = Field(default_factory=dict, description="Task parameters")
-    user_id: Optional[str] = Field(None, description="User ID for the task")
+    params: dict[str, Any] = Field(default_factory=dict, description="Task parameters")
+    user_id: str | None = Field(None, description="User ID for the task")
 
 
 class TaskSubmitResponse(BaseModel):
@@ -92,6 +92,6 @@ def task_to_response(task_info: TaskInfo) -> TaskResponse:
     return TaskResponse.from_task_info(task_info)
 
 
-def tasks_to_list_response(tasks: List[TaskInfo], stats: Dict[str, Any]) -> TaskListResponse:
+def tasks_to_list_response(tasks: list[TaskInfo], stats: dict[str, Any]) -> TaskListResponse:
     """Convert task list to API response"""
     return TaskListResponse(tasks=[task_to_response(t) for t in tasks], total=len(tasks), stats=stats)

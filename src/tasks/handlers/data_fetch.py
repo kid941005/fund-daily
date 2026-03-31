@@ -5,7 +5,7 @@ Handles fund data fetching tasks in the background.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from ..models import TaskContext, TaskType
 from ..task_registry import register_task
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
     max_concurrent=2,
     timeout=1800,
 )
-def fund_fetch_handler(context: TaskContext) -> Dict[str, Any]:
+def fund_fetch_handler(context: TaskContext) -> dict[str, Any]:
     """
     Handle fund data fetching
 
@@ -39,7 +39,7 @@ def fund_fetch_handler(context: TaskContext) -> Dict[str, Any]:
             from db import database_pg as db
 
             holdings = db.get_all_holdings()
-            codes = list(set([h.get("code") for h in holdings if h.get("code")]))
+            codes = list({h.get("code") for h in holdings if h.get("code")})
         except Exception as e:
             logger.error(f"Failed to get fund codes: {e}")
             codes = []
@@ -90,7 +90,7 @@ def fund_fetch_handler(context: TaskContext) -> Dict[str, Any]:
 @register_task(
     task_type=TaskType.NAV_UPDATE, name="净值更新", description="更新基金净值数据", max_concurrent=3, timeout=900
 )
-def nav_update_handler(context: TaskContext) -> Dict[str, Any]:
+def nav_update_handler(context: TaskContext) -> dict[str, Any]:
     """
     Handle NAV (Net Asset Value) update tasks
 
@@ -108,7 +108,7 @@ def nav_update_handler(context: TaskContext) -> Dict[str, Any]:
             from db import database_pg as db
 
             holdings = db.get_all_holdings()
-            codes = list(set([h.get("code") for h in holdings if h.get("code")]))
+            codes = list({h.get("code") for h in holdings if h.get("code")})
         except Exception as e:
             logger.error(f"Failed to get fund codes: {e}")
             codes = []

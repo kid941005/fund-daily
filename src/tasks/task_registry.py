@@ -7,9 +7,10 @@ Provides:
 """
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Callable, Dict, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +46,8 @@ class TaskRegistry:
         if self._initialized:
             return
         self._initialized = True
-        self._handlers: Dict[str, TaskMetadata] = {}
-        self._task_types: Dict[str, str] = {}  # type_name -> type_value
+        self._handlers: dict[str, TaskMetadata] = {}
+        self._task_types: dict[str, str] = {}  # type_name -> type_value
 
     @classmethod
     def get_instance(cls) -> "TaskRegistry":
@@ -88,18 +89,18 @@ class TaskRegistry:
 
         return decorator
 
-    def get_handler(self, task_type: str) -> Optional[Callable]:
+    def get_handler(self, task_type: str) -> Callable | None:
         """Get handler function for task type"""
         metadata = self._handlers.get(task_type)
         if metadata:
             return metadata.handler
         return None
 
-    def get_metadata(self, task_type: str) -> Optional[TaskMetadata]:
+    def get_metadata(self, task_type: str) -> TaskMetadata | None:
         """Get metadata for task type"""
         return self._handlers.get(task_type)
 
-    def get_all_types(self) -> Dict[str, TaskMetadata]:
+    def get_all_types(self) -> dict[str, TaskMetadata]:
         """Get all registered task types"""
         return dict(self._handlers)
 

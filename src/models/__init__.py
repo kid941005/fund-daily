@@ -3,7 +3,6 @@ Data models for Fund Daily
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
 
 
 @dataclass
@@ -12,11 +11,11 @@ class FundData:
 
     fund_code: str
     fund_name: str
-    nav: Optional[float] = None  # 单位净值
-    estimate_nav: Optional[float] = None  # 估算净值
+    nav: float | None = None  # 单位净值
+    estimate_nav: float | None = None  # 估算净值
     daily_change: float = 0.0  # 估算涨跌幅
-    date: Optional[str] = None  # 净值日期
-    estimate_date: Optional[str] = None  # 估算时间
+    date: str | None = None  # 净值日期
+    estimate_date: str | None = None  # 估算时间
 
     @property
     def trend(self) -> str:
@@ -33,25 +32,25 @@ class FundDetail:
 
     fund_code: str
     fund_name: str
-    nav: Optional[float] = None
-    acc_nav: Optional[float] = None
-    estimate_nav: Optional[float] = None
-    daily_change: Optional[float] = None
+    nav: float | None = None
+    acc_nav: float | None = None
+    estimate_nav: float | None = None
+    daily_change: float | None = None
 
     # 收益率
-    return_1w: Optional[float] = None
-    return_2w: Optional[float] = None
-    return_1m: Optional[float] = None
-    return_3m: Optional[float] = None
-    return_6m: Optional[float] = None
-    return_1y: Optional[float] = None
+    return_1w: float | None = None
+    return_2w: float | None = None
+    return_1m: float | None = None
+    return_3m: float | None = None
+    return_6m: float | None = None
+    return_1y: float | None = None
 
     # 费率
-    fee_rate: Optional[float] = None
-    source_rate: Optional[float] = None
+    fee_rate: float | None = None
+    source_rate: float | None = None
 
     # 风险指标
-    risk_metrics: Optional[Dict] = None
+    risk_metrics: dict | None = None
 
 
 @dataclass
@@ -110,8 +109,8 @@ class Holding:
     code: str
     name: str
     amount: float
-    buy_nav: Optional[float] = None
-    buy_date: Optional[str] = None
+    buy_nav: float | None = None
+    buy_date: str | None = None
 
 
 @dataclass
@@ -151,8 +150,8 @@ class DailyReport:
     """每日报告"""
 
     date: str
-    funds: List[FundData]
-    summary: Dict
+    funds: list[FundData]
+    summary: dict
 
     @property
     def up_count(self) -> int:

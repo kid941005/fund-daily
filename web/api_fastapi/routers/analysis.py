@@ -4,7 +4,6 @@ Analysis Router
 
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Optional
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["分析"])
 
 
-def _get_user_id(request: Request) -> Optional[str]:
+def _get_user_id(request: Request) -> str | None:
     """Get user_id from JWT token or session"""
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
@@ -45,7 +44,7 @@ async def get_portfolio_analysis(request: Request):
         return JSONResponse(status_code=status_code, content=error_response)
 
     holdings = db.get_holdings(user_id)
-    holdings_dict = {h["code"]: h for h in holdings}
+    {h["code"]: h for h in holdings}
 
     try:
         # Use QuantService.optimize_portfolio for consistent scores with quant/portfolio-optimize

@@ -5,14 +5,13 @@
 
 import logging
 from datetime import datetime
-from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
 
 def analyze_market_timing(
-    market_sentiment: Dict, commodity_sentiment: Dict, hot_sectors: List[Dict], news: List[Dict]
-) -> Dict:
+    market_sentiment: dict, commodity_sentiment: dict, hot_sectors: list[dict], news: list[dict]
+) -> dict:
     """
     综合分析市场择时信号
 
@@ -92,7 +91,7 @@ def analyze_market_timing(
     }
 
 
-def get_timing_signals(fund_codes: List[str]) -> Dict:
+def get_timing_signals(fund_codes: list[str]) -> dict:
     """
     获取基金的择时信号
 

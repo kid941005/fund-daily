@@ -5,8 +5,7 @@
 import asyncio
 import os
 import sys
-from datetime import date, timedelta
-from typing import Optional
+from datetime import date
 
 import pytest
 import pytest_asyncio
@@ -74,6 +73,11 @@ async def async_user_db(async_db):
 
 
 # ==================== AsyncDatabase 测试 ====================
+
+import pytest
+
+# Skip entire module: src.db.async_database was deleted (removed in v2.7.17)
+pytestmark = pytest.mark.skip(reason="src.db.async_database was removed in v2.7.17")
 
 
 class TestAsyncDatabase:
@@ -347,7 +351,7 @@ class TestAsyncUserDB:
         password_hash = "$2b$12$test_hash_value"
 
         # 创建
-        result = await async_user_db.create(user_id, username, password_hash)
+        await async_user_db.create(user_id, username, password_hash)
         # 可能已存在，测试边界情况
 
         # 获取

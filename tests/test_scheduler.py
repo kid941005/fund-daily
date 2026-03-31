@@ -6,10 +6,8 @@ Tests for APScheduler-based scheduled task management.
 
 import os
 import sys
-import time
-from datetime import datetime, timedelta
-from threading import Thread
-from unittest.mock import MagicMock, Mock, patch
+from datetime import datetime
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -29,7 +27,7 @@ class TestSchedulerConfig:
             if k.startswith("SCHEDULER_") or k.startswith("REDIS_")
         }
         try:
-            from src.scheduler.config import SchedulerConfig, get_scheduler_config
+            from src.scheduler.config import SchedulerConfig
 
             config = SchedulerConfig()
             assert config.timezone == "Asia/Shanghai"
@@ -88,8 +86,6 @@ class TestJobMetadata:
         """Test that predefined jobs are registered"""
         from src.scheduler.jobs import (
             SCHEDULED_JOBS,
-            get_scheduled_job,
-            list_scheduled_jobs,
         )
 
         assert len(SCHEDULED_JOBS) > 0, "Expected at least one predefined job"
@@ -284,7 +280,7 @@ class TestSchedulerAPI:
 
     def test_jobs_to_response(self):
         """Test jobs list to response conversion"""
-        from datetime import datetime, timezone
+        from datetime import timezone
 
         from src.scheduler.api import jobs_to_response
 
@@ -342,7 +338,7 @@ class TestSchedulerAPI:
 
     def test_scheduler_status_response(self):
         """Test SchedulerStatusResponse model"""
-        from datetime import datetime, timezone
+        from datetime import timezone
 
         from src.scheduler.api import SchedulerStatusResponse
 

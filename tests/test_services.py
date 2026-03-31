@@ -5,8 +5,6 @@ Tests for fund service module
 import os
 import sys
 
-import pytest
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.services.fund_service import FundService, get_fund_service

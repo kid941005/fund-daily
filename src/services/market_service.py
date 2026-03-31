@@ -11,7 +11,6 @@
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import Dict, List
 
 from src.analyzer import get_commodity_sentiment, get_market_sentiment
 from src.cache.manager import get_cache_manager
@@ -53,7 +52,7 @@ class MarketService:
         self.max_workers = 4
 
     @timed_metric(metric_type="external_api", name="get_market_sentiment")
-    def get_market_sentiment(self, use_cache: bool = True) -> Dict:
+    def get_market_sentiment(self, use_cache: bool = True) -> dict:
         """
         获取市场情绪
 
@@ -94,7 +93,7 @@ class MarketService:
             return {"sentiment": "平稳", "score": 0, "error": str(e)}
 
     @timed_metric(metric_type="external_api", name="get_commodity_sentiment")
-    def get_commodity_sentiment(self, use_cache: bool = True) -> Dict:
+    def get_commodity_sentiment(self, use_cache: bool = True) -> dict:
         """
         获取大宗商品情绪
 
@@ -130,7 +129,7 @@ class MarketService:
             return {"sentiment": "平稳", "score": 0, "error": str(e)}
 
     @timed_metric(metric_type="external_api", name="get_hot_sectors")
-    def get_hot_sectors(self, limit: int = 10, use_cache: bool = True) -> List[Dict]:
+    def get_hot_sectors(self, limit: int = 10, use_cache: bool = True) -> list[dict]:
         """
         获取热点板块
 
@@ -166,7 +165,7 @@ class MarketService:
             return []
 
     @timed_metric(metric_type="external_api", name="get_market_news")
-    def get_market_news(self, limit: int = 10, use_cache: bool = True) -> List[Dict]:
+    def get_market_news(self, limit: int = 10, use_cache: bool = True) -> list[dict]:
         """
         获取市场新闻
 
@@ -202,7 +201,7 @@ class MarketService:
             return []
 
     @timed_metric(metric_type="external_api", name="get_full_market_data")
-    def get_full_market_data(self, use_cache: bool = True) -> Dict:
+    def get_full_market_data(self, use_cache: bool = True) -> dict:
         """
         获取完整市场数据（并行获取所有组件）
 

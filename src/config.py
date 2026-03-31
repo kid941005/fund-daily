@@ -7,14 +7,14 @@ import logging
 import os
 import threading
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 def _get_version() -> str:
     """从 VERSION 文件读取当前版本"""
     try:
         version_file = os.path.join(os.path.dirname(__file__), "..", "VERSION")
-        with open(version_file, "r") as f:
+        with open(version_file) as f:
             return f.read().strip()
     except Exception:
         return "2.7.10"
@@ -46,7 +46,7 @@ class DatabaseConfig:
             password=os.getenv("FUND_DAILY_DB_PASSWORD", os.getenv("DB_PASSWORD", "")),
         )
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """验证配置，返回错误列表"""
         errors = []
 
@@ -67,7 +67,7 @@ class RedisConfig:
     host: str = "localhost"
     port: int = 6379
     db: int = 0
-    password: Optional[str] = None
+    password: str | None = None
     ttl: int = 1800  # 默认30分钟
 
     @classmethod
@@ -81,7 +81,7 @@ class RedisConfig:
             ttl=int(os.getenv("FUND_DAILY_REDIS_TTL", os.getenv("REDIS_TTL", "1800"))),
         )
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """验证配置"""
         errors = []
 
@@ -121,7 +121,7 @@ class JwtConfig:
             refresh_token_expire_days=int(os.getenv("FUND_DAILY_JWT_REFRESH_DAYS", "7")),
         )
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """验证JWT配置"""
         errors = []
 
@@ -143,7 +143,7 @@ class JwtConfig:
 class SecurityConfig:
     """安全配置"""
 
-    secret_key: Optional[str] = None
+    secret_key: str | None = None
     secure_cookies: bool = False
     ssl_verify: bool = True
     jwt: JwtConfig = field(default_factory=JwtConfig)
@@ -162,7 +162,7 @@ class SecurityConfig:
             jwt=JwtConfig.from_env(),
         )
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """验证配置"""
         errors = []
 
@@ -193,7 +193,7 @@ class CacheConfig:
             request_interval=float(os.getenv("FUND_DAILY_REQUEST_INTERVAL", "0.05")),
         )
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """验证配置"""
         errors = []
 
@@ -223,7 +223,7 @@ class ServerConfig:
             host=os.getenv("FLASK_HOST", "0.0.0.0"),
         )
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """验证配置"""
         errors = []
 
@@ -239,16 +239,16 @@ class AppConfig:
 
     env: str = "development"  # development, production, testing
     version: str = _CURRENT_VERSION
-    default_funds: List[str] = field(default_factory=lambda: ["000001", "110022", "161725"])
-    admin_token: Optional[str] = None  # API网关管理员令牌
-    user_token: Optional[str] = None  # API网关用户令牌
-    readonly_token: Optional[str] = None  # API网关只读令牌
+    default_funds: list[str] = field(default_factory=lambda: ["000001", "110022", "161725"])
+    admin_token: str | None = None  # API网关管理员令牌
+    user_token: str | None = None  # API网关用户令牌
+    readonly_token: str | None = None  # API网关只读令牌
     log_level: str = "INFO"
-    log_file: Optional[str] = None
+    log_file: str | None = None
     debug: bool = False
     enable_ocr: bool = False
     eastmoney_api_base: str = "https://fund.eastmoney.com"
-    prometheus_metrics_port: Optional[int] = None
+    prometheus_metrics_port: int | None = None
 
     @classmethod
     def from_env(cls) -> "AppConfig":
@@ -273,7 +273,7 @@ class AppConfig:
             or None,
         )
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """验证配置"""
         errors = []
 
@@ -291,7 +291,7 @@ class AppConfig:
 class CorsConfig:
     """CORS 配置"""
 
-    origins: List[str] = field(default_factory=lambda: ["*"])
+    origins: list[str] = field(default_factory=lambda: ["*"])
 
     @classmethod
     def from_env(cls) -> "CorsConfig":
@@ -304,7 +304,7 @@ class CorsConfig:
 
         return cls(origins=origins)
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """验证配置"""
         errors = []
 
@@ -359,7 +359,7 @@ class ConfigManager:
         """是否开发环境"""
         return self.app.env == "development"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典（用于调试）"""
         return {
             "database": {
@@ -434,7 +434,7 @@ def get_config() -> ConfigManager:
 
 
 # 兼容性函数
-def get_database_config() -> Dict[str, Any]:
+def get_database_config() -> dict[str, Any]:
     """获取数据库配置（兼容旧代码）"""
     config = get_config().database
     return {
@@ -447,7 +447,7 @@ def get_database_config() -> Dict[str, Any]:
     }
 
 
-def get_redis_config() -> Dict[str, Any]:
+def get_redis_config() -> dict[str, Any]:
     """获取Redis配置（兼容旧代码）"""
     config = get_config().redis
     return {
