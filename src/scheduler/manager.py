@@ -469,23 +469,14 @@ class SchedulerManager:
 
             # Run async function or regular function
             import asyncio
+            import concurrent.futures
 
             try:
-                # 使用 get_running_loop() 检查是否有运行中的事件循环
-                # 而不是 get_event_loop()（可能在没有循环时创建新的）
-                try:
-                    loop = asyncio.get_running_loop()
-                    # 已有运行中的循环，在其中创建任务
-                    asyncio.create_task(self._run_job_async(func, job_id))
-                    triggered = True
-                except RuntimeError:
-                    # 没有运行中的循环，创建一个新的来运行协程
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    try:
-                        triggered = loop.run_until_complete(self._run_job_async(func, job_id))
-                    finally:
-                        loop.close()
+                # 始终在新线程的独立事件循环中运行 async 函数
+                # 避免 event loop 调度但未实际执行的问题
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(asyncio.run, self._run_job_async(func, job_id))
+                    triggered = future.result()
             except Exception as e:
                 logger.error(f"❌ [Scheduler] Failed to run job {job_id}: {e}")
                 return {
@@ -512,13 +503,12 @@ class SchedulerManager:
     async def _run_job_async(self, func, job_id: str):
         """Run a job function asynchronously"""
         try:
-            if callable(func) and hasattr(func, "__wrapped__"):
-                # Check if it's an async function
-
+            import asyncio
+            if asyncio.iscoroutinefunction(func):
                 result = await func()
-                return result
             else:
-                return func()
+                result = func()
+            return result
         except Exception as e:
             logger.error(f"❌ [Scheduler] Job {job_id} execution error: {e}")
             raise
