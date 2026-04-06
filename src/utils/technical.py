@@ -4,7 +4,6 @@
 """
 
 
-
 def calculate_ma(closes: list[float], period: int) -> float | None:
     """计算移动平均线"""
     if len(closes) < period:

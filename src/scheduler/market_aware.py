@@ -12,7 +12,7 @@
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 from enum import Enum
-from typing import Callable
+
 
 
 class MarketPhase(str, Enum):
@@ -236,7 +236,6 @@ def get_market_phase_display() -> str:
     }
 
     return names.get(phase, "未知")
-
 
     """获取市场阶段的友好显示"""
     phase = get_current_phase()

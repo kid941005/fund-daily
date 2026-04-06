@@ -3,7 +3,6 @@
 根据市场周期自动调整评分权重
 """
 
-
 from src.analyzer import get_market_sentiment
 
 # 市场周期定义

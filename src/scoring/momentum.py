@@ -3,7 +3,6 @@
 """
 
 
-
 def calculate_momentum_score(fund_data: dict = None) -> dict:
     """
     动量趋势评分 (满分15分)

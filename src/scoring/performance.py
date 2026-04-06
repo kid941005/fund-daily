@@ -3,7 +3,6 @@
 """
 
 
-
 def calculate_performance_score(fund_data: dict = None) -> dict:
     """
     业绩表现评分 (满分20分)

@@ -108,7 +108,16 @@ def analyze_fund(fund_data: dict, use_cache: bool = True) -> dict:
                 calculation_version=audit.get("calculation_version"),
                 dimension_inputs={
                     dim: details.get(dim, {}).get("input", {})
-                    for dim in ["valuation", "performance", "risk_control", "momentum", "sentiment", "sector", "manager", "liquidity"]
+                    for dim in [
+                        "valuation",
+                        "performance",
+                        "risk_control",
+                        "momentum",
+                        "sentiment",
+                        "sector",
+                        "manager",
+                        "liquidity",
+                    ]
                     if details.get(dim, {}).get("input")
                 },
             )
@@ -174,6 +183,7 @@ def generate_100_score(fund_code: str, daily_change: float = 0.0, use_cache: boo
     # 1. 优先实时计算
     try:
         from src.services.score_service import get_score_service
+
         service = get_score_service()
         result = service.calculate_score(fund_code, use_cache=use_cache)
         if result and "error" not in result:
@@ -186,10 +196,11 @@ def generate_100_score(fund_code: str, daily_change: float = 0.0, use_cache: boo
             # 实时计算失败，尝试使用历史数据
     except Exception as e:
         logger.error(f"实时评分异常: {fund_code} ({e})")
-    
+
     # 2. 实时计算失败，使用历史数据作为后备
     try:
         from db.fund_ops import get_fund_score
+
         stored_score = get_fund_score(fund_code)
         if stored_score:
             logger.info(f"使用历史评分: {fund_code} (date: {stored_score.get('score_date')})")
@@ -199,7 +210,7 @@ def generate_100_score(fund_code: str, daily_change: float = 0.0, use_cache: boo
             return result
     except Exception as e:
         logger.error(f"获取历史评分也失败: {fund_code} ({e})")
-    
+
     # 3. 全部失败
     return {"error": "实时计算和历史数据均不可用", "total_score": 0, "grade": "E"}
 
@@ -245,8 +256,14 @@ def _format_stored_score(stored: dict) -> dict:
         },
         "breakdown": {
             "valuation": {"score": stored.get("valuation_score", 0), "reason": stored.get("valuation_reason", "")},
-            "performance": {"score": stored.get("performance_score", 0), "reason": stored.get("performance_reason", "")},
-            "risk_control": {"score": stored.get("risk_control_score", 0), "reason": stored.get("risk_control_reason", "")},
+            "performance": {
+                "score": stored.get("performance_score", 0),
+                "reason": stored.get("performance_reason", ""),
+            },
+            "risk_control": {
+                "score": stored.get("risk_control_score", 0),
+                "reason": stored.get("risk_control_reason", ""),
+            },
             "momentum": {"score": stored.get("momentum_score", 0), "reason": stored.get("momentum_reason", "")},
             "sentiment": {"score": stored.get("sentiment_score", 0), "reason": stored.get("sentiment_reason", "")},
             "sector": {"score": stored.get("sector_score", 0), "reason": stored.get("sector_reason", "")},

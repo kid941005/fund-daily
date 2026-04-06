@@ -3,7 +3,6 @@
 """
 
 
-
 def calculate_sector_score(
     fund_type: str, hot_sectors: list[dict], commodity_sentiment: str, fund_data: dict = None
 ) -> dict:

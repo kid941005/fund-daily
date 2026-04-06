@@ -4,7 +4,7 @@
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 @dataclass
@@ -260,9 +260,7 @@ def generate_health_report(health_indicators: list[DataHealthIndicator]) -> dict
     info_alerts = []
 
     for health in health_indicators:
-        alert_level = get_health_alert_level(
-            health.overall_score, health.is_stale, health.market_day
-        )
+        alert_level = get_health_alert_level(health.overall_score, health.is_stale, health.market_day)
 
         alert_entry = {
             "fund_code": health.fund_code,

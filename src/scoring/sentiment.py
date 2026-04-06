@@ -3,7 +3,6 @@
 """
 
 
-
 def calculate_sentiment_score(market_sentiment: str, market_score: int) -> dict:
     """
     市场情绪评分 (满分10分)

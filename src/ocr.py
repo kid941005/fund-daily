@@ -249,7 +249,6 @@ def _parse_with_rules(image_path: str) -> dict:
         # Convert to text using basic image analysis
         # For fund screenshots, we look for 6-digit fund codes
 
-
         # Try to extract text from image using basic methods
         # This is a simplified fallback - real implementation would use
         # more sophisticated image analysis

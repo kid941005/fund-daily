@@ -3,7 +3,6 @@
 """
 
 
-
 def calculate_risk_control_score(risk_metrics: dict, fund_data: dict = None) -> dict:
     """
     风险控制评分 (满分15分)

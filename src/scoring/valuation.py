@@ -3,7 +3,6 @@
 """
 
 
-
 def calculate_valuation_score(fund_detail: dict, fund_data: dict = None) -> dict:
     """
     估值面评分 (满分25分)

@@ -38,6 +38,7 @@ def _wrap_async_func(func: Callable) -> Callable:
     import asyncio
 
     if asyncio.iscoroutinefunction(func):
+
         def wrapper():
             return asyncio.run(func())
 
@@ -522,6 +523,7 @@ class SchedulerManager:
         """Run a job function asynchronously"""
         try:
             import asyncio
+
             if asyncio.iscoroutinefunction(func):
                 result = await func()
             else:

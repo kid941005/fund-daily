@@ -120,9 +120,7 @@ def create_token_pair(user_id: str, username: str) -> dict[str, Any]:
     }
 
 
-def verify_token(
-    token: str, expected_type: str = TokenType.ACCESS
-) -> tuple[bool, dict[str, Any] | None, str | None]:
+def verify_token(token: str, expected_type: str = TokenType.ACCESS) -> tuple[bool, dict[str, Any] | None, str | None]:
     """
     验证 JWT token
 

@@ -297,7 +297,9 @@ class EnhancedMetricsService(MetricsService):
             for resource_name, data in self._resource_metrics.items():
                 if data:
                     timestamps, values = zip(*data, strict=False)
-                    recent_data = [v for t, v in zip(timestamps, values, strict=False) if current_time - t <= recent_window]
+                    recent_data = [
+                        v for t, v in zip(timestamps, values, strict=False) if current_time - t <= recent_window
+                    ]
                     if recent_data:
                         resource_stats[resource_name] = {
                             "current": values[-1] if values else 0,
