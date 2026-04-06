@@ -32,7 +32,7 @@ class DatabaseConfig:
     host: str = "localhost"
     port: int = 5432
     name: str = "fund_daily"
-    user: str = "kid"
+    user: str = "admin"
     password: str = ""
 
     @classmethod
@@ -42,7 +42,7 @@ class DatabaseConfig:
             host=os.getenv("FUND_DAILY_DB_HOST", "localhost"),
             port=int(os.getenv("FUND_DAILY_DB_PORT", "5432")),
             name=os.getenv("FUND_DAILY_DB_NAME", "fund_daily"),
-            user=os.getenv("FUND_DAILY_DB_USER", "kid"),
+            user=os.getenv("FUND_DAILY_DB_USER", "admin"),
             password=os.getenv("FUND_DAILY_DB_PASSWORD", os.getenv("DB_PASSWORD", "")),
         )
 

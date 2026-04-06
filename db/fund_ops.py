@@ -100,14 +100,33 @@ def save_fund_score(
     fund_code,
     score_date,
     total_score=None,
+    # 8维度分数
     valuation_score=None,
-    sector_score=None,
+    performance_score=None,
     risk_score=None,
+    momentum_score=None,
+    sentiment_score=None,
+    sector_score=None,
+    manager_score=None,
+    liquidity_score=None,
+    # 8维度原因
     valuation_reason=None,
-    sector_reason=None,
+    performance_reason=None,
     risk_reason=None,
+    momentum_reason=None,
+    sentiment_reason=None,
+    sector_reason=None,
+    manager_reason=None,
+    liquidity_reason=None,
+    # 审计字段
+    data_source=None,
+    data_fetched_at=None,
+    calculation_version=None,
+    dimension_inputs=None,
 ):
-    """保存基金评分数据"""
+    """保存基金评分数据（增强版：支持8维度+审计追踪）"""
+    import json
+
     with get_db() as conn:
         with get_cursor(conn) as cursor:
             # 首先确保基金基本信息存在
@@ -120,17 +139,47 @@ def save_fund_score(
                 """
                 INSERT INTO fund_scores (
                     fund_code, score_date, total_score,
-                    valuation_score, sector_score, risk_score,
-                    valuation_reason, sector_reason, risk_reason
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    valuation_score, performance_score, risk_score,
+                    momentum_score, sentiment_score, sector_score,
+                    manager_score, liquidity_score,
+                    valuation_reason, performance_reason, risk_reason,
+                    momentum_reason, sentiment_reason, sector_reason,
+                    manager_reason, liquidity_reason,
+                    data_source, data_fetched_at, calculation_version,
+                    dimension_inputs
+                ) VALUES (
+                    %s, %s, %s,
+                    %s, %s, %s,
+                    %s, %s, %s,
+                    %s, %s,
+                    %s, %s, %s,
+                    %s, %s, %s,
+                    %s, %s,
+                    %s, %s, %s,
+                    %s
+                )
                 ON CONFLICT (fund_code, score_date) DO UPDATE SET
                     total_score = EXCLUDED.total_score,
                     valuation_score = EXCLUDED.valuation_score,
-                    sector_score = EXCLUDED.sector_score,
+                    performance_score = EXCLUDED.performance_score,
                     risk_score = EXCLUDED.risk_score,
+                    momentum_score = EXCLUDED.momentum_score,
+                    sentiment_score = EXCLUDED.sentiment_score,
+                    sector_score = EXCLUDED.sector_score,
+                    manager_score = EXCLUDED.manager_score,
+                    liquidity_score = EXCLUDED.liquidity_score,
                     valuation_reason = EXCLUDED.valuation_reason,
-                    sector_reason = EXCLUDED.sector_reason,
+                    performance_reason = EXCLUDED.performance_reason,
                     risk_reason = EXCLUDED.risk_reason,
+                    momentum_reason = EXCLUDED.momentum_reason,
+                    sentiment_reason = EXCLUDED.sentiment_reason,
+                    sector_reason = EXCLUDED.sector_reason,
+                    manager_reason = EXCLUDED.manager_reason,
+                    liquidity_reason = EXCLUDED.liquidity_reason,
+                    data_source = EXCLUDED.data_source,
+                    data_fetched_at = EXCLUDED.data_fetched_at,
+                    calculation_version = EXCLUDED.calculation_version,
+                    dimension_inputs = EXCLUDED.dimension_inputs,
                     created_at = CURRENT_TIMESTAMP
             """,
                 (
@@ -138,11 +187,25 @@ def save_fund_score(
                     score_date,
                     total_score,
                     valuation_score,
-                    sector_score,
+                    performance_score,
                     risk_score,
+                    momentum_score,
+                    sentiment_score,
+                    sector_score,
+                    manager_score,
+                    liquidity_score,
                     valuation_reason,
-                    sector_reason,
+                    performance_reason,
                     risk_reason,
+                    momentum_reason,
+                    sentiment_reason,
+                    sector_reason,
+                    manager_reason,
+                    liquidity_reason,
+                    data_source,
+                    data_fetched_at,
+                    calculation_version,
+                    json.dumps(dimension_inputs) if dimension_inputs else None,
                 ),
             )
             conn.commit()
@@ -357,19 +420,43 @@ def save_fund_data(fund_code, fund_data):
                 yearly_return=fund_data.get("yearly_return"),
             )
 
-        # 保存评分数据（如果存在）
+        # 保存评分数据（如果存在）- 支持8维度+审计追踪
         score_100 = fund_data.get("score_100", {})
         if score_100:
+            details = score_100.get("details", {})
+            audit = score_100.get("audit", {})
+
             save_fund_score(
                 fund_code=fund_code,
                 score_date=date.today(),
                 total_score=score_100.get("total_score"),
-                valuation_score=score_100.get("valuation", {}).get("score"),
-                sector_score=score_100.get("sector", {}).get("score"),
-                risk_score=score_100.get("risk_control", {}).get("score"),
-                valuation_reason=score_100.get("valuation", {}).get("reason"),
-                sector_reason=score_100.get("sector", {}).get("reason"),
-                risk_reason=score_100.get("risk_control", {}).get("reason"),
+                # 8维度分数
+                valuation_score=details.get("valuation", {}).get("score"),
+                performance_score=details.get("performance", {}).get("score"),
+                risk_score=details.get("risk_control", {}).get("score"),
+                momentum_score=details.get("momentum", {}).get("score"),
+                sentiment_score=details.get("sentiment", {}).get("score"),
+                sector_score=details.get("sector", {}).get("score"),
+                manager_score=details.get("manager", {}).get("score"),
+                liquidity_score=details.get("liquidity", {}).get("score"),
+                # 8维度原因
+                valuation_reason=details.get("valuation", {}).get("reason"),
+                performance_reason=details.get("performance", {}).get("reason"),
+                risk_reason=details.get("risk_control", {}).get("reason"),
+                momentum_reason=details.get("momentum", {}).get("reason"),
+                sentiment_reason=details.get("sentiment", {}).get("reason"),
+                sector_reason=details.get("sector", {}).get("reason"),
+                manager_reason=details.get("manager", {}).get("reason"),
+                liquidity_reason=details.get("liquidity", {}).get("reason"),
+                # 审计字段
+                data_source=audit.get("data_source"),
+                data_fetched_at=audit.get("data_fetched_at"),
+                calculation_version=audit.get("calculation_version"),
+                dimension_inputs={
+                    dim: details.get(dim, {}).get("input", {})
+                    for dim in ["valuation", "performance", "risk_control", "momentum", "sentiment", "sector", "manager", "liquidity"]
+                    if details.get(dim, {}).get("input")
+                },
             )
 
         return True

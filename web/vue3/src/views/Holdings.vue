@@ -105,11 +105,16 @@
     </section>
     
     <!-- 导入模态框 -->
-    <div v-if="showImport" class="modal-overlay" @click.self="showImport = false">
+    <div v-if="showImport" class="modal-overlay" @click.self="!importing && (showImport = false)">
       <div class="modal">
+        <!-- 导入中遮罩 -->
+        <div v-if="importing" class="import-loading-overlay">
+          <div class="import-loading-spinner"></div>
+          <p>导入中，请稍候...</p>
+        </div>
         <div class="modal-header">
           <h3>导入持仓</h3>
-          <button class="close-btn" @click="showImport = false">×</button>
+          <button class="close-btn" @click="!importing && (showImport = false)">×</button>
         </div>
         <!-- 导入内容 -->
         <div class="import-tabs">
@@ -119,28 +124,27 @@
         
         <div v-if="importTab === 'ocr'" class="import-form">
           <p class="hint">上传截图，OCR自动识别基金持仓</p>
-          <input type="file" accept="image/*" @change="handleOcrFile" :disabled="ocrLoading" />
+          <input type="file" accept="image/*" @change="handleOcrFile" :disabled="ocrLoading || importing" />
           <div v-if="ocrLoading" class="loading">识别中...</div>
           <div v-if="ocrResult.length > 0" class="ocr-result">
             <h4>识别结果：</h4>
             <div v-for="(fund, idx) in ocrResult" :key="idx" class="ocr-item">
-              <input v-model="fund.code" placeholder="代码" />
-              <input v-model.number="fund.amount" type="number" placeholder="金额" />
+              <input v-model="fund.code" placeholder="代码" :disabled="importing" />
+              <input v-model.number="fund.amount" type="number" placeholder="金额" :disabled="importing" />
             </div>
-            <div v-if="ocrLoading" class="loading">导入中...</div>
-            <div v-else class="ocr-actions">
-              <button class="secondary" @click="ocrResult = []">重新识别</button>
-              <button class="primary" @click="confirmOcrImport">确认导入</button>
+            <div v-if="!ocrLoading" class="ocr-actions">
+              <button class="secondary" @click="ocrResult = []" :disabled="importing">重新识别</button>
+              <button class="primary" @click="confirmOcrImport" :disabled="importing">确认导入</button>
             </div>
           </div>
         </div>
         
         <div v-if="importTab === 'text'" class="import-form">
           <p class="hint">输入基金代码和金额（每行一个）</p>
-          <textarea v-model="importText" placeholder="示例：&#10;000001 1000&#10;017042 2795.9" rows="6"></textarea>
+          <textarea v-model="importText" placeholder="示例：&#10;000001 1000&#10;017042 2795.9" rows="6" :disabled="importing"></textarea>
           <div class="modal-actions">
-            <button class="secondary" @click="showImport = false">取消</button>
-            <button class="primary" @click="confirmTextImport">确认导入</button>
+            <button class="secondary" @click="showImport = false" :disabled="importing">取消</button>
+            <button class="primary" @click="confirmTextImport" :disabled="importing">确认导入</button>
           </div>
         </div>
       </div>
@@ -186,6 +190,7 @@ const store = useFundStore()
 const showImport = ref(false)
 const showClearConfirm = ref(false)
 const clearing = ref(false)
+const importing = ref(false)  // 导入中状态
 const importTab = ref<'ocr' | 'text'>('ocr')
 const ocrLoading = ref(false)
 const ocrResult = ref<Array<{ code: string; amount: number }>>([])
@@ -283,23 +288,33 @@ const handleOcrFile = async (event: Event): Promise<void> => {
 
 const confirmOcrImport = async (): Promise<void> => {
   if (!ocrResult.value.length) return
-  await store.saveHoldings(ocrResult.value)
-  showImport.value = false
-  ocrResult.value = []
+  importing.value = true
+  try {
+    await store.saveHoldings(ocrResult.value)
+    showImport.value = false
+    ocrResult.value = []
+  } finally {
+    importing.value = false
+  }
 }
 
 const confirmTextImport = async (): Promise<void> => {
   if (!importText.value.trim()) return
-  const lines = importText.value.trim().split('\n')
-  const funds = lines
-    .map(line => line.trim().split(/\s+/))
-    .filter(parts => parts.length >= 2)
-    .map(([code, amount]) => ({ code, amount: parseFloat(amount) }))
-    .filter(f => !isNaN(f.amount))
-  if (funds.length) {
-    await store.saveHoldings(funds)
-    showImport.value = false
-    importText.value = ''
+  importing.value = true
+  try {
+    const lines = importText.value.trim().split('\n')
+    const funds = lines
+      .map(line => line.trim().split(/\s+/))
+      .filter(parts => parts.length >= 2)
+      .map(([code, amount]) => ({ code, amount: parseFloat(amount) }))
+      .filter(f => !isNaN(f.amount))
+    if (funds.length) {
+      await store.saveHoldings(funds)
+      showImport.value = false
+      importText.value = ''
+    }
+  } finally {
+    importing.value = false
   }
 }
 
@@ -556,6 +571,7 @@ button {
 }
 
 .modal {
+  position: relative;
   background: white;
   border-radius: 20px;
   padding: 32px;
@@ -688,6 +704,43 @@ button {
   color: #667eea;
   font-size: 16px;
   font-weight: 500;
+}
+
+/* 导入中遮罩样式 */
+.import-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 10;
+  border-radius: 20px;
+}
+
+.import-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.import-loading-overlay p {
+  color: #667eea;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
 }
 
 /* 清仓确认对话框样式 */

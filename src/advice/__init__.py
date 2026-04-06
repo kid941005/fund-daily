@@ -71,6 +71,50 @@ def analyze_fund(fund_data: dict, use_cache: bool = True) -> dict:
     except Exception as e:
         logger.error(f"Error generating score for {fund_code}: {e}")
 
+    # 保存评分到数据库（包含8维度+审计追踪）
+    if score_100 and not score_100.get("error"):
+        try:
+            from datetime import date
+            from db.fund_ops import save_fund_score
+
+            details = score_100.get("details", {})
+            audit = score_100.get("audit", {})
+
+            save_fund_score(
+                fund_code=fund_code,
+                score_date=date.today(),
+                total_score=score_100.get("total_score"),
+                # 8维度分数
+                valuation_score=details.get("valuation", {}).get("score"),
+                performance_score=details.get("performance", {}).get("score"),
+                risk_score=details.get("risk_control", {}).get("score"),
+                momentum_score=details.get("momentum", {}).get("score"),
+                sentiment_score=details.get("sentiment", {}).get("score"),
+                sector_score=details.get("sector", {}).get("score"),
+                manager_score=details.get("manager", {}).get("score"),
+                liquidity_score=details.get("liquidity", {}).get("score"),
+                # 8维度原因
+                valuation_reason=details.get("valuation", {}).get("reason"),
+                performance_reason=details.get("performance", {}).get("reason"),
+                risk_reason=details.get("risk_control", {}).get("reason"),
+                momentum_reason=details.get("momentum", {}).get("reason"),
+                sentiment_reason=details.get("sentiment", {}).get("reason"),
+                sector_reason=details.get("sector", {}).get("reason"),
+                manager_reason=details.get("manager", {}).get("reason"),
+                liquidity_reason=details.get("liquidity", {}).get("reason"),
+                # 审计字段
+                data_source=audit.get("data_source"),
+                data_fetched_at=audit.get("data_fetched_at"),
+                calculation_version=audit.get("calculation_version"),
+                dimension_inputs={
+                    dim: details.get(dim, {}).get("input", {})
+                    for dim in ["valuation", "performance", "risk_control", "momentum", "sentiment", "sector", "manager", "liquidity"]
+                    if details.get(dim, {}).get("input")
+                },
+            )
+        except Exception as e:
+            logger.warning(f"Failed to save score to DB for {fund_code}: {e}")
+
     return {
         "fund_code": fund_code,
         "fund_name": name,
@@ -126,15 +170,95 @@ def get_fund_detail_info(code: str, use_cache: bool = True) -> dict:
 
 
 def generate_100_score(fund_code: str, daily_change: float = 0.0, use_cache: bool = False) -> dict:
-    """Generate 100-point score using unified scoring service"""
+    """Generate 100-point score - real-time first, fallback to stored"""
+    # 1. 优先实时计算
     try:
         from src.services.score_service import get_score_service
-
         service = get_score_service()
-        return service.calculate_score(fund_code, use_cache=use_cache)
+        result = service.calculate_score(fund_code, use_cache=use_cache)
+        if result and "error" not in result:
+            logger.info(f"实时评分成功: {fund_code} (score: {result.get('total_score')})")
+            result["data_freshness"] = "realtime"
+            result["error"] = None  # 清除可能的错误
+            return result
+        elif result and "error" in result:
+            logger.warning(f"实时评分失败: {fund_code} ({result.get('error')})")
+            # 实时计算失败，尝试使用历史数据
     except Exception as e:
-        logger.error(f"Generate 100 score error: {e}")
-        return {"error": str(e)}
+        logger.error(f"实时评分异常: {fund_code} ({e})")
+    
+    # 2. 实时计算失败，使用历史数据作为后备
+    try:
+        from db.fund_ops import get_fund_score
+        stored_score = get_fund_score(fund_code)
+        if stored_score:
+            logger.info(f"使用历史评分: {fund_code} (date: {stored_score.get('score_date')})")
+            result = _format_stored_score(stored_score)
+            result["data_freshness"] = "stored"
+            result["calculation_error"] = "实时计算失败，使用历史数据"
+            return result
+    except Exception as e:
+        logger.error(f"获取历史评分也失败: {fund_code} ({e})")
+    
+    # 3. 全部失败
+    return {"error": "实时计算和历史数据均不可用", "total_score": 0, "grade": "E"}
+
+
+def _format_stored_score(stored: dict) -> dict:
+    """将数据库存储的评分格式化为API响应格式"""
+    return {
+        "total_score": stored.get("total_score", 0),
+        "grade": stored.get("grade", "E"),
+        "details": {
+            "valuation": {
+                "score": stored.get("valuation_score", 0),
+                "reason": stored.get("valuation_reason", ""),
+            },
+            "performance": {
+                "score": stored.get("performance_score", 0),
+                "reason": stored.get("performance_reason", ""),
+            },
+            "risk_control": {
+                "score": stored.get("risk_control_score", 0),
+                "reason": stored.get("risk_control_reason", ""),
+            },
+            "momentum": {
+                "score": stored.get("momentum_score", 0),
+                "reason": stored.get("momentum_reason", ""),
+            },
+            "sentiment": {
+                "score": stored.get("sentiment_score", 0),
+                "reason": stored.get("sentiment_reason", ""),
+            },
+            "sector": {
+                "score": stored.get("sector_score", 0),
+                "reason": stored.get("sector_reason", ""),
+            },
+            "manager": {
+                "score": stored.get("manager_score", 0),
+                "reason": stored.get("manager_reason", ""),
+            },
+            "liquidity": {
+                "score": stored.get("liquidity_score", 0),
+                "reason": stored.get("liquidity_reason", ""),
+            },
+        },
+        "breakdown": {
+            "valuation": {"score": stored.get("valuation_score", 0), "reason": stored.get("valuation_reason", "")},
+            "performance": {"score": stored.get("performance_score", 0), "reason": stored.get("performance_reason", "")},
+            "risk_control": {"score": stored.get("risk_control_score", 0), "reason": stored.get("risk_control_reason", "")},
+            "momentum": {"score": stored.get("momentum_score", 0), "reason": stored.get("momentum_reason", "")},
+            "sentiment": {"score": stored.get("sentiment_score", 0), "reason": stored.get("sentiment_reason", "")},
+            "sector": {"score": stored.get("sector_score", 0), "reason": stored.get("sector_reason", "")},
+            "manager": {"score": stored.get("manager_score", 0), "reason": stored.get("manager_reason", "")},
+            "liquidity": {"score": stored.get("liquidity_score", 0), "reason": stored.get("liquidity_reason", "")},
+        },
+        "audit": {
+            "data_source": "stored",
+            "calculation_time": str(stored.get("created_at", "")),
+            "score_date": str(stored.get("score_date", "")),
+        },
+    }
 
 
 def format_100_score_report(fund_code: str) -> str:

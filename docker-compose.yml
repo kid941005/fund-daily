@@ -11,16 +11,14 @@ services:
     env_file:
       - .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-kid}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin123}
       POSTGRES_DB: ${POSTGRES_DB:-fund_daily}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kid}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -42,8 +40,6 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
     volumes:
       - redis_data:/data
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -63,8 +59,8 @@ services:
       - FUND_DAILY_DB_HOST=postgres
       - FUND_DAILY_DB_PORT=5432
       - FUND_DAILY_DB_NAME=${POSTGRES_DB:-fund_daily}
-      - FUND_DAILY_DB_USER=${POSTGRES_USER:-kid}
-      - FUND_DAILY_DB_PASSWORD=${POSTGRES_PASSWORD:-}
+      - FUND_DAILY_DB_USER=${POSTGRES_USER:-admin}
+      - FUND_DAILY_DB_PASSWORD=${POSTGRES_PASSWORD:-admin123}
       - FUND_DAILY_REDIS_HOST=redis
       - FUND_DAILY_REDIS_PORT=6379
       - FUND_DAILY_REDIS_DB=${REDIS_DB:-0}

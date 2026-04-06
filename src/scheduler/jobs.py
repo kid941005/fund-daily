@@ -5,6 +5,7 @@ Predefined scheduled jobs for fund data management.
 Each job class wraps a task handler with scheduling metadata.
 """
 
+import asyncio
 import logging
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -187,13 +188,18 @@ def _daily_nav_update_sync():
     return {"updated": updated, "total": total, "errors": len(errors), "duration_s": duration}
 
 
-async def daily_nav_update():
+async def _daily_nav_update_async():
     """
-    Daily NAV Update Job
+    Daily NAV Update Job (async core)
 
     Fetches latest NAV data for all tracked funds.
     Runs 30 minutes after market close to allow data providers to update.
     """
+
+
+def daily_nav_update():
+    """Sync wrapper for APScheduler."""
+    return asyncio.run(_daily_nav_update_async())
     from src.tasks.background import BackgroundTaskManager
 
     try:
@@ -230,13 +236,18 @@ _daily_nav_update_job = _register_job(
 # Runs every Monday at 09:00
 
 
-async def weekly_score_calculation():
+async def _weekly_score_calculation_async():
     """
-    Weekly Score Calculation Job
+    Weekly Score Calculation Job (async core)
 
     Recalculates comprehensive scores for all funds.
     Runs Monday morning to refresh scores for the new week.
     """
+
+
+def weekly_score_calculation():
+    """Sync wrapper for APScheduler."""
+    return asyncio.run(_weekly_score_calculation_async())
     from src.tasks.background import BackgroundTaskManager
 
     if not _is_trading_day():
@@ -275,13 +286,18 @@ _register_job(
 # Runs every trading day at 08:55
 
 
-async def market_open_reminder():
+async def _market_open_reminder_async():
     """
-    Market Open Reminder Job
+    Market Open Reminder Job (async core)
 
     Sends a reminder notification 5 minutes before market open.
     Integrates with notification system (Feishu/bot) if configured.
     """
+
+
+def market_open_reminder():
+    """Sync wrapper for APScheduler."""
+    return asyncio.run(_market_open_reminder_async())
     if not _is_trading_day():
         logger.info("[Scheduler] Skipping market open reminder (not a trading day)")
         return {"skipped": True}
@@ -343,14 +359,19 @@ _register_job(
 # Runs every 30 minutes
 
 
-async def cache_warmup():
+async def _cache_warmup_async():
     """
-    Cache Warmup Job
+    Cache Warmup Job (async core)
 
     Preloads frequently accessed fund data into cache.
     Runs every 30 minutes to ensure cache freshness.
     """
     from src.tasks.background import BackgroundTaskManager
+
+
+def cache_warmup():
+    """Sync wrapper for APScheduler."""
+    return asyncio.run(_cache_warmup_async())
 
     try:
         manager = BackgroundTaskManager.get_instance()
@@ -383,9 +404,9 @@ _register_job(
 # Runs daily at 23:00
 
 
-async def cleanup_old_data():
+async def _cleanup_old_data_async():
     """
-    Cleanup Old Data Job
+    Cleanup Old Data Job (async core)
 
     Removes expired cache entries and old task records.
     Runs nightly to maintain database hygiene.
@@ -431,6 +452,11 @@ async def cleanup_old_data():
     return cleaned
 
 
+def cleanup_old_data():
+    """Sync wrapper for APScheduler."""
+    return asyncio.run(_cleanup_old_data_async())
+
+
 _register_job(
     JobMetadata(
         job_id="cleanup_old_data",
@@ -450,9 +476,9 @@ _register_job(
 # Runs every 2 hours during trading hours
 
 
-async def fund_data_fetch():
+async def _fund_data_fetch_async():
     """
-    Fund Data Fetch Job
+    Fund Data Fetch Job (async core)
 
     Periodically fetches fund basic data to keep information current.
     """
@@ -469,6 +495,11 @@ async def fund_data_fetch():
     except Exception as e:
         logger.error(f"❌ [Scheduler] Fund fetch failed: {e}")
         raise
+
+
+def fund_data_fetch():
+    """Sync wrapper for APScheduler."""
+    return asyncio.run(_fund_data_fetch_async())
 
 
 _register_job(

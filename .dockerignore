@@ -82,4 +82,6 @@ web/vue3/dist/
 README*.md
 CHANGELOG*.md
 *.txt
+!requirements.txt
+!requirements-dev.txt
 docs/

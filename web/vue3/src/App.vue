@@ -66,9 +66,12 @@
             <label>用户名</label>
             <input v-model="loginForm.username" placeholder="请输入用户名" required />
           </div>
-          <div class="form-group">
+          <div class="form-group password-input">
             <label>密码</label>
-            <input v-model="loginForm.password" type="password" placeholder="请输入密码" required @keyup.enter="handleLogin" />
+            <input v-model="loginForm.password" :type="showPassword ? 'text' : 'password'" placeholder="请输入密码" required @keyup.enter="handleLogin" />
+            <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+              {{ showPassword ? '👁' : '👁️‍🗨' }}
+            </button>
           </div>
           <div class="modal-actions">
             <button type="button" @click="closeLogin">取消</button>
@@ -87,13 +90,19 @@
             <label>用户名</label>
             <input v-model="loginForm.username" placeholder="请输入用户名（至少3位）" required minlength="3" />
           </div>
-          <div class="form-group">
+          <div class="form-group password-input">
             <label>密码</label>
-            <input v-model="loginForm.password" type="password" placeholder="请输入密码（至少6位）" required minlength="6" />
+            <input v-model="loginForm.password" :type="showPassword ? 'text' : 'password'" placeholder="请输入密码（至少8位，包含大小写字母和数字）" required minlength="8" />
+            <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+              {{ showPassword ? '👁' : '👁️‍🗨' }}
+            </button>
           </div>
-          <div class="form-group">
+          <div class="form-group password-input">
             <label>确认密码</label>
-            <input v-model="loginForm.confirmPassword" type="password" placeholder="请再次输入密码" required @keyup.enter="handleRegister" />
+            <input v-model="loginForm.confirmPassword" :type="showConfirmPassword ? 'text' : 'password'" placeholder="请再次输入密码" required @keyup.enter="handleRegister" />
+            <button type="button" class="toggle-password" @click="showConfirmPassword = !showConfirmPassword">
+              {{ showConfirmPassword ? '👁' : '👁️‍🗨' }}
+            </button>
           </div>
           <div class="modal-actions">
             <button type="button" @click="closeLogin">取消</button>
@@ -225,6 +234,8 @@ const showSettings = ref(false)
 const settingsTab = ref<'notify' | 'security'>('notify')
 const isRegistering = ref(false)
 const loginForm = ref<LoginForm>({ username: '', password: '', confirmPassword: '' })
+const showPassword = ref(false)
+const showConfirmPassword = ref(false)
 const loggingIn = ref(false)
 
 const settings = reactive<Settings>({
@@ -267,14 +278,19 @@ const handleLogin = async (): Promise<void> => {
   if (loggingIn.value) return
   loggingIn.value = true
   try {
-    const result = await store.login(loginForm.value.username, loginForm.value.password) as { success?: boolean; message?: string }
+    const result = await store.login(loginForm.value.username, loginForm.value.password) as { success?: boolean; message?: string; error?: string; fail_count?: number; remaining_attempts?: number }
     if (result.success) {
       // store.login 已加载所有板块数据
       showLogin.value = false
       loginForm.value = { username: '', password: '', confirmPassword: '' }
       loadSettings()
     } else {
-      alert(result.message || '登录失败')
+      // 解析登录错误信息
+      let errorMsg = result.error || result.message || '登录失败'
+      if (result.remaining_attempts !== undefined && result.remaining_attempts > 0) {
+        errorMsg += ` (剩余${result.remaining_attempts}次尝试机会)`
+      }
+      alert(errorMsg)
     }
   } finally {
     loggingIn.value = false
@@ -298,21 +314,55 @@ const handleRegister = async (): Promise<void> => {
   }
 
   try {
+    console.log('Attempting registration:', { username, password })
     const response = await fetch('/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     })
-    const data = await response.json() as { success?: boolean; error?: { message?: string }; message?: string }
+    const data = await response.json() as { success?: boolean; error?: string | { message?: string }; message?: string; detail?: Array<{ type?: string; msg?: string; input?: string }> }
+
+    console.log('Registration response:', data)
 
     if (data.success) {
+      console.log('Registration succeeded')
       alert('注册成功！请使用新账号登录')
       isRegistering.value = false
       loginForm.value = { username: '', password: '', confirmPassword: '' }
     } else {
-      alert(data.error?.message || data.message || '注册失败')
+      // 解析错误信息
+      let errorMsg = '注册失败'
+      if (data.detail && Array.isArray(data.detail) && data.detail.length > 0) {
+        // FastAPI Pydantic 验证错误格式
+        const firstError = data.detail[0]
+        const msg = firstError.msg || firstError.message || ''
+        if (firstError.type === 'string_too_short') {
+          errorMsg = '密码长度至少8位'
+        } else if (firstError.type === 'missing') {
+          errorMsg = `缺少必填字段: ${firstError.loc?.join(' > ')}`
+        } else if (msg.includes('at least 8')) {
+          errorMsg = '密码长度至少8位'
+        } else if (msg.includes('uppercase')) {
+          errorMsg = '密码必须包含大写字母'
+        } else if (msg.includes('lowercase')) {
+          errorMsg = '密码必须包含小写字母'
+        } else if (msg.includes('digit')) {
+          errorMsg = '密码必须包含数字'
+        } else {
+          errorMsg = msg
+        }
+      } else if (typeof data.error === 'string') {
+        errorMsg = data.error
+      } else if (data.error?.message) {
+        errorMsg = data.error.message
+      } else if (data.message) {
+        errorMsg = data.message
+      }
+      console.log('Registration failed:', errorMsg)
+      alert(errorMsg)
     }
   } catch (error) {
+    console.error('Registration exception:', error)
     alert('注册请求失败，请检查网络连接')
     console.error('Registration error:', error)
   }
@@ -499,6 +549,31 @@ const clearError = (): void => {
 
 .form-group {
   margin-bottom: 12px;
+}
+
+.form-group.password-input {
+  position: relative;
+}
+
+.form-group.password-input input {
+  padding-right: 40px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px 8px;
+  opacity: 0.6;
+}
+
+.toggle-password:hover {
+  opacity: 1;
 }
 
 .modal-content input {

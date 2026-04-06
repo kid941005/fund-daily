@@ -29,6 +29,22 @@ from .jobs import (
 logger = logging.getLogger(__name__)
 
 
+def _wrap_async_func(func: Callable) -> Callable:
+    """
+    Wrap an async function so APScheduler executors can call it correctly.
+    APScheduler's executors don't await coroutines, so we wrap async
+    functions in a sync wrapper that uses asyncio.run().
+    """
+    import asyncio
+
+    if asyncio.iscoroutinefunction(func):
+        def wrapper():
+            return asyncio.run(func())
+
+        return wrapper
+    return func
+
+
 class DistributedLock:
     """
     Redis-based distributed lock for cluster deployments.
@@ -362,6 +378,8 @@ class SchedulerManager:
             return False
 
         try:
+            func = _wrap_async_func(func)
+
             # Build trigger kwargs
             trigger_kwargs = {}
             if trigger == "cron":
@@ -586,6 +604,7 @@ class SchedulerManager:
                 module_path, func_name = meta.func_ref.rsplit(".", 1)
                 module = importlib.import_module(module_path)
                 func = getattr(module, func_name)
+                func = _wrap_async_func(func)
 
                 # Build trigger
                 if meta.trigger_type == "cron":

@@ -4,15 +4,23 @@
 """
 
 import logging
+from datetime import datetime
 
 from src.utils.error_handling import handle_errors
 
 from .config import _get_cached_score, _set_cached_score
-from .models import ScoreInput
+from .models import SCORE_VERSION, ScoreAudit, ScoreInput
 from .utils import get_grade  # 统一使用 utils.py 的等级函数
 from .weights import SCORE_WEIGHTS
 
 logger = logging.getLogger(__name__)
+
+
+def _build_dimension_input(fund_data: dict | None, field: str, default=None):
+    """从 fund_data 中提取维度评分所需的原始输入"""
+    if fund_data is None:
+        return default
+    return fund_data.get(field, default)
 
 
 def calculate_total_score(
@@ -30,10 +38,24 @@ def calculate_total_score(
     fund_data: dict = None,
     fund_code: str = "",
     use_cache: bool = False,
+    audit: ScoreAudit | None = None,
 ) -> dict:
     """
-    计算基金综合评分（100分制）
+    计算基金综合评分（100分制，含完整审计追踪）
+
+    新增审计追踪功能:
+    - 每个维度返回原始输入值（input 字段）
+    - 支持 data_source / data_fetched_at / calculation_version
+    - 支持传入 audit 对象或自动构建
     """
+    # 构建审计对象
+    if audit is None:
+        audit = ScoreAudit(
+            data_source="unknown",
+            calculation_version=SCORE_VERSION,
+            calculation_time=datetime.now(),
+        )
+
     # 尝试从缓存获取（仅当 use_cache=True 时）
     if use_cache and fund_code:
         cached = _get_cached_score(fund_code)
@@ -52,29 +74,73 @@ def calculate_total_score(
     from .sentiment import calculate_sentiment_score
     from .valuation import calculate_valuation_score
 
-    # 1. 估值面 (25分)
+    # 1. 估值面 (25分) - 记录原始输入
+    valuation_input = {
+        "return_1y": _build_dimension_input(fund_data, "return_1y"),
+        "return_3m": _build_dimension_input(fund_data, "return_3m"),
+        "return_6m": _build_dimension_input(fund_data, "return_6m"),
+    }
     valuation = calculate_valuation_score(fund_detail, fund_data)
+    valuation["input"] = valuation_input
 
-    # 2. 业绩表现 (20分)
+    # 2. 业绩表现 (20分) - 记录原始输入
+    performance_input = {
+        "return_1y": _build_dimension_input(fund_data, "return_1y"),
+        "return_3m": _build_dimension_input(fund_data, "return_3m"),
+        "volatility": risk_metrics.get("volatility") if risk_metrics else None,
+    }
     performance = calculate_performance_score(fund_data)
+    performance["input"] = performance_input
 
-    # 3. 风险控制 (15分)
+    # 3. 风险控制 (15分) - 记录原始输入
+    risk_control_input = {
+        "max_drawdown": risk_metrics.get("max_drawdown") if risk_metrics else None,
+        "sharpe_ratio": risk_metrics.get("sharpe_ratio") if risk_metrics else None,
+        "volatility": risk_metrics.get("volatility") if risk_metrics else None,
+    }
     risk_control = calculate_risk_control_score(risk_metrics, fund_data)
+    risk_control["input"] = risk_control_input
 
-    # 4. 动量趋势 (15分)
+    # 4. 动量趋势 (15分) - 记录原始输入
+    momentum_input = {
+        "return_1m": _build_dimension_input(fund_data, "return_1m"),
+        "return_3m": _build_dimension_input(fund_data, "return_3m"),
+    }
     momentum = calculate_momentum_score(fund_data)
+    momentum["input"] = momentum_input
 
-    # 5. 市场情绪 (10分)
+    # 5. 市场情绪 (10分) - 记录原始输入
+    sentiment_input = {
+        "market_sentiment": market_sentiment,
+        "market_score": market_score,
+    }
     sentiment = calculate_sentiment_score(market_sentiment, market_score)
+    sentiment["input"] = sentiment_input
 
-    # 6. 板块景气 (8分)
+    # 6. 板块景气 (8分) - 记录原始输入
+    sector_input = {
+        "fund_type": fund_type,
+        "hot_sectors_count": len(hot_sectors) if hot_sectors else 0,
+        "commodity_sentiment": commodity_sentiment,
+    }
     sector = calculate_sector_score(fund_type, hot_sectors, commodity_sentiment, fund_data)
+    sector["input"] = sector_input
 
-    # 7. 基金经理 (4分)
+    # 7. 基金经理 (4分) - 记录原始输入
+    manager_input = {
+        "manager_name": fund_manager.get("name") if fund_manager else None,
+        "manager_tenure": fund_manager.get("tenure") if fund_manager else None,
+    }
     manager = calculate_manager_score(fund_manager)
+    manager["input"] = manager_input
 
-    # 8. 流动性 (3分)
+    # 8. 流动性 (3分) - 记录原始输入
+    liquidity_input = {
+        "daily_change": daily_change,
+        "fund_scale": fund_scale,
+    }
     liquidity = calculate_liquidity_score(daily_change, fund_scale)
+    liquidity["input"] = liquidity_input
 
     # 计算总分
     total_score = (
@@ -141,6 +207,8 @@ def calculate_total_score(
             "manager": manager,
             "liquidity": liquidity,
         },
+        # 审计字段
+        "audit": audit.to_dict(),
     }
 
     if fund_code:
@@ -250,4 +318,57 @@ def calculate_score_v2(input_data: ScoreInput) -> dict:
         daily_change=input_data.daily_change,
         fund_data=input_data.fund_data,
         fund_code=input_data.fund_code,
+    )
+
+
+def calculate_total_score_with_audit(
+    fund_detail: dict,
+    risk_metrics: dict,
+    market_sentiment: str,
+    market_score: int,
+    news: list[dict],
+    hot_sectors: list[dict],
+    commodity_sentiment: str,
+    fund_manager: dict | None,
+    fund_type: str,
+    fund_scale: float,
+    daily_change: float,
+    fund_data: dict = None,
+    fund_code: str = "",
+    use_cache: bool = False,
+    data_source: str = "api",
+    data_fetched_at: datetime | None = None,
+    nav_date: str | None = None,
+) -> dict:
+    """
+    计算基金综合评分（带完整审计追踪的便捷封装）
+
+    Args:
+        data_source: 数据来源 (api/cache/db)
+        data_fetched_at: 数据抓取时间
+        nav_date: 净值数据日期
+    """
+    audit = ScoreAudit(
+        data_source=data_source,
+        data_fetched_at=data_fetched_at or datetime.now(),
+        nav_date=nav_date,
+        calculation_version=SCORE_VERSION,
+        calculation_time=datetime.now(),
+    )
+    return calculate_total_score(
+        fund_detail=fund_detail,
+        risk_metrics=risk_metrics,
+        market_sentiment=market_sentiment,
+        market_score=market_score,
+        news=news,
+        hot_sectors=hot_sectors,
+        commodity_sentiment=commodity_sentiment,
+        fund_manager=fund_manager,
+        fund_type=fund_type,
+        fund_scale=fund_scale,
+        daily_change=daily_change,
+        fund_data=fund_data,
+        fund_code=fund_code,
+        use_cache=use_cache,
+        audit=audit,
     )

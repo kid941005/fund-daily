@@ -144,22 +144,49 @@ class EnhancedFetcher:
                             }
                         )
 
-                    # 获取最新评分
+                    # 获取最新评分（8维度）
                     score_data = get_fund_score(fund_code)
                     if score_data:
                         db_data["score_100"] = {
                             "total_score": score_data.get("total_score"),
-                            "valuation": {
-                                "score": score_data.get("valuation_score"),
-                                "reason": score_data.get("valuation_reason"),
+                            "details": {
+                                "valuation": {
+                                    "score": score_data.get("valuation_score"),
+                                    "reason": score_data.get("valuation_reason"),
+                                },
+                                "performance": {
+                                    "score": score_data.get("performance_score"),
+                                    "reason": score_data.get("performance_reason"),
+                                },
+                                "risk_control": {
+                                    "score": score_data.get("risk_score"),
+                                    "reason": score_data.get("risk_reason"),
+                                },
+                                "momentum": {
+                                    "score": score_data.get("momentum_score"),
+                                    "reason": score_data.get("momentum_reason"),
+                                },
+                                "sentiment": {
+                                    "score": score_data.get("sentiment_score"),
+                                    "reason": score_data.get("sentiment_reason"),
+                                },
+                                "sector": {
+                                    "score": score_data.get("sector_score"),
+                                    "reason": score_data.get("sector_reason"),
+                                },
+                                "manager": {
+                                    "score": score_data.get("manager_score"),
+                                    "reason": score_data.get("manager_reason"),
+                                },
+                                "liquidity": {
+                                    "score": score_data.get("liquidity_score"),
+                                    "reason": score_data.get("liquidity_reason"),
+                                },
                             },
-                            "sector": {
-                                "score": score_data.get("sector_score"),
-                                "reason": score_data.get("sector_reason"),
-                            },
-                            "risk_control": {
-                                "score": score_data.get("risk_score"),
-                                "reason": score_data.get("risk_reason"),
+                            "audit": {
+                                "data_source": score_data.get("data_source"),
+                                "data_fetched_at": score_data.get("data_fetched_at"),
+                                "calculation_version": score_data.get("calculation_version"),
                             },
                         }
 
@@ -214,6 +241,7 @@ class EnhancedFetcher:
             # 构造返回数据
             result = {
                 "fundcode": fund_code,
+                "code": fund_code,  # 兼容 analyze_fund 期望的字段名
                 "name": fund_info.get("fund_name", f"基金{fund_code}"),
                 "source": "database",
             }
@@ -231,9 +259,44 @@ class EnhancedFetcher:
             if score_data:
                 result["score_100"] = {
                     "total_score": score_data.get("total_score"),
-                    "valuation": {
-                        "score": score_data.get("valuation_score"),
-                        "reason": score_data.get("valuation_reason"),
+                    "details": {
+                        "valuation": {
+                            "score": score_data.get("valuation_score"),
+                            "reason": score_data.get("valuation_reason"),
+                        },
+                        "performance": {
+                            "score": score_data.get("performance_score"),
+                            "reason": score_data.get("performance_reason"),
+                        },
+                        "risk_control": {
+                            "score": score_data.get("risk_score"),
+                            "reason": score_data.get("risk_reason"),
+                        },
+                        "momentum": {
+                            "score": score_data.get("momentum_score"),
+                            "reason": score_data.get("momentum_reason"),
+                        },
+                        "sentiment": {
+                            "score": score_data.get("sentiment_score"),
+                            "reason": score_data.get("sentiment_reason"),
+                        },
+                        "sector": {
+                            "score": score_data.get("sector_score"),
+                            "reason": score_data.get("sector_reason"),
+                        },
+                        "manager": {
+                            "score": score_data.get("manager_score"),
+                            "reason": score_data.get("manager_reason"),
+                        },
+                        "liquidity": {
+                            "score": score_data.get("liquidity_score"),
+                            "reason": score_data.get("liquidity_reason"),
+                        },
+                    },
+                    "audit": {
+                        "data_source": score_data.get("data_source"),
+                        "data_fetched_at": score_data.get("data_fetched_at"),
+                        "calculation_version": score_data.get("calculation_version"),
                     },
                 }
 

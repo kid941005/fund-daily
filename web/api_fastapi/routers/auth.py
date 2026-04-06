@@ -422,3 +422,22 @@ def _get_user_from_request(request: Request) -> str | None:
 
     # Fallback to session
     return request.cookies.get("session")
+
+
+@router.get("/test-db")
+async def test_db():
+    """Test database connectivity"""
+    import logging
+    logger = logging.getLogger(__name__)
+    from db.pool import get_db, get_cursor
+    try:
+        with get_db() as conn:
+            with get_cursor(conn) as cursor:
+                cursor.execute("SELECT COUNT(*) as cnt FROM users")
+                result = cursor.fetchone()
+                return {"success": True, "user_count": result[0] if result else 0}
+    except Exception as e:
+        logger.error(f"DB test failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "error": str(e)}

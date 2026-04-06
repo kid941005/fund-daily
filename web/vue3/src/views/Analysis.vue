@@ -113,32 +113,44 @@ echarts.use([PieChart, BarChart, TooltipComponent, GridComponent, CanvasRenderer
 
 import api from '@/api'
 import { useFundStore } from '@/stores/fund'
-import type { AnalysisFund } from '@/types/api'
-
-interface AnalysisData {
-  funds?: AnalysisFund[]
-  allocation?: {
-    suggestions?: Array<{ fund_code: string; action: string; amount?: number }>
-  }
-}
+import type { Fund, Holding } from '@/types/api'
 
 const pieChart = ref<HTMLElement | null>(null)
 const barChart = ref<HTMLElement | null>(null)
 const store = useFundStore()
-const analysis = ref<AnalysisData | null>(null)
 const rebalancing = computed(() => store.rebalancing)
 const rebalancingLoading = computed(() => store.loading.rebalancing)
 
 const sortOrder = ref<'asc' | 'desc'>('desc')
 const loading = ref(true)
 
+// 使用与持仓页面一致的数据源
+const holdingsWithFunds = computed(() => {
+  if (!store.holdings?.length || !store.funds?.length) return []
+  return store.holdings
+    .filter(h => (h.amount ?? 0) > 0)
+    .map(h => {
+      const fund = store.funds.find(f => f.code === h.code || f.fund_code === h.code)
+      return {
+        code: h.code,
+        name: fund?.fund_name || fund?.name || `基金${h.code}`,
+        amount: h.amount,
+        nav: fund?.nav,
+        estimate_nav: fund?.estimate_nav,
+        daily_change: fund?.daily_change,
+        score_100: fund?.score_100
+      }
+    })
+})
+
 store.fetchRebalancing()
+store.fetchHoldings()
+store.fetchFunds()
 
 const fetchAnalysis = async (): Promise<void> => {
   loading.value = true
   try {
-    const data = await api.getAnalysis()
-    analysis.value = (data as { analysis?: AnalysisData }).analysis || (data as unknown as AnalysisData)
+    await Promise.all([store.fetchHoldings(), store.fetchFunds()])
     nextTick(initCharts)
   } catch (e) {
     console.error('Failed to fetch analysis:', e)
@@ -148,7 +160,7 @@ const fetchAnalysis = async (): Promise<void> => {
 }
 
 const initCharts = (): void => {
-  if (!analysis.value?.funds) return
+  if (!holdingsWithFunds.value.length) return
   setTimeout(() => {
     initPieChart()
     initBarChart()
@@ -156,13 +168,13 @@ const initCharts = (): void => {
 }
 
 const initPieChart = (): void => {
-  if (!pieChart.value || !analysis.value?.funds) return
+  if (!pieChart.value || !holdingsWithFunds.value.length) return
 
   const chart = echarts.init(pieChart.value)
-  const data = analysis.value.funds
+  const data = holdingsWithFunds.value
     .filter(f => (f.amount ?? 0) > 0)
     .map(f => ({
-      name: (f.name || f.fund_name || f.code)?.substring(0, 8) || f.code,
+      name: (f.name || f.code)?.substring(0, 8) || f.code,
       value: f.amount || 0
     }))
 
@@ -185,11 +197,11 @@ const initPieChart = (): void => {
 }
 
 const initBarChart = (): void => {
-  if (!barChart.value || !analysis.value?.funds) return
+  if (!barChart.value || !holdingsWithFunds.value.length) return
 
   const chart = echarts.init(barChart.value)
-  const data = analysis.value.funds.map(f => ({
-    name: (f.name || f.fund_name || f.code)?.substring(0, 6) || f.code,
+  const data = holdingsWithFunds.value.map(f => ({
+    name: (f.name || f.code)?.substring(0, 6) || f.code,
     value: f.score_100?.total_score || 0
   }))
 

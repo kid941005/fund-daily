@@ -35,13 +35,18 @@ def get_user_by_id(user_id):
 
 @handle_db_errors
 def create_user(user_id, username, password_hash):
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(f"[CREATE_USER] user_id={user_id}, username={username}")
     with get_db() as conn:
         with get_cursor(conn) as cursor:
             cursor.execute(
                 "INSERT INTO users (user_id, username, password) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
                 (user_id, username, password_hash),
             )
+            logger.warning(f"[CREATE_USER] rows_affected={cursor.rowcount}")
             conn.commit()
+            logger.warning(f"[CREATE_USER] commit done")
 
 
 @handle_db_errors

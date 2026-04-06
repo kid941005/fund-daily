@@ -6,7 +6,7 @@ set -e
 
 # 配置
 PORT=${1:-5007}
-DB_PASSWORD=${FUND_DAILY_DB_PASSWORD:-941005}
+DB_PASSWORD=${FUND_DAILY_DB_PASSWORD:-admin123}
 ENV=${FUND_DAILY_ENV:-development}
 
 # 颜色输出
@@ -64,7 +64,7 @@ check_services() {
     echo -e "\n${YELLOW}[3/4] 检查外部服务...${NC}"
     
     # PostgreSQL
-    if python3 -c "import psycopg2; conn = psycopg2.connect(host='localhost', port=5432, user='kid', password='$DB_PASSWORD', dbname='fund_daily'); conn.close()" 2>/dev/null; then
+    if python3 -c "import psycopg2; conn = psycopg2.connect(host='localhost', port=5432, user='admin', password='$DB_PASSWORD', dbname='fund_daily'); conn.close()" 2>/dev/null; then
         echo -e "  ${GREEN}PostgreSQL: 已连接${NC}"
     else
         echo -e "${RED}  PostgreSQL: 无法连接 (host=localhost:5432)${NC}"
