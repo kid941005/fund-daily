@@ -75,6 +75,7 @@ def analyze_fund(fund_data: dict, use_cache: bool = True) -> dict:
     if score_100 and not score_100.get("error"):
         try:
             from datetime import date
+
             from db.fund_ops import save_fund_score
 
             details = score_100.get("details", {})

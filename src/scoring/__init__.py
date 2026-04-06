@@ -10,6 +10,7 @@ from .calculator import (
     calculate_total_score_with_audit,
     format_score_report,
 )
+from .config import validate_weights_compat
 from .health import (
     DataHealthIndicator,
     calculate_data_health,
@@ -17,7 +18,6 @@ from .health import (
     get_health_alert_level,
     is_market_day,
 )
-from .config import validate_weights_compat
 from .liquidity import calculate_liquidity_score
 from .manager import calculate_manager_score
 from .models import SCORE_VERSION, ScoreAudit, ScoreInput, ScoreResult
