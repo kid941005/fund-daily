@@ -1,0 +1,675 @@
+配置验证失败:
+  - 建议设置 FUND_DAILY_SECRET_KEY
+2026-04-05 16:12:31,804 - db.pool - INFO - PostgreSQL connection pool created
+2026-04-05 16:12:31,806 - db.pool - INFO - Database tables initialized
+2026-04-05 16:12:31,821 - src.jwt_auth - INFO - JWT配置: 使用配置管理器
+2026-04-05 16:12:32,027 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.CACHE_WARM -> cache_warmup_handler
+2026-04-05 16:12:32,027 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.SCORE_CALC -> score_calculation_handler
+2026-04-05 16:12:32,027 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.BATCH_IMPORT -> batch_import_handler
+2026-04-05 16:12:32,028 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.FUND_FETCH -> fund_fetch_handler
+2026-04-05 16:12:32,028 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.NAV_UPDATE -> nav_update_handler
+INFO:     Started server process [1620369]
+INFO:     Waiting for application startup.
+2026-04-05 16:12:32,053 - src.scheduler.manager - INFO - [Scheduler] Cluster mode enabled (instance: kid:1620369)
+2026-04-05 16:12:32,057 - apscheduler.scheduler - INFO - Scheduler started
+2026-04-05 16:12:32,057 - src.scheduler.manager - INFO - 🚀 [Scheduler] Scheduler started
+2026-04-05 16:12:32,061 - apscheduler.executors.default - WARNING - Run time of job "缓存预热 (trigger: interval[0:30:00], next run at: 2026-04-05 15:00:50 CST)" was missed by 0:11:41.849705
+2026-04-05 16:12:32,062 - src.scheduler.manager - WARNING - ⚠️ [Scheduler] Job cache_warmup missed its scheduled run
+2026-04-05 16:12:32,063 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job daily_nav_update: 'Job identifier (daily_nav_update) conflicts with an existing job'
+2026-04-05 16:12:32,064 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job weekly_score_calculation: 'Job identifier (weekly_score_calculation) conflicts with an existing job'
+2026-04-05 16:12:32,064 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job market_open_reminder: 'Job identifier (market_open_reminder) conflicts with an existing job'
+2026-04-05 16:12:32,064 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job cache_warmup: 'Job identifier (cache_warmup) conflicts with an existing job'
+2026-04-05 16:12:32,065 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job cleanup_old_data: 'Job identifier (cleanup_old_data) conflicts with an existing job'
+2026-04-05 16:12:32,065 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job fund_data_fetch: 'Job identifier (fund_data_fetch) conflicts with an existing job'
+2026-04-05 16:12:32,065 - web.api_fastapi.main - INFO - ✅ [FastAPI] Scheduler started on app startup
+INFO:     Application startup complete.
+ERROR:    [Errno 98] error while attempting to bind on address ('0.0.0.0', 5007): address already in use
+INFO:     Waiting for application shutdown.
+2026-04-05 16:12:32,065 - apscheduler.scheduler - INFO - Scheduler has been shut down
+2026-04-05 16:12:32,066 - src.scheduler.manager - INFO - ⏹️ [Scheduler] Scheduler stopped
+2026-04-05 16:12:32,066 - web.api_fastapi.main - INFO - ⏹️ [FastAPI] Scheduler stopped on app shutdown
+INFO:     Application shutdown complete.
+配置验证失败:
+  - 建议设置 FUND_DAILY_SECRET_KEY
+2026-04-05 16:13:21,646 - db.pool - INFO - PostgreSQL connection pool created
+2026-04-05 16:13:21,648 - db.pool - INFO - Database tables initialized
+2026-04-05 16:13:21,663 - src.jwt_auth - INFO - JWT配置: 使用配置管理器
+2026-04-05 16:13:21,889 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.CACHE_WARM -> cache_warmup_handler
+2026-04-05 16:13:21,890 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.SCORE_CALC -> score_calculation_handler
+2026-04-05 16:13:21,890 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.BATCH_IMPORT -> batch_import_handler
+2026-04-05 16:13:21,890 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.FUND_FETCH -> fund_fetch_handler
+2026-04-05 16:13:21,890 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.NAV_UPDATE -> nav_update_handler
+INFO:     Started server process [1620845]
+INFO:     Waiting for application startup.
+2026-04-05 16:13:21,918 - src.scheduler.manager - INFO - [Scheduler] Cluster mode enabled (instance: kid:1620845)
+2026-04-05 16:13:21,922 - apscheduler.scheduler - INFO - Scheduler started
+2026-04-05 16:13:21,922 - src.scheduler.manager - INFO - 🚀 [Scheduler] Scheduler started
+2026-04-05 16:13:21,926 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job daily_nav_update: 'Job identifier (daily_nav_update) conflicts with an existing job'
+2026-04-05 16:13:21,927 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job weekly_score_calculation: 'Job identifier (weekly_score_calculation) conflicts with an existing job'
+2026-04-05 16:13:21,927 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job market_open_reminder: 'Job identifier (market_open_reminder) conflicts with an existing job'
+2026-04-05 16:13:21,927 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job cache_warmup: 'Job identifier (cache_warmup) conflicts with an existing job'
+2026-04-05 16:13:21,928 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job cleanup_old_data: 'Job identifier (cleanup_old_data) conflicts with an existing job'
+2026-04-05 16:13:21,928 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job fund_data_fetch: 'Job identifier (fund_data_fetch) conflicts with an existing job'
+2026-04-05 16:13:21,928 - web.api_fastapi.main - INFO - ✅ [FastAPI] Scheduler started on app startup
+INFO:     Application startup complete.
+ERROR:    [Errno 98] error while attempting to bind on address ('0.0.0.0', 5007): address already in use
+INFO:     Waiting for application shutdown.
+2026-04-05 16:13:21,928 - apscheduler.scheduler - INFO - Scheduler has been shut down
+2026-04-05 16:13:21,929 - src.scheduler.manager - INFO - ⏹️ [Scheduler] Scheduler stopped
+2026-04-05 16:13:21,929 - web.api_fastapi.main - INFO - ⏹️ [FastAPI] Scheduler stopped on app shutdown
+INFO:     Application shutdown complete.
+配置验证失败:
+  - 建议设置 FUND_DAILY_SECRET_KEY
+2026-04-05 16:31:11,788 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:31:11,789 - web.api_fastapi.main - WARNING - 数据库初始化失败（服务将以降级模式运行）: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:31:11,804 - src.jwt_auth - INFO - JWT配置: 使用配置管理器
+2026-04-05 16:31:12,002 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.CACHE_WARM -> cache_warmup_handler
+2026-04-05 16:31:12,002 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.SCORE_CALC -> score_calculation_handler
+2026-04-05 16:31:12,002 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.BATCH_IMPORT -> batch_import_handler
+2026-04-05 16:31:12,002 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.FUND_FETCH -> fund_fetch_handler
+2026-04-05 16:31:12,002 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.NAV_UPDATE -> nav_update_handler
+INFO:     Started server process [1626342]
+INFO:     Waiting for application startup.
+2026-04-05 16:31:12,028 - src.scheduler.manager - INFO - [Scheduler] Cluster mode enabled (instance: kid:1626342)
+2026-04-05 16:31:12,032 - apscheduler.scheduler - INFO - Scheduler started
+2026-04-05 16:31:12,032 - src.scheduler.manager - INFO - 🚀 [Scheduler] Scheduler started
+2026-04-05 16:31:12,037 - apscheduler.executors.default - INFO - Running job "缓存预热 (trigger: interval[0:30:00], next run at: 2026-04-05 16:30:50 CST)" (scheduled at 2026-04-05 16:30:50.212169+08:00)
+2026-04-05 16:31:12,038 - apscheduler.executors.default - INFO - Job "缓存预热 (trigger: interval[0:30:00], next run at: 2026-04-05 17:00:50 CST)" executed successfully
+2026-04-05 16:31:12,038 - apscheduler.executors.default - INFO - Running job "基金数据抓取 (trigger: interval[2:00:00], next run at: 2026-04-05 18:30:50 CST)" (scheduled at 2026-04-05 16:30:50.213180+08:00)
+2026-04-05 16:31:12,039 - src.scheduler.manager - INFO - ✅ [Scheduler] Job cache_warmup executed successfully
+2026-04-05 16:31:12,041 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job daily_nav_update: 'Job identifier (daily_nav_update) conflicts with an existing job'
+2026-04-05 16:31:12,042 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job weekly_score_calculation: 'Job identifier (weekly_score_calculation) conflicts with an existing job'
+2026-04-05 16:31:12,043 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job market_open_reminder: 'Job identifier (market_open_reminder) conflicts with an existing job'
+2026-04-05 16:31:12,043 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job cache_warmup: 'Job identifier (cache_warmup) conflicts with an existing job'
+2026-04-05 16:31:12,044 - src.tasks.background - INFO - ✅ Task Manager Redis 连接成功: localhost:6379
+2026-04-05 16:31:12,044 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job cleanup_old_data: 'Job identifier (cleanup_old_data) conflicts with an existing job'
+2026-04-05 16:31:12,045 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job fund_data_fetch: 'Job identifier (fund_data_fetch) conflicts with an existing job'
+2026-04-05 16:31:12,045 - web.api_fastapi.main - INFO - ✅ [FastAPI] Scheduler started on app startup
+INFO:     Application startup complete.
+ERROR:    [Errno 98] error while attempting to bind on address ('0.0.0.0', 5007): address already in use
+INFO:     Waiting for application shutdown.
+2026-04-05 16:31:12,050 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:31:12,050 - src.scheduler.jobs - WARNING - Failed to get fund codes: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:31:12,050 - src.tasks.background - INFO - 📝 Task submitted: 3ec553a8-df06-43b2-b7c8-5af45553e141 (fund_fetch)
+2026-04-05 16:31:12,050 - src.scheduler.jobs - INFO - 📋 [Scheduler] Fund fetch task submitted: 3ec553a8-df06-43b2-b7c8-5af45553e141
+2026-04-05 16:31:12,051 - apscheduler.executors.default - INFO - Job "基金数据抓取 (trigger: interval[2:00:00], next run at: 2026-04-05 18:30:50 CST)" executed successfully
+2026-04-05 16:31:12,051 - src.scheduler.manager - INFO - ✅ [Scheduler] Job fund_data_fetch executed successfully
+2026-04-05 16:31:12,052 - src.tasks.background - INFO - 🚀 Task started: 3ec553a8-df06-43b2-b7c8-5af45553e141
+2026-04-05 16:31:12,052 - apscheduler.scheduler - INFO - Scheduler has been shut down
+2026-04-05 16:31:12,053 - src.scheduler.manager - INFO - ⏹️ [Scheduler] Scheduler stopped
+2026-04-05 16:31:12,053 - web.api_fastapi.main - INFO - ⏹️ [FastAPI] Scheduler stopped on app shutdown
+INFO:     Application shutdown complete.
+2026-04-05 16:31:12,057 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:31:12,057 - src.tasks.handlers.data_fetch - ERROR - Failed to get fund codes: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:31:12,057 - src.tasks.background - INFO - ✅ Task completed: 3ec553a8-df06-43b2-b7c8-5af45553e141
+配置验证失败:
+  - 建议设置 FUND_DAILY_SECRET_KEY
+2026-04-05 16:40:51,424 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:40:51,425 - web.api_fastapi.main - WARNING - 数据库初始化失败（服务将以降级模式运行）: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:40:51,441 - src.jwt_auth - INFO - JWT配置: 使用配置管理器
+2026-04-05 16:40:51,656 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.CACHE_WARM -> cache_warmup_handler
+2026-04-05 16:40:51,656 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.SCORE_CALC -> score_calculation_handler
+2026-04-05 16:40:51,656 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.BATCH_IMPORT -> batch_import_handler
+2026-04-05 16:40:51,656 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.FUND_FETCH -> fund_fetch_handler
+2026-04-05 16:40:51,656 - src.tasks.task_registry - INFO - ✅ Task registered: TaskType.NAV_UPDATE -> nav_update_handler
+INFO:     Started server process [1628365]
+INFO:     Waiting for application startup.
+2026-04-05 16:40:51,681 - src.scheduler.manager - INFO - [Scheduler] Cluster mode enabled (instance: kid:1628365)
+2026-04-05 16:40:51,685 - apscheduler.scheduler - INFO - Scheduler started
+2026-04-05 16:40:51,686 - src.scheduler.manager - INFO - 🚀 [Scheduler] Scheduler started
+2026-04-05 16:40:51,690 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job daily_nav_update: 'Job identifier (daily_nav_update) conflicts with an existing job'
+2026-04-05 16:40:51,690 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job weekly_score_calculation: 'Job identifier (weekly_score_calculation) conflicts with an existing job'
+2026-04-05 16:40:51,690 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job market_open_reminder: 'Job identifier (market_open_reminder) conflicts with an existing job'
+2026-04-05 16:40:51,691 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job cache_warmup: 'Job identifier (cache_warmup) conflicts with an existing job'
+2026-04-05 16:40:51,691 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job cleanup_old_data: 'Job identifier (cleanup_old_data) conflicts with an existing job'
+2026-04-05 16:40:51,691 - src.scheduler.manager - ERROR - ❌ [Scheduler] Failed to register job fund_data_fetch: 'Job identifier (fund_data_fetch) conflicts with an existing job'
+2026-04-05 16:40:51,691 - web.api_fastapi.main - INFO - ✅ [FastAPI] Scheduler started on app startup
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:5007 (Press CTRL+C to quit)
+2026-04-05 16:41:04,719 - web.api_fastapi.main - INFO - [d9c8affa] GET /holdings
+INFO:     192.168.50.100:33292 - "GET /holdings HTTP/1.1" 200 OK
+2026-04-05 16:41:04,841 - web.api_fastapi.main - INFO - [25c1dbb9] GET /api/check-login
+2026-04-05 16:41:04,845 - src.cache.redis_cache - INFO - ✅ Redis 连接成功: localhost:6379
+2026-04-05 16:41:04,850 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:41:04,850 - src.utils.error_handling - ERROR - 函数 get_user_by_id 执行失败: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+Traceback (most recent call last):
+  File "/home/kid/fund-daily/src/utils/error_handling.py", line 45, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/db/users.py", line 30, in get_user_by_id
+    with get_db() as conn:
+  File "/usr/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/db/pool.py", line 47, in get_db
+    conn = get_pool().getconn()
+           ^^^^^^^^^^
+  File "/home/kid/fund-daily/db/pool.py", line 34, in get_pool
+    _connection_pool = pool.ThreadedConnectionPool(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/pool.py", line 161, in __init__
+    AbstractConnectionPool.__init__(
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/pool.py", line 59, in __init__
+    self._connect()
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/pool.py", line 63, in _connect
+    conn = psycopg2.connect(*self._args, **self._kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+INFO:     192.168.50.100:33298 - "GET /api/check-login HTTP/1.1" 200 OK
+2026-04-05 16:41:04,853 - web.api_fastapi.main - INFO - [1df5e06b] GET /favicon.ico
+INFO:     192.168.50.100:33300 - "GET /favicon.ico HTTP/1.1" 200 OK
+2026-04-05 16:41:05,919 - web.api_fastapi.main - INFO - [2eaced45] GET /api/holdings
+2026-04-05 16:41:05,919 - web.api_fastapi.main - INFO - [2c7e303a] GET /api/sectors
+2026-04-05 16:41:05,919 - web.api_fastapi.main - INFO - [762cdec0] GET /api/advice
+2026-04-05 16:41:05,919 - web.api_fastapi.main - INFO - [2bbbd03d] GET /api/funds
+2026-04-05 16:41:05,928 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:41:05,928 - src.utils.error_handling - ERROR - 函数 get_holdings 执行失败: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+Traceback (most recent call last):
+  File "/home/kid/fund-daily/src/utils/error_handling.py", line 45, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/db/holdings.py", line 10, in get_holdings
+    with get_db() as conn:
+  File "/usr/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/db/pool.py", line 47, in get_db
+    conn = get_pool().getconn()
+           ^^^^^^^^^^
+  File "/home/kid/fund-daily/db/pool.py", line 34, in get_pool
+    _connection_pool = pool.ThreadedConnectionPool(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/pool.py", line 161, in __init__
+    AbstractConnectionPool.__init__(
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/pool.py", line 59, in __init__
+    self._connect()
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/pool.py", line 63, in _connect
+    conn = psycopg2.connect(*self._args, **self._kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:41:05,930 - src.fetcher.market_data.market - INFO - Fetching hot sectors (limit=10)
+2026-04-05 16:41:06,013 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:41:06,013 - src.utils.error_handling - ERROR - 函数 get_holdings 执行失败: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+Traceback (most recent call last):
+  File "/home/kid/fund-daily/src/utils/error_handling.py", line 45, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/db/holdings.py", line 10, in get_holdings
+    with get_db() as conn:
+  File "/usr/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/db/pool.py", line 47, in get_db
+    conn = get_pool().getconn()
+           ^^^^^^^^^^
+  File "/home/kid/fund-daily/db/pool.py", line 34, in get_pool
+    _connection_pool = pool.ThreadedConnectionPool(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/pool.py", line 161, in __init__
+    AbstractConnectionPool.__init__(
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/pool.py", line 59, in __init__
+    self._connect()
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/pool.py", line 63, in _connect
+    conn = psycopg2.connect(*self._args, **self._kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:41:06,021 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:41:06,021 - src.utils.error_handling - ERROR - 函数 get_holdings 执行失败: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+Traceback (most recent call last):
+  File "/home/kid/fund-daily/src/utils/error_handling.py", line 45, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/db/holdings.py", line 10, in get_holdings
+    with get_db() as conn:
+  File "/usr/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/db/pool.py", line 47, in get_db
+    conn = get_pool().getconn()
+           ^^^^^^^^^^
+  File "/home/kid/fund-daily/db/pool.py", line 34, in get_pool
+    _connection_pool = pool.ThreadedConnectionPool(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/pool.py", line 161, in __init__
+    AbstractConnectionPool.__init__(
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/pool.py", line 59, in __init__
+    self._connect()
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/pool.py", line 63, in _connect
+    conn = psycopg2.connect(*self._args, **self._kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:41:06,022 - web.api_fastapi.middleware.error_handler - ERROR - Unhandled exception: object of type 'NoneType' has no len()
+Traceback (most recent call last):
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/web/api_fastapi/main.py", line 92, in log_requests
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/gzip.py", line 29, in __call__
+    await responder(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/gzip.py", line 130, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/gzip.py", line 46, in __call__
+    await self.app(scope, receive, self.send_with_compression)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 87, in __call__
+    await self.app(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 134, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 120, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 674, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 328, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/web/api_fastapi/routers/holdings.py", line 88, in get_holdings
+    total = len(holdings)
+            ^^^^^^^^^^^^^
+TypeError: object of type 'NoneType' has no len()
+INFO:     192.168.50.100:33310 - "GET /api/holdings HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/kid/.local/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/applications.py", line 1159, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/web/api_fastapi/main.py", line 92, in log_requests
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/gzip.py", line 29, in __call__
+    await responder(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/gzip.py", line 130, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/gzip.py", line 46, in __call__
+    await self.app(scope, receive, self.send_with_compression)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 87, in __call__
+    await self.app(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 134, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 120, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 674, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 328, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/web/api_fastapi/routers/holdings.py", line 88, in get_holdings
+    total = len(holdings)
+            ^^^^^^^^^^^^^
+TypeError: object of type 'NoneType' has no len()
+INFO:     192.168.50.100:33320 - "GET /api/sectors?limit=10 HTTP/1.1" 200 OK
+INFO:     192.168.50.100:33328 - "GET /api/advice HTTP/1.1" 200 OK
+2026-04-05 16:41:06,038 - web.api_fastapi.middleware.error_handler - ERROR - Unhandled exception: 'NoneType' object is not iterable
+Traceback (most recent call last):
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/web/api_fastapi/main.py", line 92, in log_requests
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/gzip.py", line 29, in __call__
+    await responder(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/gzip.py", line 130, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/gzip.py", line 46, in __call__
+    await self.app(scope, receive, self.send_with_compression)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 87, in __call__
+    await self.app(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 134, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 120, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 674, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 328, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/web/api_fastapi/routers/funds.py", line 239, in get_funds
+    codes = [h["code"] for h in holdings if h.get("amount", 0) > 0]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'NoneType' object is not iterable
+INFO:     192.168.50.100:33330 - "GET /api/funds HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/kid/.local/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/applications.py", line 1159, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/web/api_fastapi/main.py", line 92, in log_requests
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/gzip.py", line 29, in __call__
+    await responder(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/gzip.py", line 130, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/gzip.py", line 46, in __call__
+    await self.app(scope, receive, self.send_with_compression)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 87, in __call__
+    await self.app(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 134, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/kid/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 120, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 674, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/fastapi/routing.py", line 328, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/web/api_fastapi/routers/funds.py", line 239, in get_funds
+    codes = [h["code"] for h in holdings if h.get("amount", 0) > 0]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'NoneType' object is not iterable
+2026-04-05 16:41:06,042 - web.api_fastapi.main - INFO - [cd15bc7b] GET /api/check-login
+2026-04-05 16:41:06,042 - web.api_fastapi.main - INFO - [4217474a] GET /api/news
+2026-04-05 16:41:06,042 - web.api_fastapi.main - INFO - [fd16ad61] GET /favicon.ico
+2026-04-05 16:41:06,047 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:41:06,047 - src.utils.error_handling - ERROR - 函数 get_user_by_id 执行失败: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+Traceback (most recent call last):
+  File "/home/kid/fund-daily/src/utils/error_handling.py", line 45, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/db/users.py", line 30, in get_user_by_id
+    with get_db() as conn:
+  File "/usr/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/home/kid/fund-daily/db/pool.py", line 47, in get_db
+    conn = get_pool().getconn()
+           ^^^^^^^^^^
+  File "/home/kid/fund-daily/db/pool.py", line 34, in get_pool
+    _connection_pool = pool.ThreadedConnectionPool(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/pool.py", line 161, in __init__
+    AbstractConnectionPool.__init__(
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/pool.py", line 59, in __init__
+    self._connect()
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/pool.py", line 63, in _connect
+    conn = psycopg2.connect(*self._args, **self._kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kid/.local/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:41:06,048 - src.fetcher.market_data.market - INFO - Fetching market news (limit=8)
+INFO:     192.168.50.100:33344 - "GET /api/check-login HTTP/1.1" 200 OK
+INFO:     192.168.50.100:33350 - "GET /api/news?limit=8 HTTP/1.1" 200 OK
+INFO:     192.168.50.100:33358 - "GET /favicon.ico HTTP/1.1" 200 OK
+2026-04-05 16:42:02,773 - web.api_fastapi.main - INFO - [bd578cae] GET /api/config
+INFO:     127.0.0.1:37298 - "GET /api/config HTTP/1.1" 200 OK
+2026-04-05 16:42:02,779 - web.api_fastapi.main - INFO - [1a70d4a4] GET /api/funds
+2026-04-05 16:42:02,791 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:02,791 - src.fetcher.enhanced_fetcher - ERROR - 从数据库获取基金数据异常: 161725, connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:02,791 - src.fetcher.enhanced_fetcher - INFO - 从API获取基金数据: 161725
+2026-04-05 16:42:02,791 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:02,792 - src.fetcher.enhanced_fetcher - ERROR - 从数据库获取基金数据异常: 000001, connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:02,792 - src.fetcher.enhanced_fetcher - INFO - 从API获取基金数据: 000001
+2026-04-05 16:42:02,792 - src.fetcher.fund_basic.basic - INFO - Fetching fund data (cache=hit): 161725
+2026-04-05 16:42:02,792 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:02,792 - src.fetcher.enhanced_fetcher - ERROR - 从数据库获取基金数据异常: 110022, connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:02,792 - src.fetcher.enhanced_fetcher - INFO - 从API获取基金数据: 110022
+2026-04-05 16:42:02,792 - src.fetcher.fund_basic.basic - INFO - Fetching fund data (cache=hit): 110022
+2026-04-05 16:42:02,793 - src.fetcher.fund_basic.basic - INFO - Fetching fund data (cache=hit): 000001
+2026-04-05 16:42:03,077 - src.fetcher.fund_basic.basic - INFO - Got returns for 000001: {'return_1y': 20.21, 'return_6m': -9.32, 'return_3m': -5.63, 'return_1m': -6.84}
+2026-04-05 16:42:03,082 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,082 - db.fund_ops - ERROR - 保存基金数据失败: 000001, connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,083 - src.services.score_service - INFO - 评分服务初始化完成（v2 - 直接模块调用）
+2026-04-05 16:42:03,083 - src.fetcher.market_data.market - INFO - Fetching market news (limit=10)
+2026-04-05 16:42:03,117 - src.fetcher.fund_basic.basic - INFO - Got returns for 161725: {'return_1y': -23.22, 'return_6m': -18.5, 'return_3m': -9.95, 'return_1m': -4.65}
+2026-04-05 16:42:03,122 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,122 - db.fund_ops - ERROR - 保存基金数据失败: 161725, connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,123 - src.fetcher.market_data.market - INFO - Fetching market news (limit=10)
+2026-04-05 16:42:03,245 - src.fetcher.market_data.market - INFO - Fetching commodity prices
+2026-04-05 16:42:03,249 - src.fetcher.fund_basic.basic - INFO - Got returns for 110022: {'return_1y': -12.28, 'return_6m': -14.18, 'return_3m': -9.09, 'return_1m': -3.01}
+2026-04-05 16:42:03,253 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,253 - src.advice - WARNING - Failed to save score to DB for 000001: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,255 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,255 - db.fund_ops - ERROR - 保存基金数据失败: 110022, connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,258 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,258 - web.api_fastapi.routers.funds - WARNING - Failed to calculate data health for 000001: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,261 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,261 - src.advice - WARNING - Failed to save score to DB for 110022: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,266 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,266 - web.api_fastapi.routers.funds - WARNING - Failed to calculate data health for 110022: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,294 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,294 - src.advice - WARNING - Failed to save score to DB for 161725: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,299 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:03,299 - web.api_fastapi.routers.funds - WARNING - Failed to calculate data health for 161725: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+INFO:     127.0.0.1:37312 - "GET /api/funds HTTP/1.1" 200 OK
+2026-04-05 16:42:10,372 - web.api_fastapi.main - INFO - [9eb3c5cc] GET /api/sectors
+INFO:     127.0.0.1:57646 - "GET /api/sectors HTTP/1.1" 200 OK
+2026-04-05 16:42:10,378 - web.api_fastapi.main - INFO - [512952da] GET /api/news
+INFO:     127.0.0.1:57648 - "GET /api/news HTTP/1.1" 200 OK
+2026-04-05 16:42:10,384 - web.api_fastapi.main - INFO - [33a3a7cb] GET /api/market/status
+INFO:     127.0.0.1:57652 - "GET /api/market/status HTTP/1.1" 200 OK
+2026-04-05 16:42:16,126 - web.api_fastapi.main - INFO - [534ed667] POST /api/login
+2026-04-05 16:42:16,133 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:16,133 - web.api_fastapi.routers.auth - ERROR - Login failed: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+INFO:     127.0.0.1:57658 - "POST /api/login HTTP/1.1" 500 Internal Server Error
+2026-04-05 16:42:16,146 - web.api_fastapi.main - INFO - [9ea52d57] GET /api/advice
+INFO:     127.0.0.1:57660 - "GET /api/advice HTTP/1.1" 401 Unauthorized
+2026-04-05 16:42:19,625 - web.api_fastapi.main - INFO - [b4e34b0c] POST /api/login
+2026-04-05 16:42:19,631 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:19,631 - web.api_fastapi.routers.auth - ERROR - Login failed: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+INFO:     127.0.0.1:34364 - "POST /api/login HTTP/1.1" 500 Internal Server Error
+2026-04-05 16:42:25,597 - web.api_fastapi.main - INFO - [e60afc00] POST /api/login
+2026-04-05 16:42:25,603 - db.pool - ERROR - Failed to create connection pool: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+2026-04-05 16:42:25,603 - web.api_fastapi.routers.auth - ERROR - Login failed: connection to server at "localhost" (127.0.0.1), port 5432 failed: fe_sendauth: no password supplied
+
+INFO:     127.0.0.1:34376 - "POST /api/login HTTP/1.1" 500 Internal Server Error
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-05 16:43:08,778 - apscheduler.scheduler - INFO - Scheduler has been shut down
+2026-04-05 16:43:08,779 - src.scheduler.manager - INFO - ⏹️ [Scheduler] Scheduler stopped
+2026-04-05 16:43:08,779 - web.api_fastapi.main - INFO - ⏹️ [FastAPI] Scheduler stopped on app shutdown
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1628365]
