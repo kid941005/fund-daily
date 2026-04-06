@@ -402,7 +402,7 @@ class TestScheduledJobFunctions:
             mock_manager_class.get_instance.return_value = mock_manager
 
             with patch("src.scheduler.jobs._get_fund_codes", return_value=["000001"]):
-                result = asyncio.run(daily_nav_update())
+                result = daily_nav_update()
 
         assert isinstance(result, dict)
         assert "task_id" in result
@@ -418,7 +418,7 @@ class TestScheduledJobFunctions:
             mock_manager.submit.return_value = "test-task-id"
             mock_manager_class.get_instance.return_value = mock_manager
 
-            result = asyncio.run(cache_warmup())
+            result = cache_warmup()
 
         assert isinstance(result, dict)
         assert "task_id" in result
@@ -430,7 +430,7 @@ class TestScheduledJobFunctions:
         from src.scheduler.jobs import market_open_reminder
 
         with patch("src.scheduler.jobs._is_trading_day", return_value=False):
-            result = asyncio.run(market_open_reminder())
+            result = market_open_reminder()
 
         assert result.get("skipped") is True
 
@@ -444,7 +444,7 @@ class TestScheduledJobFunctions:
             mock_instance = MagicMock()
             mock_cache_mgr.get_instance.return_value = mock_instance
 
-            result = asyncio.run(cleanup_old_data())
+            result = cleanup_old_data()
 
         assert isinstance(result, dict)
         assert "errors" in result

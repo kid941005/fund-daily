@@ -199,7 +199,6 @@ async def _daily_nav_update_async():
 
 def daily_nav_update():
     """Sync wrapper for APScheduler."""
-    return asyncio.run(_daily_nav_update_async())
     from src.tasks.background import BackgroundTaskManager
 
     try:
@@ -247,7 +246,6 @@ async def _weekly_score_calculation_async():
 
 def weekly_score_calculation():
     """Sync wrapper for APScheduler."""
-    return asyncio.run(_weekly_score_calculation_async())
     from src.tasks.background import BackgroundTaskManager
 
     if not _is_trading_day():
@@ -297,7 +295,6 @@ async def _market_open_reminder_async():
 
 def market_open_reminder():
     """Sync wrapper for APScheduler."""
-    return asyncio.run(_market_open_reminder_async())
     if not _is_trading_day():
         logger.info("[Scheduler] Skipping market open reminder (not a trading day)")
         return {"skipped": True}
@@ -366,12 +363,11 @@ async def _cache_warmup_async():
     Preloads frequently accessed fund data into cache.
     Runs every 30 minutes to ensure cache freshness.
     """
-    from src.tasks.background import BackgroundTaskManager
 
 
 def cache_warmup():
     """Sync wrapper for APScheduler."""
-    return asyncio.run(_cache_warmup_async())
+    from src.tasks.background import BackgroundTaskManager
 
     try:
         manager = BackgroundTaskManager.get_instance()
@@ -454,7 +450,45 @@ async def _cleanup_old_data_async():
 
 def cleanup_old_data():
     """Sync wrapper for APScheduler."""
-    return asyncio.run(_cleanup_old_data_async())
+    logger.info("🧹 [Scheduler] Starting data cleanup")
+    start_time = datetime.now()
+
+    cleaned = {"cache_entries": 0, "old_tasks": 0, "errors": []}
+
+    # Cleanup old cache entries
+    try:
+        from src.cache.manager import CacheManager
+
+        cache_mgr = CacheManager.get_instance()
+        cache_mgr.cleanup_expired()
+        cleaned["cache_entries"] = 1
+    except Exception as e:
+        logger.warning(f"[Scheduler] Cache cleanup failed: {e}")
+        cleaned["errors"].append({"cache": str(e)})
+
+    # Cleanup old completed tasks (older than 7 days)
+    try:
+        from src.tasks.background import BackgroundTaskManager
+
+        BackgroundTaskManager.get_instance()
+        # This would need a cleanup method in the task manager
+        # For now, just log
+        logger.info("[Scheduler] Task cleanup skipped (not implemented)")
+    except Exception as e:
+        logger.warning(f"[Scheduler] Task cleanup failed: {e}")
+        cleaned["errors"].append({"tasks": str(e)})
+
+    # Cleanup old NAV history (keep last 2 years)
+    try:
+
+        logger.info("[Scheduler] NAV history cleanup would be done here")
+    except Exception as e:
+        logger.warning(f"[Scheduler] NAV cleanup failed: {e}")
+        cleaned["errors"].append({"nav": str(e)})
+
+    duration = (datetime.now() - start_time).total_seconds()
+    logger.info(f"✅ [Scheduler] Cleanup completed in {duration:.1f}s, errors: {len(cleaned['errors'])}")
+    return cleaned
 
 
 _register_job(
@@ -499,7 +533,6 @@ async def _fund_data_fetch_async():
 
 def fund_data_fetch():
     """Sync wrapper for APScheduler."""
-    return asyncio.run(_fund_data_fetch_async())
 
 
 _register_job(

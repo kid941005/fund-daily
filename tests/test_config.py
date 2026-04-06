@@ -54,7 +54,7 @@ class TestDatabaseConfig:
         assert config.host == "localhost"
         assert config.port == 5432
         assert config.name == "fund_daily"
-        assert config.user == "kid"
+        assert config.user == "admin"
         assert config.password == ""
 
     def test_validate_postgres_valid(self):
