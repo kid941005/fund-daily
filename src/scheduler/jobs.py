@@ -5,7 +5,6 @@ Predefined scheduled jobs for fund data management.
 Each job class wraps a task handler with scheduling metadata.
 """
 
-
 import logging
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed

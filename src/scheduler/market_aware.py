@@ -14,7 +14,6 @@ from datetime import datetime, time, timedelta
 from enum import Enum
 
 
-
 class MarketPhase(str, Enum):
     """市场阶段"""
 
